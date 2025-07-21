@@ -141,7 +141,7 @@ const Login = () => {
             className="mx-auto h-20 w-auto mb-4"
           />
         </div>
-        <hr />
+        <hr /><br />
         <h3 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-6 text-center">Setlist Management System</h3>
 
         {error && (
