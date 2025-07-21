@@ -7,7 +7,7 @@ const Sidebar = () => {
   const { user } = useAuth();
 
   return (
-    <div className="w-64 bg-gray-800 text-white p-4 flex flex-col dark:bg-gray-950">
+    <div className="w-64 bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 p-4 flex flex-col dark:bg-gray-950">
       <div className="text-2xl font-bold mb-8 text-232323-400">Setlist Console</div>
       <nav className="flex-1">
         <ul>
