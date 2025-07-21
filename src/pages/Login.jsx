@@ -142,7 +142,7 @@ const Login = () => {
           />
         </div>
         <hr /><br />
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-6 text-center">Setlist Management System<hr /><br /></h3>
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-slate-100 mb-6 text-center">Setlist Management System<br /><hr /></h3>
       
         {error && (
           <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg mb-4" role="alert">
