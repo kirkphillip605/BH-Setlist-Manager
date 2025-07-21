@@ -52,6 +52,17 @@ export const setsService = {
       throw new Error('Set name and setlist_id are required.');
     }
 
+    // Check for duplicates within the setlist (across all sets)
+    if (songs && songs.length > 0) {
+      const duplicates = await this.checkForDuplicatesInSetlist(setlist_id, songs.map(s => s.song_id));
+      if (duplicates.length > 0) {
+        throw new Error(JSON.stringify({
+          type: 'DUPLICATES_FOUND',
+          duplicates: duplicates,
+          message: 'Some songs already exist in other sets within this setlist'
+        }));
+      }
+    }
     // Get the current highest set_order for this setlist
     const { data: existingSets, error: orderError } = await supabase
       .from('sets')
@@ -100,6 +111,29 @@ export const setsService = {
       throw new Error('Set name is required.');
     }
 
+    // Check for duplicates within the setlist (across all sets) excluding current set
+    if (songs !== undefined && songs.length > 0) {
+      const { data: currentSet } = await supabase
+        .from('sets')
+        .select('setlist_id')
+        .eq('id', id)
+        .single();
+
+      if (currentSet) {
+        const duplicates = await this.checkForDuplicatesInSetlist(
+          currentSet.setlist_id, 
+          songs.map(s => s.song_id),
+          id // Exclude current set from duplicate check
+        );
+        if (duplicates.length > 0) {
+          throw new Error(JSON.stringify({
+            type: 'DUPLICATES_FOUND',
+            duplicates: duplicates,
+            message: 'Some songs already exist in other sets within this setlist'
+          }));
+        }
+      }
+    }
     const { data: updatedSet, error: setError } = await supabase
       .from('sets')
       .update({ name })
@@ -145,5 +179,99 @@ export const setsService = {
       .eq('id', id);
 
     if (error) throw new Error(error.message);
+  },
+
+  // Check for duplicate songs in a setlist (across all sets)
+  async checkForDuplicatesInSetlist(setlistId, songIds, excludeSetId = null) {
+    let query = supabase
+      .from('set_songs')
+      .select(`
+        song_id,
+        sets!inner(id, name, setlist_id),
+        songs(title, original_artist)
+      `)
+      .eq('sets.setlist_id', setlistId)
+      .in('song_id', songIds);
+
+    if (excludeSetId) {
+      query = query.neq('sets.id', excludeSetId);
+    }
+
+    const { data, error } = await query;
+    
+    if (error) throw new Error(error.message);
+    
+    return data || [];
+  },
+
+  // Move song to another set within the same setlist
+  async moveSongToSet(songId, fromSetId, toSetId, newOrder = null) {
+    // First verify both sets are in the same setlist
+    const { data: sets, error: setsError } = await supabase
+      .from('sets')
+      .select('setlist_id')
+      .in('id', [fromSetId, toSetId]);
+
+    if (setsError) throw new Error(setsError.message);
+    
+    if (sets.length !== 2 || sets[0].setlist_id !== sets[1].setlist_id) {
+      throw new Error('Both sets must be in the same setlist');
+    }
+
+    // Remove from original set
+    const { error: deleteError } = await supabase
+      .from('set_songs')
+      .delete()
+      .eq('set_id', fromSetId)
+      .eq('song_id', songId);
+
+    if (deleteError) throw new Error(deleteError.message);
+
+    // Get next order if not specified
+    if (!newOrder) {
+      const { data: maxOrder } = await supabase
+        .from('set_songs')
+        .select('song_order')
+        .eq('set_id', toSetId)
+        .order('song_order', { ascending: false })
+        .limit(1);
+      
+      newOrder = (maxOrder && maxOrder[0]?.song_order || 0) + 1;
+    }
+
+    // Add to new set
+    const { error: insertError } = await supabase
+      .from('set_songs')
+      .insert({
+        set_id: toSetId,
+        song_id: songId,
+        song_order: newOrder
+      });
+
+    if (insertError) throw new Error(insertError.message);
+  },
+
+  // Reorder songs within a set
+  async reorderSongs(setId, songOrderMap) {
+    const updates = Object.entries(songOrderMap).map(([songId, order]) => ({
+      set_id: setId,
+      song_id: songId,
+      song_order: order
+    }));
+
+    // Delete existing order
+    const { error: deleteError } = await supabase
+      .from('set_songs')
+      .delete()
+      .eq('set_id', setId);
+
+    if (deleteError) throw new Error(deleteError.message);
+
+    // Insert with new order
+    const { error: insertError } = await supabase
+      .from('set_songs')
+      .insert(updates);
+
+    if (insertError) throw new Error(insertError.message);
   }
 };

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Edit, ArrowLeft, Trash2 } from 'lucide-react';
+import { Edit, ArrowLeft } from 'lucide-react';
 import { usePageTitle } from '../context/PageTitleContext';
 import { setsService } from '../services/setsService';
+import { setlistsService } from '../services/setlistsService';
+import DraggableList from '../components/DraggableList';
 
 const SetDetailPage = () => {
   const { setlistId, setId } = useParams();
@@ -10,20 +12,29 @@ const SetDetailPage = () => {
   const navigate = useNavigate();
   
   const [set, setSet] = useState(null);
+  const [availableSets, setAvailableSets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchSet();
+    fetchSetAndAvailableSets();
   }, [setId]);
 
-  const fetchSet = async () => {
+  const fetchSetAndAvailableSets = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await setsService.getSetById(setId);
-      setSet(data);
-      setPageTitle(`${data.name} - ${data.setlists?.name || 'Set'}`);
+      const [setData, setlistData] = await Promise.all([
+        setsService.getSetById(setId),
+        setlistsService.getSetlistById(setlistId)
+      ]);
+      
+      setSet(setData);
+      setPageTitle(`${setData.name} - ${setData.setlists?.name || 'Set'}`);
+      
+      // Get other sets in the same setlist for moving songs
+      const otherSets = setlistData.sets?.filter(s => s.id !== setId) || [];
+      setAvailableSets(otherSets);
     } catch (err) {
       console.error('Error fetching set:', err);
       setError(err.message || 'Failed to load set');
@@ -33,29 +44,60 @@ const SetDetailPage = () => {
   };
 
   const handleRemoveSong = async (songId) => {
-    if (!window.confirm('Are you sure you want to remove this song from the set?')) {
-      return;
-    }
+    const updatedSongs = songs.filter((_, index) => index !== songIndex);
+    await updateSetSongs(updatedSongs);
+  };
+
+  const handleReorderSongs = async (sourceIndex, destinationIndex) => {
+    const reorderedSongs = [...songs];
+    const [removed] = reorderedSongs.splice(sourceIndex, 1);
+    reorderedSongs.splice(destinationIndex, 0, removed);
     
+    // Update song_order for all songs
+    const updatedSongs = reorderedSongs.map((song, index) => ({
+      ...song,
+      song_order: index + 1
+    }));
+    
+    await updateSetSongs(updatedSongs);
+  };
+
+  const handleMoveToSet = async (songId, targetSetId) => {
     try {
-      const updatedSongs = set.set_songs
-        .filter(ss => ss.songs.id !== songId)
-        .map((ss, index) => ({
-          song_id: ss.songs.id,
-          song_order: index + 1
-        }));
+      await setsService.moveSongToSet(songId, setId, targetSetId);
+      await fetchSetAndAvailableSets(); // Refresh data
+    } catch (err) {
+      console.error('Error moving song:', err);
+      setError('Failed to move song');
+    }
+  };
+    
+  const updateSetSongs = async (updatedSongs) => {
+    try {
+      const songsData = updatedSongs.map((song, index) => ({
+        song_id: song.id,
+        song_order: index + 1
+      }));
 
       await setsService.updateSet(setId, {
         name: set.name,
-        songs: updatedSongs
+        songs: songsData
       });
 
-      await fetchSet();
+      // Update local state
+      setSet(prev => ({
+        ...prev,
+        set_songs: updatedSongs.map((song, index) => ({
+          songs: song,
+          song_order: index + 1
+        }))
+      }));
     } catch (err) {
-      console.error('Error removing song:', err);
-      setError('Failed to remove song from set');
+      console.error('Error updating songs:', err);
+      setError('Failed to update songs');
     }
   };
+
 
   if (loading) {
     return (
@@ -121,44 +163,15 @@ const SetDetailPage = () => {
             <p className="text-slate-300 text-lg">No songs in this set</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-600">
-              <thead className="bg-slate-700">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                    Title
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                    Artist
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                    Key
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-slate-800 divide-y divide-slate-700">
-                {songs.map((song) => (
-                  <tr key={song.id} className="hover:bg-slate-700 transition-colors">
-                    <td className="px-4 py-4 text-sm font-medium text-slate-100">{song.title}</td>
-                    <td className="px-4 py-4 text-sm text-slate-300">{song.original_artist}</td>
-                    <td className="px-4 py-4 text-sm text-slate-300">{song.key_signature || '-'}</td>
-                    <td className="px-4 py-4 text-right">
-                      <button
-                        onClick={() => handleRemoveSong(song.id)}
-                        className="p-2 text-red-400 hover:text-red-300 transition-colors"
-                        title="Remove from Set"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DraggableList
+            items={songs}
+            onReorder={handleReorderSongs}
+            onRemove={handleRemoveSong}
+            onMoveToSet={handleMoveToSet}
+            availableSets={availableSets}
+            showMoveToSet={true}
+            type="songs"
+          />
         )}
       </div>
     </div>

@@ -97,11 +97,12 @@ const SongCollectionFormPage = () => {
 
       if (isEditing) {
         await songCollectionsService.updateSongCollection(collectionId, collectionData);
+        navigate(`/song-collections/${collectionId}`);
       } else {
-        await songCollectionsService.createSongCollection(collectionData);
+        const newCollection = await songCollectionsService.createSongCollection(collectionData);
+        // Route directly to add songs page for new collections
+        navigate(`/song-collections/edit/${newCollection.id}`);
       }
-
-      navigate('/song-collections');
     } catch (err) {
       console.error('Error saving song collection:', err);
       setError(err.message || 'Failed to save song collection');

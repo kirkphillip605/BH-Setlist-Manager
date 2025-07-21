@@ -128,11 +128,12 @@ const SetFormPage = () => {
 
       if (isEditing) {
         await setsService.updateSet(setId, setData);
+        navigate(`/setlists/${setlistId}/sets/${setId}`);
       } else {
-        await setsService.createSet(setData);
+        const newSet = await setsService.createSet(setData);
+        // Route directly to add songs page for new sets
+        navigate(`/setlists/${setlistId}/sets/${newSet.id}/edit`);
       }
-
-      navigate(`/setlists/${setlistId}`);
     } catch (err) {
       console.error('Error saving set:', err);
       setError(err.message || 'Failed to save set');

@@ -59,10 +59,10 @@ const SetlistFormPage = () => {
 
       if (isEditing) {
         await setlistsService.updateSetlist(setlistId, setlistData);
-        navigate(`/setlists/${setlistId}`);
+        navigate(`/setlists/${setlistId}`); // Stay on same behavior for editing
       } else {
         const newSetlist = await setlistsService.createSetlist(setlistData);
-        navigate(`/setlists/${newSetlist.id}`);
+        navigate(`/setlists/${newSetlist.id}`); // Route to sets page immediately
       }
     } catch (err) {
       console.error('Error saving setlist:', err);
