@@ -12,9 +12,11 @@ import ManageSongs from './pages/ManageSongs';
 import SongViewPage from './pages/SongViewPage';
 import SongFormPage from './pages/SongFormPage';
 import ManageSetlists from './pages/ManageSetlists';
-import ManageSetTemplates from './pages/ManageSetTemplates';
+import ManageSongCollections from './pages/ManageSongCollections';
 import SetlistFormPage from './pages/SetlistFormPage';
-import SetTemplateFormPage from './pages/SetTemplateFormPage';
+import SetlistDetailPage from './pages/SetlistDetailPage';
+import SetFormPage from './pages/SetFormPage';
+import SongCollectionFormPage from './pages/SongCollectionFormPage';
 import PrivateRoute from './components/PrivateRoute';
 import Login from './pages/Login';
 import EditProfile from './pages/EditProfile';
@@ -56,20 +58,32 @@ const router = createBrowserRouter([
     element: <PrivateRoute><Layout><SetlistFormPage /></Layout></PrivateRoute>
   },
   {
+    path: "/setlists/:setlistId",
+    element: <PrivateRoute><Layout><SetlistDetailPage /></Layout></PrivateRoute>
+  },
+  {
     path: "/setlists/edit/:setlistId",
     element: <PrivateRoute><Layout><SetlistFormPage /></Layout></PrivateRoute>
   },
   {
-    path: "/set-templates",
-    element: <PrivateRoute><Layout><ManageSetTemplates /></Layout></PrivateRoute>
+    path: "/setlists/:setlistId/sets/add",
+    element: <PrivateRoute><Layout><SetFormPage /></Layout></PrivateRoute>
   },
   {
-    path: "/set-templates/add",
-    element: <PrivateRoute><Layout><SetTemplateFormPage /></Layout></PrivateRoute>
+    path: "/setlists/:setlistId/sets/:setId/edit",
+    element: <PrivateRoute><Layout><SetFormPage /></Layout></PrivateRoute>
   },
   {
-    path: "/set-templates/edit/:templateId",
-    element: <PrivateRoute><Layout><SetTemplateFormPage /></Layout></PrivateRoute>
+    path: "/song-collections",
+    element: <PrivateRoute><Layout><ManageSongCollections /></Layout></PrivateRoute>
+  },
+  {
+    path: "/song-collections/add",
+    element: <PrivateRoute><Layout><SongCollectionFormPage /></Layout></PrivateRoute>
+  },
+  {
+    path: "/song-collections/edit/:collectionId",
+    element: <PrivateRoute><Layout><SongCollectionFormPage /></Layout></PrivateRoute>
   },
   {
     path: "/profile",

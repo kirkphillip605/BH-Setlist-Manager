@@ -16,7 +16,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const menuItems = [
     { path: '/', label: 'Dashboard', icon: Home },
     { path: '/songs', label: 'Manage Songs', icon: Music },
-    { path: '/set-templates', label: 'Set Templates', icon: LayoutTemplate },
+    { path: '/song-collections', label: 'Song Collections', icon: LayoutTemplate },
     { path: '/setlists', label: 'Setlists', icon: ListMusic },
   ];
 

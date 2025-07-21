@@ -3,14 +3,14 @@ import { PlusCircle, Edit, Trash2, ChevronUp, ChevronDown, Music } from 'lucide-
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
-import { setTemplatesService } from '../services/setTemplatesService';
+import { songCollectionsService } from '../services/songCollectionsService';
 
-const ManageSetTemplates = () => {
+const ManageSongCollections = () => {
   const { setPageTitle } = usePageTitle();
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  const [templates, setTemplates] = useState([]);
+  const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -20,36 +20,36 @@ const ManageSetTemplates = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
-    setPageTitle('Set Templates');
-    fetchTemplates();
+    setPageTitle('Song Collections');
+    fetchCollections();
   }, [setPageTitle]);
 
-  const fetchTemplates = async () => {
+  const fetchCollections = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await setTemplatesService.getAllSetTemplates();
-      setTemplates(data);
+      const data = await songCollectionsService.getAllSongCollections();
+      setCollections(data);
     } catch (err) {
-      console.error('Error fetching set templates:', err);
-      setError(err.message || 'Failed to fetch set templates. Please try again.');
+      console.error('Error fetching song collections:', err);
+      setError(err.message || 'Failed to fetch song collections. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteTemplate = async (templateId) => {
-    if (!window.confirm('Are you sure you want to delete this set template?')) {
+  const handleDeleteCollection = async (collectionId) => {
+    if (!window.confirm('Are you sure you want to delete this song collection?')) {
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      await setTemplatesService.deleteSetTemplate(templateId);
-      await fetchTemplates();
+      await songCollectionsService.deleteSongCollection(collectionId);
+      await fetchCollections();
     } catch (err) {
-      console.error('Error deleting set template:', err);
-      setError(err.message || 'Failed to delete set template. Please try again.');
+      console.error('Error deleting song collection:', err);
+      setError(err.message || 'Failed to delete song collection. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -65,25 +65,25 @@ const ManageSetTemplates = () => {
     setCurrentPage(1);
   };
 
-  const filteredTemplates = useMemo(() => {
-    return templates.filter(template =>
-      template.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCollections = useMemo(() => {
+    return collections.filter(collection =>
+      collection.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [templates, searchTerm]);
+  }, [collections, searchTerm]);
 
-  const sortedTemplates = useMemo(() => {
-    if (!sortColumn) return filteredTemplates;
-    return [...filteredTemplates].sort((a, b) => {
+  const sortedCollections = useMemo(() => {
+    if (!sortColumn) return filteredCollections;
+    return [...filteredCollections].sort((a, b) => {
       const aValue = a[sortColumn] || '';
       const bValue = b[sortColumn] || '';
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [filteredTemplates, sortColumn, sortDirection]);
+  }, [filteredCollections, sortColumn, sortDirection]);
 
-  const totalPages = Math.ceil(sortedTemplates.length / itemsPerPage);
-  const currentTemplates = sortedTemplates.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.ceil(sortedCollections.length / itemsPerPage);
+  const currentCollections = sortedCollections.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const renderSortIcon = (column) => {
     if (sortColumn === column) {
@@ -106,39 +106,39 @@ const ManageSetTemplates = () => {
           <div className="w-full sm:w-1/2 lg:w-1/3">
             <input
               type="text"
-              placeholder="Search templates..."
+              placeholder="Search collections..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             />
           </div>
           <button
-            onClick={() => navigate('/set-templates/add')}
+            onClick={() => navigate('/song-collections/add')}
             className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors font-medium"
           >
             <PlusCircle size={20} className="mr-2" />
-            New Template
+            New Collection
           </button>
         </div>
 
-        {loading && <p className="text-center text-slate-300 py-8">Loading set templates...</p>}
+        {loading && <p className="text-center text-slate-300 py-8">Loading song collections...</p>}
 
-        {!loading && templates.length === 0 && !error && (
+        {!loading && collections.length === 0 && !error && (
           <div className="text-center py-12">
             <Music className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-            <p className="text-slate-300 text-lg mb-2">No set templates found</p>
-            <p className="text-slate-400 mb-6">Create your first set template to get started</p>
+            <p className="text-slate-300 text-lg mb-2">No song collections found</p>
+            <p className="text-slate-400 mb-6">Create your first song collection to get started</p>
             <button
-              onClick={() => navigate('/set-templates/add')}
+              onClick={() => navigate('/song-collections/add')}
               className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               <PlusCircle size={20} className="mr-2" />
-              Create Template
+              Create Collection
             </button>
           </div>
         )}
 
-        {!loading && templates.length > 0 && (
+        {!loading && collections.length > 0 && (
           <>
             <div className="overflow-x-auto -mx-4 sm:mx-0">
               <table className="min-w-full divide-y divide-slate-600">
@@ -149,7 +149,7 @@ const ManageSetTemplates = () => {
                       onClick={() => handleSort('name')}
                     >
                       <div className="flex items-center">
-                        Template Name {renderSortIcon('name')}
+                        Collection Name {renderSortIcon('name')}
                       </div>
                     </th>
                     <th 
@@ -166,27 +166,27 @@ const ManageSetTemplates = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-slate-800 divide-y divide-slate-700">
-                  {currentTemplates.map((template) => (
-                    <tr key={template.id} className="hover:bg-slate-700 transition-colors">
+                  {currentCollections.map((collection) => (
+                    <tr key={collection.id} className="hover:bg-slate-700 transition-colors">
                       <td className="px-4 sm:px-6 py-4">
-                        <div className="text-sm font-medium text-slate-100">{template.name}</div>
+                        <div className="text-sm font-medium text-slate-100">{collection.name}</div>
                       </td>
                       <td className="px-4 sm:px-6 py-4 text-sm text-slate-300">
-                        {new Date(template.created_at).toLocaleDateString()}
+                        {new Date(collection.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-4 sm:px-6 py-4 text-right">
                         <div className="flex justify-end space-x-2">
                           <button
-                            onClick={() => navigate(`/set-templates/edit/${template.id}`)}
+                            onClick={() => navigate(`/song-collections/edit/${collection.id}`)}
                             className="p-2 text-blue-400 hover:text-blue-300 transition-colors"
-                            title="Edit Template"
+                            title="Edit Collection"
                           >
                             <Edit size={18} />
                           </button>
                           <button
-                            onClick={() => handleDeleteTemplate(template.id)}
+                            onClick={() => handleDeleteCollection(collection.id)}
                             className="p-2 text-red-400 hover:text-red-300 transition-colors"
-                            title="Delete Template"
+                            title="Delete Collection"
                           >
                             <Trash2 size={18} />
                           </button>
@@ -242,4 +242,4 @@ const ManageSetTemplates = () => {
   );
 };
 
-export default ManageSetTemplates;
+export default ManageSongCollections;

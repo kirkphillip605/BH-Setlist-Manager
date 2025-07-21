@@ -169,7 +169,12 @@ const ManageSetlists = () => {
                   {currentSetlists.map((setlist) => (
                     <tr key={setlist.id} className="hover:bg-slate-700 transition-colors">
                       <td className="px-4 sm:px-6 py-4">
-                        <div className="text-sm font-medium text-slate-100">{setlist.name}</div>
+                        <button
+                          onClick={() => navigate(`/setlists/${setlist.id}`)}
+                          className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors text-left"
+                        >
+                          {setlist.name}
+                        </button>
                       </td>
                       <td className="px-4 sm:px-6 py-4 text-sm text-slate-300">
                         {new Date(setlist.created_at).toLocaleDateString()}

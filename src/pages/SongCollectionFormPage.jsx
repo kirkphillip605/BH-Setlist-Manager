@@ -3,51 +3,51 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Save, XCircle, Music, Trash2, GripVertical } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
-import { setTemplatesService } from '../services/setTemplatesService';
+import { songCollectionsService } from '../services/songCollectionsService';
 import SongSelector from '../components/SongSelector';
 
-const SetTemplateFormPage = () => {
-  const { templateId } = useParams();
+const SongCollectionFormPage = () => {
+  const { collectionId } = useParams();
   const { user } = useAuth();
   const { setPageTitle } = usePageTitle();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [templateName, setTemplateName] = useState('');
-  const [templateSongs, setTemplateSongs] = useState([]);
+  const [collectionName, setCollectionName] = useState('');
+  const [collectionSongs, setCollectionSongs] = useState([]);
   const [showSongSelector, setShowSongSelector] = useState(false);
 
-  const isEditing = !!templateId;
+  const isEditing = !!collectionId;
 
   useEffect(() => {
     if (isEditing) {
-      setPageTitle('Edit Set Template');
-      fetchTemplate();
+      setPageTitle('Edit Song Collection');
+      fetchCollection();
     } else {
-      setPageTitle('New Set Template');
-      setTemplateName('');
-      setTemplateSongs([]);
+      setPageTitle('New Song Collection');
+      setCollectionName('');
+      setCollectionSongs([]);
     }
-  }, [templateId, isEditing, setPageTitle]);
+  }, [collectionId, isEditing, setPageTitle]);
 
-  const fetchTemplate = async () => {
+  const fetchCollection = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await setTemplatesService.getSetTemplateById(templateId);
-      setTemplateName(data.name);
+      const data = await songCollectionsService.getSongCollectionById(collectionId);
+      setCollectionName(data.name);
       // Transform the data structure to include song details
-      const songs = data.set_template_songs
-        ?.map(ts => ({
-          ...ts.songs,
-          song_order: ts.song_order
+      const songs = data.song_collection_songs
+        ?.map(cs => ({
+          ...cs.songs,
+          song_order: cs.song_order
         }))
         .sort((a, b) => a.song_order - b.song_order) || [];
-      setTemplateSongs(songs);
+      setCollectionSongs(songs);
     } catch (err) {
-      console.error('Error fetching set template:', err);
-      setError(err.message || 'Failed to load set template');
+      console.error('Error fetching song collection:', err);
+      setError(err.message || 'Failed to load song collection');
     } finally {
       setLoading(false);
     }
@@ -56,18 +56,18 @@ const SetTemplateFormPage = () => {
   const handleSongsSelected = (selectedSongs) => {
     const newSongs = selectedSongs.map((song, index) => ({
       ...song,
-      song_order: templateSongs.length + index + 1
+      song_order: collectionSongs.length + index + 1
     }));
-    setTemplateSongs(prev => [...prev, ...newSongs]);
+    setCollectionSongs(prev => [...prev, ...newSongs]);
     setShowSongSelector(false);
   };
 
   const handleRemoveSong = (songIndex) => {
-    setTemplateSongs(prev => prev.filter((_, index) => index !== songIndex));
+    setCollectionSongs(prev => prev.filter((_, index) => index !== songIndex));
   };
 
   const handleReorderSongs = (fromIndex, toIndex) => {
-    setTemplateSongs(prev => {
+    setCollectionSongs(prev => {
       const newSongs = [...prev];
       const [removed] = newSongs.splice(fromIndex, 1);
       newSongs.splice(toIndex, 0, removed);
@@ -77,8 +77,8 @@ const SetTemplateFormPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!templateName.trim()) {
-      setError('Template name is required');
+    if (!collectionName.trim()) {
+      setError('Collection name is required');
       return;
     }
 
@@ -86,39 +86,39 @@ const SetTemplateFormPage = () => {
     setError(null);
 
     try {
-      const templateData = {
-        name: templateName,
+      const collectionData = {
+        name: collectionName,
         user_id: user.id,
-        songs: templateSongs.map((song, index) => ({
+        songs: collectionSongs.map((song, index) => ({
           song_id: song.id,
           song_order: index + 1
         }))
       };
 
       if (isEditing) {
-        await setTemplatesService.updateSetTemplate(templateId, templateData);
+        await songCollectionsService.updateSongCollection(collectionId, collectionData);
       } else {
-        await setTemplatesService.createSetTemplate(templateData);
+        await songCollectionsService.createSongCollection(collectionData);
       }
 
-      navigate('/set-templates');
+      navigate('/song-collections');
     } catch (err) {
-      console.error('Error saving set template:', err);
-      setError(err.message || 'Failed to save set template');
+      console.error('Error saving song collection:', err);
+      setError(err.message || 'Failed to save song collection');
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    navigate('/set-templates');
+    navigate('/song-collections');
   };
 
   if (loading && isEditing) {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
-          <p className="text-center text-slate-300">Loading template...</p>
+          <p className="text-center text-slate-300">Loading collection...</p>
         </div>
       </div>
     );
@@ -133,20 +133,20 @@ const SetTemplateFormPage = () => {
         </div>
       )}
 
-      {/* Template Name Form */}
+      {/* Collection Name Form */}
       <div className="bg-slate-800 rounded-xl p-4 lg:p-6 border border-slate-700">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="templateName" className="block text-sm font-medium text-slate-300 mb-2">
-              Template Name
+            <label htmlFor="collectionName" className="block text-sm font-medium text-slate-300 mb-2">
+              Collection Name
             </label>
             <input
               type="text"
-              id="templateName"
-              value={templateName}
-              onChange={(e) => setTemplateName(e.target.value)}
+              id="collectionName"
+              value={collectionName}
+              onChange={(e) => setCollectionName(e.target.value)}
               className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              placeholder="Enter template name..."
+              placeholder="Enter collection name..."
               required
             />
           </div>
@@ -162,20 +162,20 @@ const SetTemplateFormPage = () => {
             </button>
             <button
               type="submit"
-              disabled={loading || !templateName.trim()}
+              disabled={loading || !collectionName.trim()}
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Save size={18} className="mr-2" />
-              {loading ? 'Saving...' : isEditing ? 'Update Template' : 'Create Template'}
+              {loading ? 'Saving...' : isEditing ? 'Update Collection' : 'Create Collection'}
             </button>
           </div>
         </form>
       </div>
 
-      {/* Template Songs */}
+      {/* Collection Songs */}
       <div className="bg-slate-800 rounded-xl p-4 lg:p-6 border border-slate-700">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-medium text-slate-100">Songs in Template</h3>
+          <h3 className="text-lg font-medium text-slate-100">Songs in Collection</h3>
           <button
             onClick={() => setShowSongSelector(!showSongSelector)}
             className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -185,15 +185,15 @@ const SetTemplateFormPage = () => {
           </button>
         </div>
 
-        {templateSongs.length === 0 ? (
+        {collectionSongs.length === 0 ? (
           <div className="text-center py-8">
             <Music className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-            <p className="text-slate-300 text-lg mb-2">No songs in template</p>
-            <p className="text-slate-400">Add songs to build your set template</p>
+            <p className="text-slate-300 text-lg mb-2">No songs in collection</p>
+            <p className="text-slate-400">Add songs to build your collection</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {templateSongs.map((song, index) => (
+            {collectionSongs.map((song, index) => (
               <div
                 key={`${song.id}-${index}`}
                 className="flex items-center justify-between p-4 bg-slate-700 rounded-lg border border-slate-600"
@@ -225,11 +225,11 @@ const SetTemplateFormPage = () => {
       {showSongSelector && (
         <SongSelector
           onSongsSelected={handleSongsSelected}
-          selectedSongs={templateSongs}
+          selectedSongs={collectionSongs}
         />
       )}
     </div>
   );
 };
 
-export default SetTemplateFormPage;
+export default SongCollectionFormPage;

@@ -12,25 +12,21 @@ export const setlistsService = {
     return data;
   },
 
-  // Get a single setlist by ID with its songs
+  // Get a single setlist by ID with its sets
   async getSetlistById(id) {
     const { data, error } = await supabase
       .from('setlists')
       .select(`
         *,
-        setlist_songs (
-          song_order,
-          songs (
-            id,
-            original_artist,
-            title,
-            key_signature,
-            lyrics
-          )
+        sets (
+          id,
+          name,
+          set_order,
+          created_at
         )
       `)
       .eq('id', id)
-      .order('song_order', { foreignTable: 'setlist_songs', ascending: true })
+      .order('set_order', { foreignTable: 'sets', ascending: true })
       .single();
 
     if (error) {
@@ -44,7 +40,7 @@ export const setlistsService = {
 
   // Create a new setlist
   async createSetlist(setlistData) {
-    const { name, songs, user_id } = setlistData;
+    const { name, user_id } = setlistData;
 
     if (!name || !user_id) {
       throw new Error('Setlist name and user_id are required.');
@@ -73,29 +69,13 @@ export const setlistsService = {
 
     if (setlistError) throw new Error(setlistError.message);
 
-    if (songs && songs.length > 0) {
-      const setlistSongsToInsert = songs.map((s) => ({
-        setlist_id: newSetlist.id,
-        song_id: s.song_id,
-        song_order: s.song_order,
-      }));
-
-      const { error: setlistSongsError } = await supabase
-        .from('setlist_songs')
-        .insert(setlistSongsToInsert);
-
-      if (setlistSongsError) {
-        await supabase.from('setlists').delete().eq('id', newSetlist.id);
-        throw new Error(setlistSongsError.message);
-      }
-    }
 
     return newSetlist;
   },
 
   // Update a setlist
   async updateSetlist(id, setlistData) {
-    const { name, songs } = setlistData;
+    const { name } = setlistData;
 
     if (!name) {
       throw new Error('Setlist name is required.');
@@ -137,30 +117,6 @@ export const setlistsService = {
 
     if (setlistError) throw new Error(setlistError.message);
 
-    // Update associated songs
-    if (songs !== undefined) {
-      // Delete existing setlist_songs for this setlist
-      const { error: deleteError } = await supabase
-        .from('setlist_songs')
-        .delete()
-        .eq('setlist_id', id);
-
-      if (deleteError) throw new Error(deleteError.message);
-
-      if (songs.length > 0) {
-        const setlistSongsToInsert = songs.map((s) => ({
-          setlist_id: id,
-          song_id: s.song_id,
-          song_order: s.song_order,
-        }));
-
-        const { error: insertError } = await supabase
-          .from('setlist_songs')
-          .insert(setlistSongsToInsert);
-
-        if (insertError) throw new Error(insertError.message);
-      }
-    }
 
     return updatedSetlist;
   },
