@@ -197,242 +197,246 @@ const UserManagement = () => {
 
   if (!authUser || authUser.user_level !== 3) {
     return (
-      <div className="container mx-auto p-6 bg-white rounded-lg shadow-md dark:bg-gray-800 dark:text-gray-200">
-        <p className="text-center text-gray-600 dark:text-gray-400">You do not have permission to view this page.</p>
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+          <p className="text-center text-slate-300">You do not have permission to view this page.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 bg-white rounded-lg shadow-md dark:bg-gray-800 dark:text-gray-200">
+    <div className="max-w-7xl mx-auto">
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 dark:bg-red-900 dark:text-red-200 dark:border-red-700" role="alert">
+        <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg mb-4" role="alert">
           <strong className="font-bold">Error!</strong>
           <span className="block sm:inline"> {error}</span>
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-4">
-        <button
-          onClick={() => setShowAddUserForm(!showAddUserForm)}
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          <PlusCircle size={20} className="mr-2" />
-          {showAddUserForm ? 'Cancel' : 'Add User'}
-        </button>
-      </div>
-
-      {showAddUserForm && (
-        <div className="p-4 border border-gray-200 rounded-lg bg-gray-50 dark:border-gray-700 dark:bg-gray-900 mb-4">
-          <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Add New User</h3>
-          <form onSubmit={handleAddUser} className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={newUser.name}
-                onChange={handleInputChange}
-                required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-              />
-            </div>
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
-              <select
-                id="role"
-                name="role"
-                value={newUser.role}
-                onChange={handleInputChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-              >
-                <option value="">Select a role</option>
-                <option value="Bass Guitar">Bass Guitar</option>
-                <option value="Drums">Drums</option>
-                <option value="Lead Guitar">Lead Guitar</option>
-                <option value="Rhythm Guitar">Rhythm Guitar</option>
-                <option value="Keyboard">Keyboard</option>
-                <option value="Vocals">Vocals</option>
-                <option value="Sound Engineer">Sound Engineer</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={newUser.email}
-                onChange={handleInputChange}
-                required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-              />
-            </div>
-            <div>
-              <label htmlFor="user_level" className="block text-sm font-medium text-gray-700 dark:text-gray-300">User Level</label>
-              <select
-                id="user_level"
-                name="user_level"
-                value={newUser.user_level}
-                onChange={handleInputChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-              >
-                <option value="1">User</option>
-                <option value="2">Editor</option>
-                <option value="3">Admin</option>
-              </select>
-            </div>
-            <div>
-              <button
-                type="submit"
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <Mail size={16} className="mr-2" />
-                Send Invitation
-              </button>
-            </div>
-          </form>
+      <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-4 lg:p-6">
+        <div className="flex justify-between items-center mb-4">
+          <button
+            onClick={() => setShowAddUserForm(!showAddUserForm)}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors font-medium"
+          >
+            <PlusCircle size={20} className="mr-2" />
+            {showAddUserForm ? 'Cancel' : 'Add User'}
+          </button>
         </div>
-      )}
 
-      {loading ? (
-        <p className="text-center text-gray-600 dark:text-gray-400">Loading users...</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th scope="                col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
-                  Name
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
-                  Role
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
-                  Email
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
-                  User Level
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
-                  Last Login
-                </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {user.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{user.role || 'Not specified'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{user.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{user.user_level}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'Never'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {editingUser?.id === user.id ? (
-                      <form onSubmit={handleUpdateUser} className="flex items-center justify-end space-x-2">
-                        <input
-                          type="text"
-                          name="name"
-                          value={editingUser.name || ''}
-                          onChange={handleEditInputChange}
-                          placeholder="Full Name"
-                          className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-                        />
-                        <select
-                          name="role"
-                          value={editingUser.role || ''}
-                          onChange={handleEditInputChange}
-                          className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-                        >
-                          <option value="">Select a role</option>
-                          <option value="Bass Guitar">Bass Guitar</option>
-                          <option value="Drums">Drums</option>
-                          <option value="Lead Guitar">Lead Guitar</option>
-                          <option value="Rhythm Guitar">Rhythm Guitar</option>
-                          <option value="Keyboard">Keyboard</option>
-                          <option value="Vocals">Vocals</option>
-                          <option value="Sound Engineer">Sound Engineer</option>
-                          <option value="Other">Other</option>
-                        </select>
-                        <input
-                          type="email"
-                          name="email"
-                          value={editingUser.email || ''}
-                          onChange={handleEditInputChange}
-                          placeholder="Email"
-                          className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-                        />
-                        <select
-                          name="user_level"
-                          value={editingUser.user_level || 1}
-                          onChange={handleEditInputChange}
-                          className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-                        >
-                          <option value="1">User</option>
-                          <option value="2">Editor</option>
-                          <option value="3">Admin</option>
-                        </select>
-                        <button
-                          type="submit"
-                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                        >
-                          Update
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingUser(null)}
-                          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-                        >
-                          Cancel
-                        </button>
-                      </form>
-                    ) : (
-                      <div className="flex items-center justify-end space-x-2">
-                        <button
-                          onClick={() => handleResetUserPassword(user.email)}
-                          className="inline-flex items-center px-3 py-1 border border-yellow-300 rounded-md shadow-sm text-xs font-medium text-yellow-700 bg-yellow-50 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 dark:bg-yellow-900 dark:border-yellow-700 dark:text-yellow-200"
-                        >
-                          Reset Password
-                        </button>
-                        <button
-                          onClick={() => handleResendInvite(user.email)}
-                          className="inline-flex items-center px-3 py-1 border border-blue-300 rounded-md shadow-sm text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-900 dark:border-blue-700 dark:text-blue-200"
-                        >
-                          <Mail size={14} className="mr-1" />
-                          Resend
-                        </button>
-                        <button
-                          onClick={() => setEditingUser(user)}
-                          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-                        >
-                          <Edit size={16} className="mr-2" />
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteUser(user.id)}
-                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                        >
-                          <Trash2 size={16} className="mr-2" />
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </td>
+        {showAddUserForm && (
+          <div className="p-4 border border-slate-600 rounded-lg bg-slate-700 mb-4">
+            <h3 className="text-lg font-semibold text-slate-200 mb-2">Add New User</h3>
+            <form onSubmit={handleAddUser} className="space-y-4">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-slate-300">Full Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={newUser.name}
+                  onChange={handleInputChange}
+                  required
+                  className="mt-1 block w-full px-3 py-2 bg-slate-600 border border-slate-500 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="role" className="block text-sm font-medium text-slate-300">Role</label>
+                <select
+                  id="role"
+                  name="role"
+                  value={newUser.role}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full px-3 py-2 bg-slate-600 border border-slate-500 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select a role</option>
+                  <option value="Bass Guitar">Bass Guitar</option>
+                  <option value="Drums">Drums</option>
+                  <option value="Lead Guitar">Lead Guitar</option>
+                  <option value="Rhythm Guitar">Rhythm Guitar</option>
+                  <option value="Keyboard">Keyboard</option>
+                  <option value="Vocals">Vocals</option>
+                  <option value="Sound Engineer">Sound Engineer</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-slate-300">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={newUser.email}
+                  onChange={handleInputChange}
+                  required
+                  className="mt-1 block w-full px-3 py-2 bg-slate-600 border border-slate-500 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="user_level" className="block text-sm font-medium text-slate-300">User Level</label>
+                <select
+                  id="user_level"
+                  name="user_level"
+                  value={newUser.user_level}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full px-3 py-2 bg-slate-600 border border-slate-500 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="1">User</option>
+                  <option value="2">Editor</option>
+                  <option value="3">Admin</option>
+                </select>
+              </div>
+              <div>
+                <button
+                  type="submit"
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors font-medium"
+                >
+                  <Mail size={16} className="mr-2" />
+                  Send Invitation
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {loading ? (
+          <p className="text-center text-slate-300">Loading users...</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-600">
+              <thead className="bg-slate-700">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                    Role
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                    User Level
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                    Last Login
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody className="bg-slate-800 divide-y divide-slate-700">
+                {users.map((user) => (
+                  <tr key={user.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-100">
+                      {user.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">{user.role || 'Not specified'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">{user.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">{user.user_level}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
+                      {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'Never'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {editingUser?.id === user.id ? (
+                        <form onSubmit={handleUpdateUser} className="flex items-center justify-end space-x-2">
+                          <input
+                            type="text"
+                            name="name"
+                            value={editingUser.name || ''}
+                            onChange={handleEditInputChange}
+                            placeholder="Full Name"
+                            className="px-3 py-2 bg-slate-600 border border-slate-500 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                          <select
+                            name="role"
+                            value={editingUser.role || ''}
+                            onChange={handleEditInputChange}
+                            className="px-3 py-2 bg-slate-600 border border-slate-500 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="">Select a role</option>
+                            <option value="Bass Guitar">Bass Guitar</option>
+                            <option value="Drums">Drums</option>
+                            <option value="Lead Guitar">Lead Guitar</option>
+                            <option value="Rhythm Guitar">Rhythm Guitar</option>
+                            <option value="Keyboard">Keyboard</option>
+                            <option value="Vocals">Vocals</option>
+                            <option value="Sound Engineer">Sound Engineer</option>
+                            <option value="Other">Other</option>
+                          </select>
+                          <input
+                            type="email"
+                            name="email"
+                            value={editingUser.email || ''}
+                            onChange={handleEditInputChange}
+                            placeholder="Email"
+                            className="px-3 py-2 bg-slate-600 border border-slate-500 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                          <select
+                            name="user_level"
+                            value={editingUser.user_level || 1}
+                            onChange={handleEditInputChange}
+                            className="px-3 py-2 bg-slate-600 border border-slate-500 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="1">User</option>
+                            <option value="2">Editor</option>
+                            <option value="3">Admin</option>
+                          </select>
+                          <button
+                            type="submit"
+                            className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
+                          >
+                            Update
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingUser(null)}
+                            className="inline-flex items-center px-4 py-2 border border-slate-600 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </form>
+                      ) : (
+                        <div className="flex items-center justify-end space-x-2">
+                          <button
+                            onClick={() => handleResetUserPassword(user.email)}
+                            className="inline-flex items-center px-3 py-1 border border-yellow-500 bg-yellow-900/50 text-yellow-200 rounded-lg hover:bg-yellow-800/50 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-colors text-xs"
+                          >
+                            Reset Password
+                          </button>
+                          <button
+                            onClick={() => handleResendInvite(user.email)}
+                            className="inline-flex items-center px-3 py-1 border border-blue-500 bg-blue-900/50 text-blue-200 rounded-lg hover:bg-blue-800/50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors text-xs"
+                          >
+                            <Mail size={14} className="mr-1" />
+                            Resend
+                          </button>
+                          <button
+                            onClick={() => setEditingUser(user)}
+                            className="inline-flex items-center px-4 py-2 border border-slate-600 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                          >
+                            <Edit size={16} className="mr-2" />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors"
+                          >
+                            <Trash2 size={16} className="mr-2" />
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
