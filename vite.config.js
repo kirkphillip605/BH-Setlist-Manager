@@ -6,5 +6,9 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
+    allowedHosts: [
+      'setlist.kirknetllc.com', // Allow a specific domain
+      '.kirknetllc.com' // Allow a domain and all its subdomains
+    ],
   },
 });
