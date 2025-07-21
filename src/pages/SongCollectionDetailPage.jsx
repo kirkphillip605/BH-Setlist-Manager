@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Edit, ArrowLeft, Trash2 } from 'lucide-react';
 import { usePageTitle } from '../context/PageTitleContext';
 import { songCollectionsService } from '../services/songCollectionsService';
+import DraggableList from '../components/DraggableList';
 
 const SongCollectionDetailPage = () => {
   const { collectionId } = useParams();
@@ -33,27 +34,44 @@ const SongCollectionDetailPage = () => {
   };
 
   const handleRemoveSong = async (songId) => {
-    if (!window.confirm('Are you sure you want to remove this song from the collection?')) {
+    const updatedSongs = songs.filter((_, index) => index !== songIndex);
+    await updateCollectionSongs(updatedSongs);
+  };
+
+  const handleReorderSongs = async (sourceIndex, destinationIndex) => {
+    const reorderedSongs = [...songs];
+    const [removed] = reorderedSongs.splice(sourceIndex, 1);
+    reorderedSongs.splice(destinationIndex, 0, removed);
+    
+    // Update song_order for all songs
+    const updatedSongs = reorderedSongs.map((song, index) => ({
+      ...song,
+      song_order: index + 1
+    }));
+    
+    await updateCollectionSongs(updatedSongs);
+  };
+    
+  const updateCollectionSongs = async (updatedSongs) => {
+    if (!window.confirm('Are you sure you want to make this change?')) {
       return;
     }
     
     try {
-      const updatedSongs = collection.song_collection_songs
-        .filter(cs => cs.songs.id !== songId)
-        .map((cs, index) => ({
-          song_id: cs.songs.id,
-          song_order: index + 1
-        }));
+      const songsData = updatedSongs.map((song, index) => ({
+        song_id: song.id,
+        song_order: index + 1
+      }));
 
       await songCollectionsService.updateSongCollection(collectionId, {
         name: collection.name,
-        songs: updatedSongs
+        songs: songsData
       });
 
       await fetchCollection();
     } catch (err) {
-      console.error('Error removing song:', err);
-      setError('Failed to remove song from collection');
+      console.error('Error updating songs:', err);
+      setError('Failed to update songs');
     }
   };
 
@@ -121,44 +139,13 @@ const SongCollectionDetailPage = () => {
             <p className="text-slate-300 text-lg">No songs in this collection</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-600">
-              <thead className="bg-slate-700">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                    Title
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                    Artist
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                    Key
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-slate-800 divide-y divide-slate-700">
-                {songs.map((song) => (
-                  <tr key={song.id} className="hover:bg-slate-700 transition-colors">
-                    <td className="px-4 py-4 text-sm font-medium text-slate-100">{song.title}</td>
-                    <td className="px-4 py-4 text-sm text-slate-300">{song.original_artist}</td>
-                    <td className="px-4 py-4 text-sm text-slate-300">{song.key_signature || '-'}</td>
-                    <td className="px-4 py-4 text-right">
-                      <button
-                        onClick={() => handleRemoveSong(song.id)}
-                        className="p-2 text-red-400 hover:text-red-300 transition-colors"
-                        title="Remove from Collection"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DraggableList
+            items={songs}
+            onReorder={handleReorderSongs}
+            onRemove={handleRemoveSong}
+            type="songs"
+            showMoveToSet={false}
+          />
         )}
       </div>
     </div>

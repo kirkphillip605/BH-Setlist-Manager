@@ -273,5 +273,15 @@ export const setsService = {
       .insert(updates);
 
     if (insertError) throw new Error(insertError.message);
+  },
+
+  // Remove song from set
+  async removeSongFromSet(setId, songId) {
+    const { error } = await supabase
+      .from('set_songs')
+      .delete()
+      .eq('set_id', setId)
+      .eq('song_id', songId);
+    if (error) throw new Error(error.message);
   }
 };

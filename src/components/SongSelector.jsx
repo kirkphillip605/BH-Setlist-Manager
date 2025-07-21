@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Plus, Minus, ChevronUp, ChevronDown } from 'lucide-react';
 import { songsService } from '../services/songsService';
+import { setlistsService } from '../services/setlistsService';
 
-const SongSelector = ({ onSongsSelected, selectedSongs = [], showAddButton = true }) => {
+const SongSelector = ({ onSongsSelected, selectedSongs = [], showAddButton = true, setlistId = null }) => {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -12,14 +13,38 @@ const SongSelector = ({ onSongsSelected, selectedSongs = [], showAddButton = tru
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [localSelectedSongs, setLocalSelectedSongs] = useState(new Set(selectedSongs.map(s => s.id || s)));
+  const [allSetlistSongs, setAllSetlistSongs] = useState(new Set());
 
   useEffect(() => {
     fetchSongs();
+    if (setlistId) {
+      fetchSetlistSongs();
+    }
   }, []);
 
   useEffect(() => {
     setLocalSelectedSongs(new Set(selectedSongs.map(s => s.id || s)));
   }, [selectedSongs]);
+
+  const fetchSetlistSongs = async () => {
+    try {
+      const setlistData = await setlistsService.getSetlistById(setlistId);
+      const allSongIds = new Set();
+      
+      // Get all songs from all sets in the setlist
+      for (const set of setlistData.sets || []) {
+        const { setsService } = await import('../services/setsService');
+        const setData = await setsService.getSetById(set.id);
+        setData.set_songs?.forEach(ss => {
+          allSongIds.add(ss.songs.id);
+        });
+      }
+      
+      setAllSetlistSongs(allSongIds);
+    } catch (err) {
+      console.error('Error fetching setlist songs:', err);
+    }
+  };
 
   const fetchSongs = async () => {
     setLoading(true);
@@ -172,12 +197,13 @@ const SongSelector = ({ onSongsSelected, selectedSongs = [], showAddButton = tru
                   <button
                     onClick={() => handleSongToggle(song)}
                     className={`p-2 rounded-full transition-colors ${
-                      localSelectedSongs.has(song.id)
+                      localSelectedSongs.has(song.id) || allSetlistSongs.has(song.id)
                         ? 'bg-blue-600 text-white hover:bg-blue-700'
                         : 'bg-slate-600 text-slate-300 hover:bg-slate-500'
                     }`}
+                    disabled={allSetlistSongs.has(song.id) && !localSelectedSongs.has(song.id)}
                   >
-                    {localSelectedSongs.has(song.id) ? <Minus size={16} /> : <Plus size={16} />}
+                    {localSelectedSongs.has(song.id) || allSetlistSongs.has(song.id) ? <Minus size={16} /> : <Plus size={16} />}
                   </button>
                 </td>
                 <td className="px-4 py-4 text-sm font-medium text-slate-100">{song.title}</td>

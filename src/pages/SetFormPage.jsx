@@ -6,6 +6,7 @@ import { usePageTitle } from '../context/PageTitleContext';
 import { setsService } from '../services/setsService';
 import { songCollectionsService } from '../services/songCollectionsService';
 import SongSelector from '../components/SongSelector';
+import DuplicateModal from '../components/DuplicateModal';
 
 const SetFormPage = () => {
   const { setlistId, setId } = useParams();
@@ -20,6 +21,8 @@ const SetFormPage = () => {
   const [showSongSelector, setShowSongSelector] = useState(false);
   const [showCollectionSelector, setShowCollectionSelector] = useState(false);
   const [collections, setCollections] = useState([]);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicates, setDuplicates] = useState([]);
 
   const isEditing = !!setId;
 
@@ -34,6 +37,36 @@ const SetFormPage = () => {
     }
     fetchCollections();
   }, [setId, isEditing, setPageTitle]);
+
+  const handleRemoveDuplicates = () => {
+    const duplicateSongIds = new Set(duplicates.map(d => d.song_id));
+    const filteredSongs = setSongs.filter(song => !duplicateSongIds.has(song.id));
+    setSetSongs(filteredSongs);
+    setDuplicates([]);
+    setShowDuplicateModal(false);
+  };
+
+  const handleKeepInCurrentSet = async () => {
+    // Remove from other sets and keep in current
+    try {
+      for (const duplicate of duplicates) {
+        await setsService.removeSongFromSet(duplicate.sets.id, duplicate.song_id);
+      }
+      setDuplicates([]);
+      setShowDuplicateModal(false);
+    } catch (err) {
+      setError('Failed to move songs');
+    }
+  };
+
+  const handleKeepInOriginalSet = () => {
+    // Remove from current set
+    const duplicateSongIds = new Set(duplicates.map(d => d.song_id));
+    const filteredSongs = setSongs.filter(song => !duplicateSongIds.has(song.id));
+    setSetSongs(filteredSongs);
+    setDuplicates([]);
+    setShowDuplicateModal(false);
+  };
 
   const fetchSet = async () => {
     setLoading(true);
@@ -131,11 +164,21 @@ const SetFormPage = () => {
         navigate(`/setlists/${setlistId}/sets/${setId}`);
       } else {
         const newSet = await setsService.createSet(setData);
-        // Route directly to add songs page for new sets
-        navigate(`/setlists/${setlistId}/sets/${newSet.id}/edit`);
+        navigate(`/setlists/${setlistId}/sets/${newSet.id}`);
       }
     } catch (err) {
       console.error('Error saving set:', err);
+      // Handle duplicate error
+      try {
+        const errorData = JSON.parse(err.message);
+        if (errorData.type === 'DUPLICATES_FOUND') {
+          setShowDuplicateModal(true);
+          setDuplicates(errorData.duplicates);
+          return;
+        }
+      } catch (parseError) {
+        // Not a JSON error, show regular error
+      }
       setError(err.message || 'Failed to save set');
     } finally {
       setLoading(false);
@@ -290,8 +333,20 @@ const SetFormPage = () => {
         <SongSelector
           onSongsSelected={handleSongsSelected}
           selectedSongs={setSongs}
+          setlistId={setlistId}
         />
       )}
+      
+      {/* Duplicate Modal */}
+      <DuplicateModal
+        isOpen={showDuplicateModal}
+        onClose={() => setShowDuplicateModal(false)}
+        duplicates={duplicates}
+        onRemoveDuplicates={handleRemoveDuplicates}
+        onKeepInCurrentSet={handleKeepInCurrentSet}
+        onKeepInOriginalSet={handleKeepInOriginalSet}
+        type="set"
+      />
     </div>
   );
 };
