@@ -177,8 +177,8 @@ const ManageSongs = () => {
           >
             <Trash2 size={18} />
           </button>
-            </>
           )}
+            </>
           )}
         </div>
       ),
@@ -186,7 +186,7 @@ const ManageSongs = () => {
       sortable: false,
       align: 'right',
     },
-  ], [sortColumn, sortDirection, handleSort, handleDeleteSong, navigate]);
+  ], [sortColumn, sortDirection, handleSort, handleDeleteSong, navigate, user]);
 
   return (
     <div className="max-w-7xl mx-auto">
