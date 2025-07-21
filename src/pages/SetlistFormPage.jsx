@@ -4,7 +4,7 @@ import { Save, XCircle, Music, Trash2, GripVertical, BookTemplate as Template } 
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 import { setlistsService } from '../services/setlistsService';
-import { setTemplatesService } from '../services/setTemplatesService';
+import { songCollectionsService } from '../services/songCollectionsService';
 import SongSelector from '../components/SongSelector';
 
 const SetlistFormPage = () => {
@@ -60,7 +60,7 @@ const SetlistFormPage = () => {
 
   const fetchTemplates = async () => {
     try {
-      const data = await setTemplatesService.getAllSetTemplates();
+      const data = await songCollectionsService.getAllSongCollections();
       setTemplates(data);
     } catch (err) {
       console.error('Error fetching templates:', err);
@@ -78,11 +78,11 @@ const SetlistFormPage = () => {
 
   const handleTemplateSelected = async (template) => {
     try {
-      const templateData = await setTemplatesService.getSetTemplateById(template.id);
-      const templateSongs = templateData.set_template_songs
-        ?.map(ts => ({
-          ...ts.songs,
-          song_order: setlistSongs.length + ts.song_order
+      const templateData = await songCollectionsService.getSongCollectionById(template.id);
+      const templateSongs = templateData.song_collection_songs
+        ?.map(cs => ({
+          ...cs.songs,
+          song_order: setlistSongs.length + cs.song_order
         }))
         .sort((a, b) => a.song_order - b.song_order) || [];
       
