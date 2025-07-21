@@ -241,7 +241,7 @@ const ManageSongs = () => {
                 </select>
               </div>
               <nav className="flex space-x-1" aria-label="Pagination">
-                </button>
+                <button
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
                   className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
