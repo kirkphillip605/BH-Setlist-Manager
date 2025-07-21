@@ -17,73 +17,65 @@ export const AuthProvider = ({ children }) => {
 
     const fetchUserData = async (authUser) => {
       try {
+        // First check if user exists in our users table
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('*')
           .eq('id', authUser.id)
-          .maybeSingle();
+          .single();
         
-        if (userData && !userError) {
+        if (userData) {
           return userData;
-        } else {
-          // If no user data found, create a user record in the database
-          const newUserData = {
-            id: authUser.id,
-            email: authUser.email,
-            name: authUser.user_metadata?.name || authUser.email,
-            user_level: 1
-          };
-          
-          const { data: insertedUser, error: insertError } = await supabase
-            .from('users')
-            .insert([newUserData])
-            .select()
-            .single();
-            
-          if (insertedUser && !insertError) {
-            return insertedUser;
-          } else {
-            console.error('Error creating user record:', insertError);
-            // Return fallback data if insert fails
-            return newUserData;
-          }
         }
+        
+        // If user doesn't exist (error code PGRST116), create user record
+        if (userError && userError.code === 'PGRST116') {
+          return await createUserRecord(authUser);
+        }
+        
+        // If other error, throw it
+        if (userError) {
+          throw userError;
+        }
+        
       } catch (error) {
         console.error('Error in fetchUserData:', error);
-        // Create user record as fallback
-        try {
-          const fallbackUserData = {
-            id: authUser.id,
-            email: authUser.email,
-            name: authUser.user_metadata?.name || authUser.email,
-            user_level: 1
-          };
+        // Try to create user as fallback
+        return await createUserRecord(authUser);
+      }
+    };
+
+    const createUserRecord = async (authUser) => {
+      try {
+        const newUserData = {
+          id: authUser.id, // Use auth user ID directly
+          email: authUser.email,
+          name: authUser.user_metadata?.name || authUser.email.split('@')[0],
+          user_level: 1
+        };
+        
+        const { data: insertedUser, error: insertError } = await supabase
+          .from('users')
+          .insert([newUserData])
+          .select()
+          .single();
           
-          const { data: insertedUser, error: insertError } = await supabase
-            .from('users')
-            .insert([fallbackUserData])
-            .select()
-            .single();
-            
-          if (insertedUser && !insertError) {
-            return insertedUser;
-          }
-          
-          return {
-            id: authUser.id,
-            email: authUser.email,
-            name: authUser.user_metadata?.name || authUser.email,
-            user_level: 1
-          };
-        } catch (fallbackError) {
-          console.error('Error creating fallback user:', fallbackError);
-          return {
-            id: authUser.id,
-            email: authUser.email,
-            name: authUser.user_metadata?.name || authUser.email,
-            user_level: 1
-          };
+        if (insertError) {
+          console.error('Error creating user record:', insertError);
+          // Return user data even if insert fails (for fallback)
+          return newUserData;
         }
+        
+        return insertedUser;
+      } catch (error) {
+        console.error('Error in createUserRecord:', error);
+        // Final fallback - return basic user data
+        return {
+          id: authUser.id,
+          email: authUser.email,
+          name: authUser.user_metadata?.name || authUser.email.split('@')[0],
+          user_level: 1
+        };
       }
     };
 
