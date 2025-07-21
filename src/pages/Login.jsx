@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext'; // Import useAuth hook
 
 const Login = () => {
@@ -8,7 +8,12 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { signIn } = useAuth(); // Use signIn from useAuth
+  const { signIn, user } = useAuth(); // Use signIn from useAuth
+
+  // If user is already logged in, redirect to dashboard
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,7 +22,7 @@ const Login = () => {
 
     try {
       await signIn(email, password); // Use signIn from useAuth
-      navigate('/'); // Redirect to dashboard on successful login
+      navigate('/', { replace: true }); // Redirect to dashboard on successful login
     } catch (error) {
       setError(error.message);
     } finally {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import ManageSongs from './pages/ManageSongs';
@@ -15,11 +15,25 @@ import EditProfile from './pages/EditProfile';
 import UserManagement from './pages/UserManagement';
 import Profile from './pages/Profile';
 import ChangePassword from './pages/ChangePassword';
+import { useAuth } from './context/AuthContext';
 
 function App() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
+      <Route 
+        path="/login" 
+        element={user ? <Navigate to="/" replace /> : <Login />} 
+      />
       <Route path="/" element={<PrivateRoute><Layout><Dashboard /></Layout></PrivateRoute>} />
       <Route path="/songs" element={<PrivateRoute><Layout><ManageSongs /></Layout></PrivateRoute>} />
       <Route path="/songs/:songId" element={<PrivateRoute><Layout><SongViewPage /></Layout></PrivateRoute>} />
@@ -35,7 +49,6 @@ function App() {
       <Route path="/edit-profile" element={<PrivateRoute><Layout><EditProfile /></Layout></PrivateRoute>} />
       <Route path="/change-password" element={<PrivateRoute><Layout><ChangePassword /></Layout></PrivateRoute>} />
       <Route path="/admin/users" element={<PrivateRoute><Layout><UserManagement /></Layout></PrivateRoute>} />
-      {/* Add other routes here */}
     </Routes>
   );
 }

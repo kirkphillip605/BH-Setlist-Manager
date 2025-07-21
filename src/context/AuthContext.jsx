@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext();
 
@@ -11,7 +10,6 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const getSession = async () => {
@@ -62,7 +60,7 @@ export const AuthProvider = ({ children }) => {
     return () => {
       subscription?.unsubscribe();
     };
-  }, [navigate]); // Add navigate as a dependency
+  }, []); // Remove navigate dependency
 
   const signIn = async (email, password) => {
     try {
@@ -86,7 +84,6 @@ export const AuthProvider = ({ children }) => {
         } else {
           setUser(data.session.user);
         }
-        navigate('/');
       }
     } catch (error) {
       throw error;
@@ -100,7 +97,6 @@ export const AuthProvider = ({ children }) => {
         throw new Error(error.message);
       }
       setUser(null);
-      navigate('/login');
     } catch (error) {
       console.error('Sign out error:', error);
     }

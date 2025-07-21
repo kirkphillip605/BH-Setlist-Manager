@@ -30,7 +30,7 @@ const ChangePassword = () => {
       setConfirmPassword('');
       // Optionally, redirect to profile or dashboard
       setTimeout(() => {
-        navigate('/');
+        navigate('/', { replace: true });
       }, 2000); // Redirect after 2 seconds
     } catch (error) {
       setError(error.message);

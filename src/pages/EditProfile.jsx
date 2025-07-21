@@ -95,7 +95,7 @@ const EditProfile = () => {
       setSuccess(true);
       // Optionally, redirect to profile or dashboard
       setTimeout(() => {
-        navigate('/profile');
+        navigate('/profile', { replace: true });
       }, 2000); // Redirect after 2 seconds
     } catch (error) {
       setError(error.message);
