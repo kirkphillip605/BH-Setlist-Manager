@@ -14,7 +14,30 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange(
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // Fetch user data from our users table
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (userData && !error) {
+          setUser(userData);
+        } else {
+          setUser(session.user);
+        }
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    };
+
+    getSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session) {
           // Fetch user data from our users table
@@ -37,7 +60,7 @@ export const AuthProvider = ({ children }) => {
     );
 
     return () => {
-      authListener.subscription?.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, [navigate]); // Add navigate as a dependency
 
