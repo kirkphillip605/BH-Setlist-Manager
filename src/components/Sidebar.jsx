@@ -36,13 +36,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         flex flex-col shadow-xl
       `}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 lg:p-6 border-b border-slate-700">
-          <div className="text-xl lg:text-2xl font-bold text-white">
-            <img 
-            src="/bhlogo.png" 
-            alt="Logo" 
-            className="mx-auto h-20 w-auto mb-4"
-          />
+        <div className="flex items-center justify-between p-4 lg:p-6 border-b border-slate-900">
             <center>Setlist Management</center>
           </div>
           <button
