@@ -183,16 +183,17 @@ const ManageSongs = () => {
   ], [sortColumn, sortDirection, handleSort, handleDeleteSong, navigate]);
 
   return (
-    <div className="container mx-auto p-6 bg-white rounded-lg shadow-md dark:bg-gray-800 dark:text-gray-200">
+    <div className="max-w-7xl mx-auto">
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 dark:bg-red-900 dark:text-red-200 dark:border-red-700" role="alert">
+        <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg mb-4" role="alert">
           <strong className="font-bold">Error!</strong>
           <span className="block sm:inline"> {error}</span>
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0">
-        <div className="w-full sm:w-1/3">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-4 lg:p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0">
+          <div className="w-full sm:w-1/2 lg:w-1/3">
           <label htmlFor="search" className="sr-only">Search songs</label>
           <input
             type="text"
@@ -200,75 +201,82 @@ const ManageSongs = () => {
             placeholder="Search by artist or title..."
             value={searchTerm}
             onChange={handleSearchChange}
-            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+            className="block w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base dark:bg-slate-700 dark:text-gray-100 transition-colors"
           />
         </div>
         {/* Navigate to add song page */}
         <button
           onClick={() => navigate('/songs/add')}
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="inline-flex items-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
         >
           <PlusCircle size={20} className="mr-2" />
           Add New Song
         </button>
-      </div>
+        </div>
 
-      {loading && <p className="text-center text-gray-600 dark:text-gray-400">Loading songs...</p>}
+        {loading && <p className="text-center text-gray-600 dark:text-gray-300 py-8">Loading songs...</p>}
 
-      {!loading && songs.length === 0 && !error && (
-        <p className="text-center text-gray-600 dark:text-gray-400">No songs found. Add a new song to get started!</p>
-      )}
+        {!loading && songs.length === 0 && !error && (
+          <p className="text-center text-gray-600 dark:text-gray-300 py-8">No songs found. Add a new song to get started!</p>
+        )}
 
-      {!loading && songs.length > 0 && (
-        <>
+        {!loading && songs.length > 0 && (
+          <>
           <ResizableTable columns={tableColumns} data={currentSongs} />
 
           {/* Pagination Controls */}
-          <div className="flex flex-col sm:flex-row justify-between items-center mt-6 space-y-4 sm:space-y-0">
-            <div className="flex items-center space-x-2">
-              <label htmlFor="items-per-page" className="text-sm text-gray-700 dark:text-gray-300">Items per page:</label>
-              <select
-                id="items-per-page"
-                value={itemsPerPage}
-                onChange={handleItemsPerPageChange}
-                className="block w-20 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-              >
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="20">20</option>
-                <option value="50">50</option>
-              </select>
-            </div>
-            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-              <button
-                onClick={() => paginate(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600"
-              >
-                <span className="sr-only">Previous</span>
-                <ChevronUp size={16} className="rotate-270" /> {/* Rotate for left arrow */}
-              </button>
-              {[...Array(totalPages).keys()].map(number => (
-                <button
-                  key={number + 1}
-                  onClick={() => paginate(number + 1)}
-                  className={`relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium ${currentPage === number + 1 ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600 dark:bg-indigo-900 dark:border-indigo-700 dark:text-indigo-300' : 'text-gray-700 hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600'}`}
+            <div className="flex flex-col sm:flex-row justify-between items-center mt-6 space-y-4 sm:space-y-0">
+              <div className="flex items-center space-x-2">
+                <label htmlFor="items-per-page" className="text-sm text-gray-700 dark:text-gray-300">Items per page:</label>
+                <select
+                  id="items-per-page"
+                  value={itemsPerPage}
+                  onChange={handleItemsPerPageChange}
+                  className="block w-20 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-slate-700 dark:text-gray-100 transition-colors"
                 >
-                  {number + 1}
+                  <option value="5">5</option>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                </select>
+              </div>
+              <nav className="flex space-x-1" aria-label="Pagination">
                 </button>
-              ))}
-              <button
-                onClick={() => paginate(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600"
-              >
-                <span className="sr-only">Next</span>
-                <ChevronDown size={16} className="-rotate-90" /> {/* Rotate for right arrow */}
-              </button>
-            </nav>
-          </div>
-        </>
-      )}
+                  onClick={() => paginate(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronUp size={16} className="rotate-270" />
+                </button>
+                {[...Array(Math.min(5, totalPages)).keys()].map(i => {
+                  const pageNum = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
+                  if (pageNum > totalPages) return null;
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => paginate(pageNum)}
+                      className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                        currentPage === pageNum 
+                          ? 'bg-blue-600 border-blue-600 text-white' 
+                          : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-600'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => paginate(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronDown size={16} className="-rotate-90" />
+                </button>
+              </nav>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

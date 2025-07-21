@@ -1,56 +1,112 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Home, Music, ListMusic, LayoutTemplate, Users } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Home, Music, ListMusic, LayoutTemplate, Users, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, onClose }) => {
   const { user } = useAuth();
+  const location = useLocation();
+
+  const isActive = (path) => {
+    if (path === '/' && location.pathname === '/') return true;
+    if (path !== '/' && location.pathname.startsWith(path)) return true;
+    return false;
+  };
+
+  const menuItems = [
+    { path: '/', label: 'Dashboard', icon: Home },
+    { path: '/songs', label: 'Manage Songs', icon: Music },
+    { path: '/set-templates', label: 'Set Templates', icon: LayoutTemplate },
+    { path: '/setlists', label: 'Setlists', icon: ListMusic },
+  ];
+
+  const adminItems = user?.user_level === 3 ? [
+    { path: '/admin/users', label: 'Users', icon: Users },
+  ] : [];
 
   return (
-    <div className="w-64 bg-gradient-to-br from-slate-600 via-blue-600 to-slate-800 p-4 flex flex-col dark:bg-gray-950">
-      <div className="text-2xl font-bold mb-8 text-white-400">Setlist Console</div>
-      <nav className="flex-1">
-        <ul>
-          <li className="mb-4">
-            <Link to="/" className="flex items-center text-gray-300 hover:text-white hover:bg-gray-700 dark:hover:bg-gray-800 p-2 rounded-md transition-colors duration-200">
-              <Home size={20} className="mr-3" />
-              Dashboard
+    <>
+      {/* Sidebar */}
+      <div className={`
+        fixed inset-y-0 left-0 z-30 w-64 
+        transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
+        transition-transform duration-300 ease-in-out
+        lg:translate-x-0 lg:static lg:inset-0
+        bg-gradient-to-b from-slate-800 via-blue-900 to-slate-900 
+        flex flex-col shadow-xl
+      `}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 lg:p-6 border-b border-slate-700">
+          <div className="text-xl lg:text-2xl font-bold text-white">
+            SetList Console
+          </div>
+          <button
+            onClick={onClose}
+            className="lg:hidden p-2 rounded-md text-gray-300 hover:text-white hover:bg-slate-700 transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-4 lg:px-6 py-4 space-y-2">
+          {menuItems.map(({ path, label, icon: Icon }) => (
+            <Link
+              key={path}
+              to={path}
+              onClick={onClose}
+              className={`
+                flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors duration-200
+                ${isActive(path) 
+                  ? 'bg-blue-700 text-white shadow-lg' 
+                  : 'text-gray-300 hover:text-white hover:bg-slate-700'
+                }
+              `}
+            >
+              <Icon size={20} className="mr-3" />
+              {label}
             </Link>
-          </li>
-          <li className="mb-4">
-            <Link to="/songs" className="flex items-center text-gray-300 hover:text-white hover:bg-gray-700 dark:hover:bg-gray-800 p-2 rounded-md transition-colors duration-200">
-              <Music size={20} className="mr-3" />
-              Manage Songs
-            </Link>
-          </li>
-          <li className="mb-4">
-            <Link to="/set-templates" className="flex items-center text-gray-300 hover:text-white hover:bg-gray-700 dark:hover:bg-gray-800 p-2 rounded-md transition-colors duration-200">
-              <LayoutTemplate size={20} className="mr-3" />
-              Manage Set Templates
-            </Link>
-          </li>
-          <li className="mb-4">
-            <Link to="/setlists" className="flex items-center text-gray-300 hover:text-white hover:bg-gray-700 dark:hover:bg-gray-800 p-2 rounded-md transition-colors duration-200">
-              <ListMusic size={20} className="mr-3" />
-              Manage Setlists
-            </Link>
-          </li>
-          {user?.user_level === 3 && ( // Admin Menu
+          ))}
+
+          {/* Admin Section */}
+          {adminItems.length > 0 && (
             <>
-              <li className="mt-6 mb-2">
-                <span className="text-gray-400 uppercase font-bold text-sm">Administration</span>
-              </li>
-              <li className="mb-4">
-                <Link to="/admin/users" className="flex items-center text-gray-300 hover:text-white hover:bg-gray-700 dark:hover:bg-gray-800 p-2 rounded-md transition-colors duration-200">
-                  <Users size={20} className="mr-3" />
-                  Users
+              <div className="pt-6 pb-2">
+                <span className="text-gray-400 uppercase font-bold text-xs px-3">
+                  Administration
+                </span>
+              </div>
+              {adminItems.map(({ path, label, icon: Icon }) => (
+                <Link
+                  key={path}
+                  to={path}
+                  onClick={onClose}
+                  className={`
+                    flex items-center px-3 py-3 rounded-lg text-sm font-medium transition-colors duration-200
+                    ${isActive(path) 
+                      ? 'bg-blue-700 text-white shadow-lg' 
+                      : 'text-gray-300 hover:text-white hover:bg-slate-700'
+                    }
+                  `}
+                >
+                  <Icon size={20} className="mr-3" />
+                  {label}
                 </Link>
-              </li>
+              ))}
             </>
           )}
-        </ul>
-      </nav>
-    </div>
+        </nav>
+
+        {/* Footer */}
+        <div className="p-4 lg:p-6 border-t border-slate-700">
+          <div className="text-xs text-gray-400">
+            {user?.name && (
+              <p className="truncate">Signed in as {user.name}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 

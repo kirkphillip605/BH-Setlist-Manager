@@ -53,15 +53,15 @@ const ResizableTable = ({ columns, data }) => {
   }, [columnWidths, resize, stopResizing]); // Now resize and stopResizing are guaranteed to be defined.
 
   return (
-    <div className="overflow-x-auto">
-      <table ref={tableRef} className="min-w-full divide-y divide-gray-200 shadow-sm rounded-lg overflow-hidden table-fixed dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-700">
+    <div className="overflow-x-auto -mx-4 sm:mx-0">
+      <table ref={tableRef} className="min-w-full divide-y divide-gray-200 dark:divide-slate-600 table-fixed">
+        <thead className="bg-gray-50 dark:bg-slate-700">
           <tr>
             {columns.map((col, index) => (
               <th
                 key={col.key}
                 scope="col"
-                className={`relative px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300 ${col.sortable ? 'cursor-pointer' : ''} ${col.align === 'right' ? 'text-right' : ''}`}
+                className={`relative px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider ${col.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-600' : ''} ${col.align === 'right' ? 'text-right' : ''}`}
                 style={{ width: columnWidths[col.key] }}
                 onClick={col.sortable ? col.onSort : undefined}
               >
@@ -70,7 +70,7 @@ const ResizableTable = ({ columns, data }) => {
                 </div>
                 {index < columns.length - 1 && ( // Don't add resizer to the last column
                   <div
-                    className="absolute top-0 right-0 w-2 h-full cursor-col-resize hover:bg-indigo-300 opacity-0 hover:opacity-100 transition-opacity duration-100"
+                    className="absolute top-0 right-0 w-2 h-full cursor-col-resize hover:bg-blue-300 opacity-0 hover:opacity-100 transition-opacity duration-100"
                     onMouseDown={(e) => startResizing(e, col.key)}
                     style={{ zIndex: 1 }}
                   />
@@ -79,13 +79,13 @@ const ResizableTable = ({ columns, data }) => {
             ))}
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+        <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-600">
           {data.map((row, rowIndex) => (
-            <tr key={row.id || rowIndex} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+            <tr key={row.id || rowIndex} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
               {columns.map((col) => (
                 <td
                   key={`${row.id || rowIndex}-${col.key}`}
-                  className={`px-6 py-4 whitespace-nowrap text-sm ${col.align === 'right' ? 'text-right' : 'text-left'} ${col.key === 'actions' ? 'font-medium' : 'text-gray-700 dark:text-gray-300'}`}
+                  className={`px-4 sm:px-6 py-4 whitespace-nowrap text-sm ${col.align === 'right' ? 'text-right' : 'text-left'} ${col.key === 'actions' ? 'font-medium' : 'text-gray-700 dark:text-gray-300'}`}
                   style={{ width: columnWidths[col.key] }}
                 >
                   {col.render(row)}

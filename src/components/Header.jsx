@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { User, LogOut, Settings } from 'lucide-react';
+import { User, LogOut, Menu } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 import { Link } from 'react-router-dom';
 
-const Header = () => {
+const Header = ({ onToggleSidebar }) => {
   const { user, signOut } = useAuth();
   const { pageTitle } = usePageTitle();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -14,42 +14,73 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-800 shadow-md p-4 flex items-center justify-between">
-      <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-        {pageTitle}
-      </div>
-      {user && (
-        <div className="relative">
-          <button onClick={toggleDropdown} className="flex items-center focus:outline-none">
-            <User size={24} className="text-gray-600 dark:text-gray-300 mr-2" />
+    <header className="bg-white dark:bg-slate-800 shadow-md border-b border-gray-200 dark:border-slate-700">
+      <div className="flex items-center justify-between px-4 py-3 lg:px-6 lg:py-4">
+        {/* Mobile menu button */}
+        <div className="flex items-center">
+          <button
+            onClick={onToggleSidebar}
+            className="lg:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors mr-3"
+          >
+            <Menu size={24} />
           </button>
-          {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-xl z-10">
-              <div className="py-1">
-                <Link
-                  to="/profile"
-                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
-                >
-                  Edit Profile
-                </Link>
-                <Link
-                  to="/change-password"
-                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
-                >
-                  Change Password
-                </Link>
-                <button
-                  onClick={signOut}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
-                >
-                  <LogOut size={16} className="inline-block mr-2" />
-                  Logout
-                </button>
-              </div>
-            </div>
-          )}
+          
+          {/* Page title */}
+          <div className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100">
+            {pageTitle}
+          </div>
         </div>
-      )}
+
+        {/* User menu */}
+        {user && (
+          <div className="relative">
+            <button 
+              onClick={toggleDropdown} 
+              className="flex items-center p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+            >
+              <User size={24} />
+            </button>
+            
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-md shadow-xl border border-gray-200 dark:border-slate-700 z-10">
+                <div className="py-1">
+                  <Link
+                    to="/profile"
+                    className="block px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                    onClick={() => setIsDropdownOpen(false)}
+                  >
+                    Profile
+                  </Link>
+                  <Link
+                    to="/edit-profile"
+                    className="block px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                    onClick={() => setIsDropdownOpen(false)}
+                  >
+                    Edit Profile
+                  </Link>
+                  <Link
+                    to="/change-password"
+                    className="block px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                    onClick={() => setIsDropdownOpen(false)}
+                  >
+                    Change Password
+                  </Link>
+                  <button
+                    onClick={() => {
+                      signOut();
+                      setIsDropdownOpen(false);
+                    }}
+                    className="flex items-center w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    <LogOut size={16} className="mr-2" />
+                    Logout
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </header>
   );
 };
