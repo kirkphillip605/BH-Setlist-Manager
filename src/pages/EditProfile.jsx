@@ -27,7 +27,7 @@ const EditProfile = () => {
             .from('users')
             .select('*')
             .eq('id', user.id)
-            .single();
+            .maybeSingle();
 
           if (error) {
             throw error;

@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
             .from('users')
             .select('*')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
           
           if (userData && !userError && mounted) {
             setUser(userData);
@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
               .from('users')
               .select('*')
               .eq('id', session.user.id)
-              .single();
+              .maybeSingle();
             
             if (userData && !userError) {
               setUser(userData);
@@ -111,7 +111,7 @@ export const AuthProvider = ({ children }) => {
           .from('users')
           .select('*')
           .eq('id', data.session.user.id)
-          .single();
+          .maybeSingle();
         
         if (userData && !userError) {
           setUser(userData);
