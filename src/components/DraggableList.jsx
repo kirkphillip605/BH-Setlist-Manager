@@ -37,7 +37,7 @@ const DraggableList = ({
                   <div
                     ref={provided.innerRef}
                     {...provided.draggableProps}
-                    className={`flex items-center justify-between p-4 bg-white dark:bg-slate-700 rounded-lg border ${
+                    className={`flex items-center justify-between p-4 bg-slate-700 rounded-lg border ${
                       snapshot.isDragging 
                         ? 'border-blue-500 shadow-lg' 
                         : 'border-slate-600 hover:bg-slate-600'
@@ -101,7 +101,7 @@ const DraggableList = ({
             {provided.placeholder}
             {items.length === 0 && (
               <div className="text-center py-8">
-                <p className="text-slate-300">No {type} yet</p>
+                <p className="text-slate-400">No {type} yet</p>
               </div>
             )}
           </div>

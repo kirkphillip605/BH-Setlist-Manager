@@ -67,16 +67,16 @@ const Dashboard = () => {
   };
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         {/* Quick Stats Cards */}
         <button
           onClick={() => navigate('/songs')}
-          className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 text-left hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+          className="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6 text-left hover:bg-slate-700 transition-colors"
         >
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Total Songs</h3>
+          <h3 className="text-lg font-semibold text-slate-100 mb-2">Total Songs</h3>
           <div className="flex items-center">
-            <Music className="h-8 w-8 text-blue-600 dark:text-blue-400 mr-3" />
-            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+            <Music className="h-8 w-8 text-blue-400 mr-3" />
+            <p className="text-3xl font-bold text-blue-400">
               {loading ? '...' : stats.totalSongs}
             </p>
           </div>
@@ -84,12 +84,12 @@ const Dashboard = () => {
         
         <button
           onClick={() => navigate('/setlists')}
-          className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 text-left hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+          className="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6 text-left hover:bg-slate-700 transition-colors"
         >
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Setlists</h3>
+          <h3 className="text-lg font-semibold text-slate-100 mb-2">Setlists</h3>
           <div className="flex items-center">
-            <ListMusic className="h-8 w-8 text-blue-600 dark:text-blue-400 mr-3" />
-            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+            <ListMusic className="h-8 w-8 text-blue-400 mr-3" />
+            <p className="text-3xl font-bold text-blue-400">
               {loading ? '...' : stats.totalSetlists}
             </p>
           </div>
@@ -97,12 +97,12 @@ const Dashboard = () => {
         
         <button
           onClick={() => navigate('/song-collections')}
-          className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 text-left hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+          className="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6 text-left hover:bg-slate-700 transition-colors"
         >
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Collections</h3>
+          <h3 className="text-lg font-semibold text-slate-100 mb-2">Collections</h3>
           <div className="flex items-center">
-            <Collection className="h-8 w-8 text-blue-600 dark:text-blue-400 mr-3" />
-            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+            <Collection className="h-8 w-8 text-blue-400 mr-3" />
+            <p className="text-3xl font-bold text-blue-400">
               {loading ? '...' : stats.totalCollections}
             </p>
           </div>
@@ -112,20 +112,20 @@ const Dashboard = () => {
       {/* Recent Data Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Songs */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+        <div className="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Recent Songs</h2>
+            <h2 className="text-xl font-semibold text-slate-100">Recent Songs</h2>
             <Link 
               to="/songs" 
-              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
+              className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
             >
               View All
             </Link>
           </div>
           {loading ? (
-            <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+            <p className="text-slate-400">Loading...</p>
           ) : recentSongs.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-400">No songs yet. <Link to="/songs/add" className="text-blue-600 dark:text-blue-400 hover:underline">Add your first song</Link></p>
+            <p className="text-slate-400">No songs yet. <Link to="/songs/add" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">Add your first song</Link></p>
           ) : (
             <div className="space-y-3">
               {recentSongs.map((song) => (
@@ -133,15 +133,15 @@ const Dashboard = () => {
                   <div>
                     <Link 
                       to={`/songs/${song.id}`}
-                      className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400"
+                      className="text-sm font-medium text-slate-100 hover:text-blue-400 transition-colors"
                     >
                       {song.title}
                     </Link>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                    <p className="text-xs text-slate-400">
                       {song.original_artist} {song.key_signature && `• ${song.key_signature}`}
                     </p>
                   </div>
-                  <span className="text-xs text-gray-500 dark:text-gray-500">
+                  <span className="text-xs text-slate-500">
                     {new Date(song.created_at).toLocaleDateString()}
                   </span>
                 </div>
@@ -151,20 +151,20 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Setlists */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+        <div className="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Recent Setlists</h2>
+            <h2 className="text-xl font-semibold text-slate-100">Recent Setlists</h2>
             <Link 
               to="/setlists" 
-              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
+              className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
             >
               View All
             </Link>
           </div>
           {loading ? (
-            <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+            <p className="text-slate-400">Loading...</p>
           ) : recentSetlists.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-400">No setlists yet. <Link to="/setlists/add" className="text-blue-600 dark:text-blue-400 hover:underline">Create your first setlist</Link></p>
+            <p className="text-slate-400">No setlists yet. <Link to="/setlists/add" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">Create your first setlist</Link></p>
           ) : (
             <div className="space-y-3">
               {recentSetlists.map((setlist) => (
@@ -172,25 +172,25 @@ const Dashboard = () => {
                   <div className="flex-1 min-w-0">
                     <Link 
                       to={`/setlists/${setlist.id}`}
-                      className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 block truncate"
+                      className="text-sm font-medium text-slate-100 hover:text-blue-400 block truncate transition-colors"
                     >
                       {setlist.name}
                     </Link>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                    <p className="text-xs text-slate-400">
                       {new Date(setlist.created_at).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="flex items-center space-x-2 ml-4">
                     <button
                       onClick={() => handlePrintSetlist(setlist)}
-                      className="p-1 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                      className="p-1 text-green-400 hover:text-green-300 transition-colors"
                       title="Print Setlist"
                     >
                       <Printer size={16} />
                     </button>
                     <Link
                       to={`/setlists/edit/${setlist.id}`}
-                      className="p-1 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                      className="p-1 text-blue-400 hover:text-blue-300 transition-colors"
                       title="Edit Setlist"
                     >
                       <Edit size={16} />
