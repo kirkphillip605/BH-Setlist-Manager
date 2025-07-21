@@ -43,6 +43,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             alt="Logo" 
             className="mx-auto h-20 w-auto mb-4"
           />
+            Setlist Management
           </div>
           <button
             onClick={onClose}
