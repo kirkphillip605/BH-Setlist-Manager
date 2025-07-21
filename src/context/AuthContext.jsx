@@ -82,7 +82,17 @@ export const AuthProvider = ({ children }) => {
     const getSession = async () => {
       try {
         if (!supabase) {
-          console.error('Supabase client not initialized');
+          console.error('❌ CRITICAL: Supabase client not initialized - check environment variables');
+          if (mounted) {
+            setUser(null);
+            setLoading(false);
+            setInitialized(true);
+          }
+          return;
+        }
+
+        if (!supabase.auth) {
+          console.error('❌ CRITICAL: Supabase auth not available');
           if (mounted) {
             setUser(null);
             setLoading(false);
@@ -170,7 +180,7 @@ export const AuthProvider = ({ children }) => {
   const signIn = async (email, password) => {
     try {
       if (!supabase) {
-        throw new Error('Supabase client not initialized');
+        throw new Error('Authentication service unavailable. Please refresh the page and try again.');
       }
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -191,7 +201,7 @@ export const AuthProvider = ({ children }) => {
   const signInWithGoogle = async () => {
     try {
       if (!supabase) {
-        throw new Error('Supabase client not initialized');
+        throw new Error('Authentication service unavailable. Please refresh the page and try again.');
       }
 
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -212,7 +222,7 @@ export const AuthProvider = ({ children }) => {
   const signInWithMagicLink = async (email) => {
     try {
       if (!supabase) {
-        throw new Error('Supabase client not initialized');
+        throw new Error('Authentication service unavailable. Please refresh the page and try again.');
       }
 
       const { error } = await supabase.auth.signInWithOtp({
@@ -233,7 +243,7 @@ export const AuthProvider = ({ children }) => {
   const signOut = async () => {
     try {
       if (!supabase) {
-        throw new Error('Supabase client not initialized');
+        throw new Error('Authentication service unavailable. Please refresh the page and try again.');
       }
 
       const { error } = await supabase.auth.signOut();
@@ -250,7 +260,7 @@ export const AuthProvider = ({ children }) => {
 
   const resetPassword = async (email) => {
     if (!supabase) {
-      throw new Error('Supabase client not initialized');
+      throw new Error('Authentication service unavailable. Please refresh the page and try again.');
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -264,7 +274,7 @@ export const AuthProvider = ({ children }) => {
 
   const updatePassword = async (password) => {
     if (!supabase) {
-      throw new Error('Supabase client not initialized');
+      throw new Error('Authentication service unavailable. Please refresh the page and try again.');
     }
 
     const { data, error } = await supabase.auth.updateUser({ password });
