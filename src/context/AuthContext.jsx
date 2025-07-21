@@ -84,6 +84,7 @@ export const AuthProvider = ({ children }) => {
             user_level: 1
           };
         }
+      }
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
