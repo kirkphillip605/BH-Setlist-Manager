@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Save, XCircle } from 'lucide-react';
 import ReactQuill from 'react-quill';
+import { songsService } from '../services/songsService';
 
 const keySignatures = [
   'C Major', 'G Major', 'D Major', 'A Major', 'E Major', 'B Major', 'F# Major', 'C# Major',
@@ -31,11 +32,7 @@ const SongFormPage = () => {
         setLoading(true);
         setError(null);
         try {
-          const response = await fetch(`/api/songs/${songId}`);
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
+          const data = await songsService.getSongById(songId);
           setFormData({
             original_artist: data.original_artist,
             title: data.title,
@@ -44,7 +41,7 @@ const SongFormPage = () => {
           });
         } catch (err) {
           console.error('Error fetching song for edit:', err);
-          setError('Failed to load song for editing. Please try again.');
+          setError(err.message || 'Failed to load song for editing. Please try again.');
         } finally {
           setLoading(false);
         }
@@ -71,24 +68,10 @@ const SongFormPage = () => {
     setError(null);
 
     try {
-      let response;
       if (isEditing) {
-        response = await fetch(`/api/songs/${songId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-        });
+        await songsService.updateSong(songId, formData);
       } else {
-        response = await fetch('/api/songs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-        });
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        await songsService.createSong(formData);
       }
 
       // Redirect after successful save

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Edit } from 'lucide-react';
+import { songsService } from '../services/songsService';
 
 const SongViewPage = () => {
   const { songId } = useParams();
@@ -14,15 +15,11 @@ const SongViewPage = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/api/songs/${songId}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        const data = await songsService.getSongById(songId);
         setSong(data);
       } catch (err) {
         console.error('Error fetching song:', err);
-        setError('Failed to load song. Please try again.');
+        setError(err.message || 'Failed to load song. Please try again.');
       } finally {
         setLoading(false);
       }

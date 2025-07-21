@@ -3,6 +3,7 @@ import { PlusCircle, Edit, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 import ResizableTable from '../components/ResizableTable';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { songsService } from '../services/songsService';
 
 const ManageSongs = () => {
   const [songs, setSongs] = useState([]);
@@ -27,15 +28,11 @@ const ManageSongs = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/songs');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
+      const data = await songsService.getAllSongs();
       setSongs(data);
     } catch (err) {
       console.error('Error fetching songs:', err);
-      setError('Failed to fetch songs. Please try again.');
+      setError(err.message || 'Failed to fetch songs. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -48,15 +45,7 @@ const ManageSongs = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/songs/${song_id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-      }
-
+      await songsService.deleteSong(song_id);
       await fetchSongs(); // Re-fetch songs
     } catch (err) {
       console.error('Error deleting song:', err);
