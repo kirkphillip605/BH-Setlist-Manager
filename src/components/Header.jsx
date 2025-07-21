@@ -1,12 +1,35 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { User, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 
 const Header = () => {
   const { user, signOut } = useAuth();
+  const location = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  const getPageTitle = () => {
+    const path = location.pathname;
+    
+    if (path === '/') return 'Dashboard';
+    if (path === '/songs') return 'Manage Songs';
+    if (path.startsWith('/songs/add')) return 'Add New Song';
+    if (path.startsWith('/songs/edit/')) return 'Edit Song';
+    if (path.startsWith('/songs/')) return 'Song Details';
+    if (path === '/setlists') return 'Manage Setlists';
+    if (path.startsWith('/setlists/add')) return 'Add New Setlist';
+    if (path.startsWith('/setlists/edit/')) return 'Edit Setlist';
+    if (path === '/set-templates') return 'Manage Set Templates';
+    if (path.startsWith('/set-templates/add')) return 'Add New Set Template';
+    if (path.startsWith('/set-templates/edit/')) return 'Edit Set Template';
+    if (path === '/profile') return 'Profile';
+    if (path === '/edit-profile') return 'Edit Profile';
+    if (path === '/change-password') return 'Change Password';
+    if (path === '/admin/users') return 'User Management';
+    
+    return 'GigFlow';
+  };
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
@@ -14,7 +37,7 @@ const Header = () => {
   return (
     <header className="bg-white dark:bg-gray-800 shadow-md p-4 flex items-center justify-between">
       <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-        
+        {getPageTitle()}
       </div>
       {user && (
         <div className="relative">
