@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Save, XCircle, Music, Trash2, GripVertical, Template } from 'lucide-react';
+import { Save, XCircle, Music, Trash2, GripVertical, BookTemplate as Template } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 import { setlistsService } from '../services/setlistsService';
