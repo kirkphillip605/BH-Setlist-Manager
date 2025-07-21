@@ -8,7 +8,7 @@ const Sidebar = () => {
 
   return (
     <div className="w-64 bg-gray-800 text-white p-4 flex flex-col dark:bg-gray-950">
-      <div className="text-2xl font-bold mb-8 text-stone-400">Setlist Console</div>
+      <div className="text-2xl font-bold mb-8 text-232323-400">Setlist Console</div>
       <nav className="flex-1">
         <ul>
           <li className="mb-4">
