@@ -20,7 +20,7 @@ const Header = ({ onToggleSidebar }) => {
         <div className="flex items-center">
           <button
             onClick={onToggleSidebar}
-            className="lg:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors mr-3"
+            className="lg:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gradient-to-b from-slate-800 via-blue-900 to-slate-900 transition-colors mr-3"
           >
             <Menu size={24} />
           </button>
