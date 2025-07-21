@@ -188,6 +188,48 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const signInWithMagicLink = async (email) => {
+    try {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized');
+      }
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const signOut = async () => {
     try {
       if (!supabase) {
@@ -207,15 +249,24 @@ export const AuthProvider = ({ children }) => {
   };
 
   const resetPassword = async (email) => {
+    if (!supabase) {
+      throw new Error('Supabase client not initialized');
+    }
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`, // Replace with your reset password route
+      redirectTo: `${window.location.origin}/auth/reset-password`,
     });
+    
     if (error) {
       throw new Error(error.message);
     }
   };
 
   const updatePassword = async (password) => {
+    if (!supabase) {
+      throw new Error('Supabase client not initialized');
+    }
+
     const { data, error } = await supabase.auth.updateUser({ password });
     if (error) {
       throw new Error(error.message);
@@ -228,6 +279,8 @@ export const AuthProvider = ({ children }) => {
     loading,
     initialized,
     signIn,
+    signInWithGoogle,
+    signInWithMagicLink,
     signOut,
     resetPassword,
     updatePassword,

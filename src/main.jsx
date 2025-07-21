@@ -25,11 +25,36 @@ import EditProfile from './pages/EditProfile';
 import UserManagement from './pages/UserManagement';
 import Profile from './pages/Profile';
 import ChangePassword from './pages/ChangePassword';
+import MagicLinkLogin from './pages/auth/MagicLinkLogin';
+import AuthCallback from './pages/auth/AuthCallback';
+import InviteComplete from './pages/auth/InviteComplete';
+import EmailConfirmation from './pages/auth/EmailConfirmation';
+import ResetPassword from './pages/auth/ResetPassword';
 
 const router = createBrowserRouter([
   {
     path: "/login",
     element: <Login />
+  },
+  {
+    path: "/auth/magic-link",
+    element: <MagicLinkLogin />
+  },
+  {
+    path: "/auth/callback",
+    element: <AuthCallback />
+  },
+  {
+    path: "/auth/invite-complete",
+    element: <InviteComplete />
+  },
+  {
+    path: "/auth/confirm-email",
+    element: <EmailConfirmation />
+  },
+  {
+    path: "/auth/reset-password",
+    element: <ResetPassword />
   },
   {
     path: "/",

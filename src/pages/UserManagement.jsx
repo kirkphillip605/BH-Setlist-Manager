@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Edit, Trash2, PlusCircle } from 'lucide-react';
+import { Edit, Trash2, PlusCircle, Mail, UserCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 
@@ -15,7 +15,6 @@ const UserManagement = () => {
     name: '',
     role: '',
     email: '',
-    password: '',
     user_level: 1,
   });
   const [editingUser, setEditingUser] = useState(null);
@@ -61,27 +60,21 @@ const UserManagement = () => {
     e.preventDefault();
     setError(null);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // Use Supabase auth admin to invite user by email
+      const { data, error } = await supabase.auth.admin.inviteUserByEmail(
         email: newUser.email,
-        password: newUser.password,
-      });
+        options: {
+          data: {
+            name: newUser.name,
+            role: newUser.role,
+            user_level: newUser.user_level,
+          },
+          redirectTo: `${window.location.origin}/auth/invite-complete`
+        }
+      );
 
       if (error) {
         throw new Error(error.message);
-      }
-
-      const { data: userInsertData, error: userInsertError } = await supabase
-        .from('users')
-        .insert({
-          name: newUser.name,
-          role: newUser.role,
-          email: newUser.email,
-          user_level: newUser.user_level,
-          id: data.user.id,
-        });
-
-      if (userInsertError) {
-        throw new Error(userInsertError.message);
       }
 
       fetchUsers();
@@ -89,10 +82,10 @@ const UserManagement = () => {
         name: '',
         role: '',
         email: '',
-        password: '',
         user_level: 1,
       });
       setShowAddUserForm(false);
+      alert('Invitation sent successfully! The user will receive an email to complete their profile.');
     } catch (error) {
       setError(error.message);
     }
@@ -137,6 +130,23 @@ const UserManagement = () => {
         throw new Error(error.message);
       }
       fetchUsers();
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+
+  const handleResendInvite = async (userEmail) => {
+    setError(null);
+    try {
+      const { error } = await supabase.auth.admin.inviteUserByEmail(userEmail, {
+        redirectTo: `${window.location.origin}/auth/invite-complete`
+      });
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      alert('Invitation resent successfully!');
     } catch (error) {
       setError(error.message);
     }
@@ -218,18 +228,6 @@ const UserManagement = () => {
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={newUser.password}
-                onChange={handleInputChange}
-                required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-              />
-            </div>
-            <div>
               <label htmlFor="user_level" className="block text-sm font-medium text-gray-700 dark:text-gray-300">User Level</label>
               <select
                 id="user_level"
@@ -248,7 +246,8 @@ const UserManagement = () => {
                 type="submit"
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                Add User
+                <Mail size={16} className="mr-2" />
+                Send Invitation
               </button>
             </div>
           </form>
@@ -349,6 +348,13 @@ const UserManagement = () => {
                       </form>
                     ) : (
                       <div className="flex items-center justify-end space-x-2">
+                        <button
+                          onClick={() => handleResendInvite(user.email)}
+                          className="inline-flex items-center px-3 py-1 border border-blue-300 rounded-md shadow-sm text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-900 dark:border-blue-700 dark:text-blue-200"
+                        >
+                          <Mail size={14} className="mr-1" />
+                          Resend
+                        </button>
                         <button
                           onClick={() => setEditingUser(user)}
                           className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
