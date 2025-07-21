@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Edit } from 'lucide-react';
 import { songsService } from '../services/songsService';
+import { usePageTitle } from '../context/PageTitleContext';
 
 const SongViewPage = () => {
   const { songId } = useParams();
+  const { setPageTitle } = usePageTitle();
   const navigate = useNavigate();
   const [song, setSong] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,6 +19,7 @@ const SongViewPage = () => {
       try {
         const data = await songsService.getSongById(songId);
         setSong(data);
+        setPageTitle(`${data.title} - ${data.original_artist}`);
       } catch (err) {
         console.error('Error fetching song:', err);
         setError(err.message || 'Failed to load song. Please try again.');
@@ -28,7 +31,7 @@ const SongViewPage = () => {
     if (songId) {
       fetchSong();
     }
-  }, [songId]);
+  }, [songId, setPageTitle]);
 
   const handleEditClick = () => {
     navigate(`/songs/edit/${songId}`); // Navigate to the dedicated edit song page

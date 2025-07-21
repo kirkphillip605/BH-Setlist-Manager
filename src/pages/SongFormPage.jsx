@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Save, XCircle } from 'lucide-react';
 import ReactQuill from 'react-quill';
 import { songsService } from '../services/songsService';
+import { usePageTitle } from '../context/PageTitleContext';
 
 const keySignatures = [
   'C Major', 'G Major', 'D Major', 'A Major', 'E Major', 'B Major', 'F# Major', 'C# Major',
@@ -13,6 +14,7 @@ const keySignatures = [
 
 const SongFormPage = () => {
   const { songId } = useParams(); // Get songId from URL for editing
+  const { setPageTitle } = usePageTitle();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
@@ -29,6 +31,7 @@ const SongFormPage = () => {
   useEffect(() => {
     if (isEditing) {
       const fetchSongForEdit = async () => {
+        setPageTitle('Edit Song');
         setLoading(true);
         setError(null);
         try {
@@ -49,9 +52,10 @@ const SongFormPage = () => {
       fetchSongForEdit();
     } else {
       // Reset form for adding new song
+      setPageTitle('Add New Song');
       setFormData({ original_artist: '', title: '', key_signature: '', lyrics: '' });
     }
-  }, [songId, isEditing]);
+  }, [songId, isEditing, setPageTitle]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -125,8 +129,6 @@ const SongFormPage = () => {
 
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow-md dark:bg-gray-800 dark:text-gray-200">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6 dark:text-gray-100">{isEditing ? 'Edit Song' : 'Add New Song'}</h1>
-
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 dark:bg-red-900 dark:text-red-200 dark:border-red-700" role="alert">
           <strong className="font-bold">Error!</strong>

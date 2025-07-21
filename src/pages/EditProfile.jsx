@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import { useNavigate } from 'react-router-dom';
+import { usePageTitle } from '../context/PageTitleContext';
 
 const EditProfile = () => {
   const { user, updatePassword } = useAuth();
+  const { setPageTitle } = usePageTitle();
   const [profile, setProfile] = useState({
     name: '',
     role: '',
@@ -18,6 +20,7 @@ const EditProfile = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    setPageTitle('Edit Profile');
     const fetchProfile = async () => {
       if (user) {
         setLoading(true);
@@ -49,7 +52,7 @@ const EditProfile = () => {
     };
 
     fetchProfile();
-  }, [user]);
+  }, [user, setPageTitle]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -106,8 +109,6 @@ const EditProfile = () => {
 
   return (
     <div className="container mx-auto p-6 bg-white rounded-lg shadow-md dark:bg-gray-800 dark:text-gray-200">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6 dark:text-gray-100">Edit Profile</h1>
-
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 dark:bg-red-900 dark:text-red-200 dark:border-red-700" role="alert">
           <strong className="font-bold">Error!</strong>
