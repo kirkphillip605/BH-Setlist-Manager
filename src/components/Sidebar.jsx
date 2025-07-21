@@ -38,7 +38,11 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-4 lg:p-6 border-b border-slate-700">
           <div className="text-xl lg:text-2xl font-bold text-white">
-            Setlist Manegement System
+            <img 
+            src="/bhlogo.png" 
+            alt="Logo" 
+            className="mx-auto h-20 w-auto mb-4"
+          />
           </div>
           <button
             onClick={onClose}
