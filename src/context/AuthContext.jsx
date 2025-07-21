@@ -23,10 +23,60 @@ export const AuthProvider = ({ children }) => {
           .eq('id', authUser.id)
           .maybeSingle();
         
-        if (userData && !userError && mounted) {
+        if (userData && !userError) {
           return userData;
-        } else if (mounted) {
-          // If no user data found, return the auth user with basic info
+        } else {
+          // If no user data found, create a user record in the database
+          const newUserData = {
+            id: authUser.id,
+            email: authUser.email,
+            name: authUser.user_metadata?.name || authUser.email,
+            user_level: 1
+          };
+          
+          const { data: insertedUser, error: insertError } = await supabase
+            .from('users')
+            .insert([newUserData])
+            .select()
+            .single();
+            
+          if (insertedUser && !insertError) {
+            return insertedUser;
+          } else {
+            console.error('Error creating user record:', insertError);
+            // Return fallback data if insert fails
+            return newUserData;
+          }
+        }
+      } catch (error) {
+        console.error('Error in fetchUserData:', error);
+        // Create user record as fallback
+        try {
+          const fallbackUserData = {
+            id: authUser.id,
+            email: authUser.email,
+            name: authUser.user_metadata?.name || authUser.email,
+            user_level: 1
+          };
+          
+          const { data: insertedUser, error: insertError } = await supabase
+            .from('users')
+            .insert([fallbackUserData])
+            .select()
+            .single();
+            
+          if (insertedUser && !insertError) {
+            return insertedUser;
+          }
+          
+          return {
+            id: authUser.id,
+            email: authUser.email,
+            name: authUser.user_metadata?.name || authUser.email,
+            user_level: 1
+          };
+        } catch (fallbackError) {
+          console.error('Error creating fallback user:', fallbackError);
           return {
             id: authUser.id,
             email: authUser.email,
@@ -36,14 +86,6 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
-        if (mounted) {
-          return {
-            id: authUser.id,
-            email: authUser.email,
-            name: authUser.user_metadata?.name || authUser.email,
-            user_level: 1
-          };
-        }
       }
       return null;
     };
