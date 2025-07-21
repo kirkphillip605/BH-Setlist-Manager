@@ -14,7 +14,7 @@ const Header = ({ onToggleSidebar }) => {
   };
 
   return (
-    <header className="bg-blue-900 shadow-lg border-b border-slate-700">
+    <header className="bg-gray-900 shadow-lg border-b border-slate-700">
       <div className="flex items-center justify-between px-6 py-4">
         {/* Mobile menu button */}
         <div className="flex items-center">
