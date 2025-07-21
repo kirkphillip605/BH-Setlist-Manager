@@ -191,13 +191,13 @@ const ManageSongs = () => {
   return (
     <div className="max-w-7xl mx-auto">
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg mb-4" role="alert">
+        <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg mb-4" role="alert">
           <strong className="font-bold">Error!</strong>
           <span className="block sm:inline"> {error}</span>
         </div>
       )}
 
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-4 lg:p-6">
+      <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-4 lg:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0">
           <div className="w-full sm:w-1/2 lg:w-1/3">
           <label htmlFor="search" className="sr-only">Search songs</label>
@@ -207,7 +207,7 @@ const ManageSongs = () => {
             placeholder="Search by artist or title..."
             value={searchTerm}
             onChange={handleSearchChange}
-            className="block w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base dark:bg-slate-700 dark:text-gray-100 transition-colors"
+            className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
           />
         </div>
         {/* Navigate to add song page */}
@@ -220,10 +220,20 @@ const ManageSongs = () => {
         </button>
         </div>
 
-        {loading && <p className="text-center text-gray-600 dark:text-gray-300 py-8">Loading songs...</p>}
+        {loading && <p className="text-center text-slate-300 py-8">Loading songs...</p>}
 
         {!loading && songs.length === 0 && !error && (
-          <p className="text-center text-gray-600 dark:text-gray-300 py-8">No songs found. Add a new song to get started!</p>
+          <div className="text-center py-12">
+            <p className="text-slate-300 text-lg mb-2">No songs found</p>
+            <p className="text-slate-400 mb-6">Add your first song to get started</p>
+            <button
+              onClick={() => navigate('/songs/add')}
+              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              <PlusCircle size={20} className="mr-2" />
+              Add Song
+            </button>
+          </div>
         )}
 
         {!loading && songs.length > 0 && (
@@ -233,12 +243,12 @@ const ManageSongs = () => {
           {/* Pagination Controls */}
             <div className="flex flex-col sm:flex-row justify-between items-center mt-6 space-y-4 sm:space-y-0">
               <div className="flex items-center space-x-2">
-                <label htmlFor="items-per-page" className="text-sm text-gray-700 dark:text-gray-300">Items per page:</label>
+                <label htmlFor="items-per-page" className="text-sm text-slate-300">Items per page:</label>
                 <select
                   id="items-per-page"
                   value={itemsPerPage}
                   onChange={handleItemsPerPageChange}
-                  className="block w-20 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm dark:bg-slate-700 dark:text-gray-100 transition-colors"
+                  className="block w-20 px-3 py-2 bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                 >
                   <option value="5">5</option>
                   <option value="10">10</option>
@@ -250,7 +260,7 @@ const ManageSongs = () => {
                 <button
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-3 py-2 rounded-lg border border-slate-600 bg-slate-700 text-sm font-medium text-slate-300 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronUp size={16} className="rotate-270" />
                 </button>
@@ -264,7 +274,7 @@ const ManageSongs = () => {
                       className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
                         currentPage === pageNum 
                           ? 'bg-blue-600 border-blue-600 text-white' 
-                          : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-600'
+                          : 'border-slate-600 bg-slate-700 text-slate-300 hover:bg-slate-600'
                       }`}
                     >
                       {pageNum}
@@ -274,7 +284,7 @@ const ManageSongs = () => {
                 <button
                   onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-2 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-3 py-2 rounded-lg border border-slate-600 bg-slate-700 text-sm font-medium text-slate-300 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronDown size={16} className="-rotate-90" />
                 </button>

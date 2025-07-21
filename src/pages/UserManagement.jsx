@@ -21,17 +21,14 @@ const UserManagement = () => {
 
   useEffect(() => {
     setPageTitle('User Management');
-    fetchUsers();
+    if (authUser && authUser.user_level === 3) {
+      fetchUsers();
+    } else {
+      setLoading(false);
+    }
   }, [authUser, setPageTitle]);
 
   const fetchUsers = async () => {
-    // Check if user is admin first
-    if (!authUser || authUser.user_level !== 3) {
-      setError('You do not have permission to view this page.');
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
     setError(null);
     try {

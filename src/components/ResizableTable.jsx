@@ -54,14 +54,14 @@ const ResizableTable = ({ columns, data }) => {
 
   return (
     <div className="overflow-x-auto -mx-4 sm:mx-0">
-      <table ref={tableRef} className="min-w-full divide-y divide-gray-200 dark:divide-slate-600 table-fixed">
-        <thead className="bg-gray-50 dark:bg-slate-700">
+      <table ref={tableRef} className="min-w-full divide-y divide-slate-600 table-fixed">
+        <thead className="bg-slate-700">
           <tr>
             {columns.map((col, index) => (
               <th
                 key={col.key}
                 scope="col"
-                className={`relative px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider ${col.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-600' : ''} ${col.align === 'right' ? 'text-right' : ''}`}
+                className={`relative px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider ${col.sortable ? 'cursor-pointer hover:bg-slate-600' : ''} ${col.align === 'right' ? 'text-right' : ''}`}
                 style={{ width: columnWidths[col.key] }}
                 onClick={col.sortable ? col.onSort : undefined}
               >
@@ -79,13 +79,13 @@ const ResizableTable = ({ columns, data }) => {
             ))}
           </tr>
         </thead>
-        <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-600">
+        <tbody className="bg-slate-800 divide-y divide-slate-600">
           {data.map((row, rowIndex) => (
-            <tr key={row.id || rowIndex} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+            <tr key={row.id || rowIndex} className="hover:bg-slate-700 transition-colors">
               {columns.map((col) => (
                 <td
                   key={`${row.id || rowIndex}-${col.key}`}
-                  className={`px-4 sm:px-6 py-4 whitespace-nowrap text-sm ${col.align === 'right' ? 'text-right' : 'text-left'} ${col.key === 'actions' ? 'font-medium' : 'text-gray-700 dark:text-gray-300'}`}
+                  className={`px-4 sm:px-6 py-4 whitespace-nowrap text-sm ${col.align === 'right' ? 'text-right' : 'text-left'} ${col.key === 'actions' ? 'font-medium' : 'text-slate-300'}`}
                   style={{ width: columnWidths[col.key] }}
                 >
                   {col.render(row)}
