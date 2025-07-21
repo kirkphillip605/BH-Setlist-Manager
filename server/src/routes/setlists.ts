@@ -3,57 +3,6 @@ import { supabase } from '../index';
 
 const router = Router();
 
-// Helper function to flatten songs from a template into setlist_songs
-async function flattenTemplateSongs(setlistId: string, templateId: string) {
-  const { data: templateSongs, error: templateSongsError } = await supabase
-    .from('template_songs')
-    .select('song_id')
-    .eq('template_id', templateId);
-
-  if (templateSongsError) throw templateSongsError;
-
-  if (templateSongs && templateSongs.length > 0) {
-    const setlistSongsToInsert = templateSongs.map(ts => ({
-      setlist_id: setlistId,
-      song_id: ts.song_id,
-    }));
-
-    const { error: insertError } = await supabase
-      .from('setlist_songs')
-      .insert(setlistSongsToInsert)
-      .select(); // Select to get potential errors from unique constraint
-
-    if (insertError) {
-      // Check if the error is due to duplicate key (song already in setlist)
-      if (insertError.code === '23505') { // PostgreSQL unique violation error code
-        throw new Error('One or more songs from this template are already in the setlist.');
-      }
-      throw insertError;
-    }
-  }
-}
-
-// Helper function to remove songs from setlist_songs that belong to a specific template
-async function removeFlattenedTemplateSongs(setlistId: string, templateId: string) {
-  const { data: templateSongs, error: templateSongsError } = await supabase
-    .from('template_songs')
-    .select('song_id')
-    .eq('template_id', templateId);
-
-  if (templateSongsError) throw templateSongsError;
-
-  if (templateSongs && templateSongs.length > 0) {
-    const songIdsToRemove = templateSongs.map(ts => ts.song_id);
-    const { error: deleteError } = await supabase
-      .from('setlist_songs')
-      .delete()
-      .eq('setlist_id', setlistId)
-      .in('song_id', songIdsToRemove);
-
-    if (deleteError) throw deleteError;
-  }
-}
-
 // Get all setlists
 router.get('/', async (req, res) => {
   const { data, error } = await supabase
@@ -65,37 +14,26 @@ router.get('/', async (req, res) => {
   res.json(data);
 });
 
-// Get a single setlist by ID with its templates and flattened songs
+// Get a single setlist by ID with its songs
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   const { data, error } = await supabase
     .from('setlists')
     .select(`
       *,
-      setlist_sets (
-        position,
-        set_templates (
-          id,
-          name,
-          template_songs (
-            position,
-            songs (
-              id,
-              original_artist,
-              title,
-              key_signature,
-              lyrics
-            )
-          )
-        )
-      ),
       setlist_songs (
-        song_id
+        song_order,
+        songs (
+          id,
+          original_artist,
+          title,
+          key_signature,
+          lyrics
+        )
       )
     `)
     .eq('id', id)
-    .order('position', { foreignTable: 'setlist_sets', ascending: true })
-    .order('position', { foreignTable: 'setlist_sets.set_templates.template_songs', ascending: true })
+    .order('song_order', { foreignTable: 'setlist_songs', ascending: true })
     .single();
 
   if (error) {
@@ -109,17 +47,18 @@ router.get('/:id', async (req, res) => {
 
 // Create a new setlist
 router.post('/', async (req, res) => {
-  const { name, templates } = req.body; // templates is an array of { template_id, position }
+  const { name, songs, user_id } = req.body; // songs is an array of { song_id, song_order }
 
-  if (!name) {
-    return res.status(400).json({ error: 'Setlist name is required.' });
+  if (!name || !user_id) {
+    return res.status(400).json({ error: 'Setlist name and user_id are required.' });
   }
 
-  // Check for duplicate setlist name
+  // Check for duplicate setlist name for this user
   const { data: existingSetlist, error: existingError } = await supabase
     .from('setlists')
     .select('id')
     .eq('name', name)
+    .eq('user_id', user_id)
     .single();
 
   if (existingSetlist) {
@@ -131,38 +70,26 @@ router.post('/', async (req, res) => {
 
   const { data: newSetlist, error: setlistError } = await supabase
     .from('setlists')
-    .insert([{ name }])
+    .insert([{ name, user_id }])
     .select()
     .single();
 
   if (setlistError) return res.status(500).json({ error: setlistError.message });
 
-  if (templates && templates.length > 0) {
-    const setlistSetsToInsert = templates.map((t: { template_id: string; position: number }) => ({
+  if (songs && songs.length > 0) {
+    const setlistSongsToInsert = songs.map((s: { song_id: string; song_order: number }) => ({
       setlist_id: newSetlist.id,
-      template_id: t.template_id,
-      position: t.position,
+      song_id: s.song_id,
+      song_order: s.song_order,
     }));
 
-    const { error: setlistSetsError } = await supabase
-      .from('setlist_sets')
-      .insert(setlistSetsToInsert);
+    const { error: setlistSongsError } = await supabase
+      .from('setlist_songs')
+      .insert(setlistSongsToInsert);
 
-    if (setlistSetsError) {
+    if (setlistSongsError) {
       await supabase.from('setlists').delete().eq('id', newSetlist.id); // Rollback
-      return res.status(500).json({ error: setlistSetsError.message });
-    }
-
-    // Flatten songs for each template
-    for (const template of templates) {
-      try {
-        await flattenTemplateSongs(newSetlist.id, template.template_id);
-      } catch (flattenError: any) {
-        await supabase.from('setlist_sets').delete().eq('setlist_id', newSetlist.id); // Rollback
-        await supabase.from('setlist_songs').delete().eq('setlist_id', newSetlist.id); // Rollback
-        await supabase.from('setlists').delete().eq('id', newSetlist.id); // Rollback
-        return res.status(409).json({ error: flattenError.message }); // Specific error for duplicate song
-      }
+      return res.status(500).json({ error: setlistSongsError.message });
     }
   }
 
@@ -172,17 +99,29 @@ router.post('/', async (req, res) => {
 // Update a setlist
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, templates } = req.body;
+  const { name, songs } = req.body;
 
   if (!name) {
     return res.status(400).json({ error: 'Setlist name is required.' });
   }
 
-  // Check for duplicate setlist name, excluding the current setlist
+  // Get the setlist to check ownership
+  const { data: setlist, error: setlistFetchError } = await supabase
+    .from('setlists')
+    .select('user_id')
+    .eq('id', id)
+    .single();
+
+  if (setlistFetchError) {
+    return res.status(404).json({ error: 'Setlist not found' });
+  }
+
+  // Check for duplicate setlist name for this user, excluding the current setlist
   const { data: existingSetlist, error: existingError } = await supabase
     .from('setlists')
     .select('id')
     .eq('name', name)
+    .eq('user_id', setlist.user_id)
     .neq('id', id)
     .single();
 
@@ -202,67 +141,28 @@ router.put('/:id', async (req, res) => {
 
   if (setlistError) return res.status(500).json({ error: setlistError.message });
 
-  // Update associated templates and flattened songs
-  if (templates !== undefined) {
-    // Get current templates in the setlist
-    const { data: currentSetlistSets, error: currentSetlistSetsError } = await supabase
-      .from('setlist_sets')
-      .select('template_id')
-      .eq('setlist_id', id);
-
-    if (currentSetlistSetsError) return res.status(500).json({ error: currentSetlistSetsError.message });
-
-    const currentTemplateIds = new Set(currentSetlistSets.map(s => s.template_id));
-    const newTemplateIds = new Set(templates.map((t: { template_id: string }) => t.template_id));
-
-    // Templates to remove
-    for (const currentTemplateId of currentTemplateIds) {
-      if (!newTemplateIds.has(currentTemplateId)) {
-        await removeFlattenedTemplateSongs(id, currentTemplateId);
-      }
-    }
-
-    // Delete existing setlist_sets for this setlist
+  // Update associated songs
+  if (songs !== undefined) {
+    // Delete existing setlist_songs for this setlist
     const { error: deleteError } = await supabase
-      .from('setlist_sets')
+      .from('setlist_songs')
       .delete()
       .eq('setlist_id', id);
 
     if (deleteError) return res.status(500).json({ error: deleteError.message });
 
-    if (templates.length > 0) {
-      const setlistSetsToInsert = templates.map((t: { template_id: string; position: number }) => ({
+    if (songs.length > 0) {
+      const setlistSongsToInsert = songs.map((s: { song_id: string; song_order: number }) => ({
         setlist_id: id,
-        template_id: t.template_id,
-        position: t.position,
+        song_id: s.song_id,
+        song_order: s.song_order,
       }));
 
       const { error: insertError } = await supabase
-        .from('setlist_sets')
-        .insert(setlistSetsToInsert);
+        .from('setlist_songs')
+        .insert(setlistSongsToInsert);
 
       if (insertError) return res.status(500).json({ error: insertError.message });
-
-      // Flatten songs for newly added templates or re-added templates
-      for (const template of templates) {
-        if (!currentTemplateIds.has(template.template_id)) { // Only flatten if it's a new template for this setlist
-          try {
-            await flattenTemplateSongs(id, template.template_id);
-          } catch (flattenError: any) {
-            // If flattening fails, attempt to rollback the setlist_sets and setlist_songs for this setlist
-            await supabase.from('setlist_sets').delete().eq('setlist_id', id);
-            await supabase.from('setlist_songs').delete().eq('setlist_id', id);
-            return res.status(409).json({ error: flattenError.message });
-          }
-        }
-      }
-    } else {
-      // If no templates are provided, clear all flattened songs for this setlist
-      const { error: clearSongsError } = await supabase
-        .from('setlist_songs')
-        .delete()
-        .eq('setlist_id', id);
-      if (clearSongsError) return res.status(500).json({ error: clearSongsError.message });
     }
   }
 

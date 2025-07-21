@@ -131,7 +131,7 @@ const ManageSongs = () => {
         </div>
       ),
       render: (song) => (
-        <Link to={`/songs/${song.song_id}`} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium">
+        <Link to={`/songs/${song.id}`} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium">
           {song.title}
         </Link>
       ),
@@ -169,14 +169,14 @@ const ManageSongs = () => {
       render: (song) => (
         <div className="flex justify-end space-x-2">
           <button
-            onClick={() => navigate(`/songs/edit/${song.song_id}`)} // Navigate to edit page
+            onClick={() => navigate(`/songs/edit/${song.id}`)} // Navigate to edit page
             className="text-indigo-600 hover:text-indigo-900 mr-3 dark:text-indigo-400 dark:hover:text-indigo-300"
             title="Edit Song"
           >
             <Edit size={18} />
           </button>
           <button
-            onClick={() => handleDeleteSong(song.song_id)}
+            onClick={() => handleDeleteSong(song.id)}
             className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
             title="Delete Song"
           >

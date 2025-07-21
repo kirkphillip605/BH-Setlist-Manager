@@ -21,8 +21,8 @@ router.get('/:id', async (req, res) => {
     .from('set_templates')
     .select(`
       *,
-      template_songs (
-        position,
+      set_template_songs (
+        song_order,
         songs (
           id,
           original_artist,
@@ -32,7 +32,7 @@ router.get('/:id', async (req, res) => {
       )
     `)
     .eq('id', id)
-    .order('position', { foreignTable: 'template_songs', ascending: true })
+    .order('song_order', { foreignTable: 'set_template_songs', ascending: true })
     .single();
 
   if (error) {
@@ -46,17 +46,18 @@ router.get('/:id', async (req, res) => {
 
 // Create a new set template
 router.post('/', async (req, res) => {
-  const { name, songs } = req.body; // songs is an array of { song_id, position }
+  const { name, songs, user_id } = req.body; // songs is an array of { song_id, song_order }
 
-  if (!name) {
-    return res.status(400).json({ error: 'Template name is required.' });
+  if (!name || !user_id) {
+    return res.status(400).json({ error: 'Template name and user_id are required.' });
   }
 
-  // Check for duplicate template name
+  // Check for duplicate template name for this user
   const { data: existingTemplate, error: existingError } = await supabase
     .from('set_templates')
     .select('id')
     .eq('name', name)
+    .eq('user_id', user_id)
     .single();
 
   if (existingTemplate) {
@@ -68,21 +69,21 @@ router.post('/', async (req, res) => {
 
   const { data: newTemplate, error: templateError } = await supabase
     .from('set_templates')
-    .insert([{ name }])
+    .insert([{ name, user_id }])
     .select()
     .single();
 
   if (templateError) return res.status(500).json({ error: templateError.message });
 
   if (songs && songs.length > 0) {
-    const templateSongsToInsert = songs.map((s: { song_id: string; position: number }) => ({
-      template_id: newTemplate.id,
+    const templateSongsToInsert = songs.map((s: { song_id: string; song_order: number }) => ({
+      set_template_id: newTemplate.id,
       song_id: s.song_id,
-      position: s.position,
+      song_order: s.song_order,
     }));
 
     const { error: templateSongsError } = await supabase
-      .from('template_songs')
+      .from('set_template_songs')
       .insert(templateSongsToInsert);
 
     if (templateSongsError) {
@@ -104,11 +105,23 @@ router.put('/:id', async (req, res) => {
     return res.status(400).json({ error: 'Template name is required.' });
   }
 
-  // Check for duplicate template name, excluding the current template
+  // Get the template to check ownership
+  const { data: template, error: templateFetchError } = await supabase
+    .from('set_templates')
+    .select('user_id')
+    .eq('id', id)
+    .single();
+
+  if (templateFetchError) {
+    return res.status(404).json({ error: 'Set template not found' });
+  }
+
+  // Check for duplicate template name for this user, excluding the current template
   const { data: existingTemplate, error: existingError } = await supabase
     .from('set_templates')
     .select('id')
     .eq('name', name)
+    .eq('user_id', template.user_id)
     .neq('id', id)
     .single();
 
@@ -132,21 +145,21 @@ router.put('/:id', async (req, res) => {
   if (songs !== undefined) {
     // Delete existing template_songs for this template
     const { error: deleteError } = await supabase
-      .from('template_songs')
+      .from('set_template_songs')
       .delete()
-      .eq('template_id', id);
+      .eq('set_template_id', id);
 
     if (deleteError) return res.status(500).json({ error: deleteError.message });
 
     if (songs.length > 0) {
-      const templateSongsToInsert = songs.map((s: { song_id: string; position: number }) => ({
-        template_id: id,
+      const templateSongsToInsert = songs.map((s: { song_id: string; song_order: number }) => ({
+        set_template_id: id,
         song_id: s.song_id,
-        position: s.position,
+        song_order: s.song_order,
       }));
 
       const { error: insertError } = await supabase
-        .from('template_songs')
+        .from('set_template_songs')
         .insert(templateSongsToInsert);
 
       if (insertError) return res.status(500).json({ error: insertError.message });

@@ -6,9 +6,8 @@ import { useNavigate } from 'react-router-dom';
 const EditProfile = () => {
   const { user, updatePassword } = useAuth();
   const [profile, setProfile] = useState({
-    first_name: '',
-    last_name: '',
-    username: '',
+    name: '',
+    role: '',
     email: '',
   });
   const [password, setPassword] = useState('');
@@ -36,9 +35,8 @@ const EditProfile = () => {
 
           if (data) {
             setProfile({
-              first_name: data.first_name || '',
-              last_name: data.last_name || '',
-              username: data.username || '',
+              name: data.name || '',
+              role: data.role || '',
               email: data.email || '',
             });
           }
@@ -77,9 +75,8 @@ const EditProfile = () => {
       const { error: updateError } = await supabase
         .from('users')
         .update({
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          username: profile.username,
+          name: profile.name,
+          role: profile.role,
           email: profile.email,
         })
         .eq('id', user.id);
@@ -132,37 +129,35 @@ const EditProfile = () => {
       {!loading && (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-                      <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">First Name</label>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
             <input
               type="text"
-              id="first_name"
-              name="first_name"
-              value={profile.first_name}
+              id="name"
+              name="name"
+              value={profile.name}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
             />
           </div>
           <div>
-            <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name</label>
-            <input
-              type="text"
-              id="last_name"
-              name="last_name"
-              value={profile.last_name}
+            <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
+            <select
+              id="role"
+              name="role"
+              value={profile.role}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-            />
-          </div>
-          <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={profile.username}
-              onChange={handleChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-            />
+            >
+              <option value="">Select a role</option>
+              <option value="Bass Guitar">Bass Guitar</option>
+              <option value="Drums">Drums</option>
+              <option value="Lead Guitar">Lead Guitar</option>
+              <option value="Rhythm Guitar">Rhythm Guitar</option>
+              <option value="Keyboard">Keyboard</option>
+              <option value="Vocals">Vocals</option>
+              <option value="Sound Engineer">Sound Engineer</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>

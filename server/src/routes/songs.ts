@@ -16,12 +16,12 @@ router.get('/', async (req, res) => {
 });
 
 // Get a single song by ID
-router.get('/:song_id', async (req, res) => {
-  const { song_id } = req.params;
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
   const { data, error } = await supabase
     .from('songs')
     .select('*')
-    .eq('song_id', song_id)
+    .eq('id', id)
     .single();
 
   if (error) {
@@ -44,7 +44,7 @@ router.post('/', async (req, res) => {
   // Check for duplicate song (title + artist)
   const { data: existingSong, error: existingError } = await supabase
     .from('songs')
-    .select('song_id')
+    .select('id')
     .eq('original_artist', original_artist)
     .eq('title', title)
     .single();
@@ -67,8 +67,8 @@ router.post('/', async (req, res) => {
 });
 
 // Update a song
-router.put('/:song_id', async (req, res) => {
-  const { song_id } = req.params;
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
   const { original_artist, title, key_signature, lyrics } = req.body;
 
   if (!original_artist || !title || !lyrics) {
@@ -78,10 +78,10 @@ router.put('/:song_id', async (req, res) => {
   // Check for duplicate song (title + artist) excluding the current song being updated
   const { data: existingSong, error: existingError } = await supabase
     .from('songs')
-    .select('song_id')
+    .select('id')
     .eq('original_artist', original_artist)
     .eq('title', title)
-    .neq('song_id', song_id)
+    .neq('id', id)
     .single();
 
   if (existingSong) {
@@ -94,7 +94,7 @@ router.put('/:song_id', async (req, res) => {
   const { data, error } = await supabase
     .from('songs')
     .update({ original_artist, title, key_signature, lyrics })
-    .eq('song_id', song_id)
+    .eq('id', id)
     .select()
     .single();
 
@@ -103,12 +103,12 @@ router.put('/:song_id', async (req, res) => {
 });
 
 // Delete a song
-router.delete('/:song_id', async (req, res) => {
-  const { song_id } = req.params;
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
   const { error } = await supabase
     .from('songs')
     .delete()
-    .eq('song_id', song_id);
+    .eq('id', id);
 
   if (error) return res.status(500).json({ error: error.message });
   res.status(204).send();

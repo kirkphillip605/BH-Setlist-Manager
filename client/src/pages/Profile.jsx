@@ -13,13 +13,10 @@ const Profile = () => {
       <h1 className="text-3xl font-bold text-gray-800 mb-6 dark:text-gray-100">Profile</h1>
       <div className="space-y-4">
         <p>
-          <strong>First Name:</strong> {user.first_name}
+          <strong>Name:</strong> {user.name}
         </p>
         <p>
-          <strong>Last Name:</strong> {user.last_name}
-        </p>
-        <p>
-          <strong>Username:</strong> {user.username}
+          <strong>Role:</strong> {user.role || 'Not specified'}
         </p>
         <p>
           <strong>Email:</strong> {user.email}

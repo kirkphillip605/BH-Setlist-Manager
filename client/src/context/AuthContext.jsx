@@ -17,7 +17,18 @@ export const AuthProvider = ({ children }) => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session) {
-          setUser(session.user);
+          // Fetch user data from our users table
+          const { data: userData, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (userData && !error) {
+            setUser(userData);
+          } else {
+            setUser(session.user);
+          }
         } else {
           setUser(null);
         }
@@ -40,7 +51,18 @@ export const AuthProvider = ({ children }) => {
         throw new Error(error.message);
       }
       if (data?.session?.user) {
-        setUser(data.session.user);
+        // Fetch user data from our users table
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', data.session.user.id)
+          .single();
+        
+        if (userData && !userError) {
+          setUser(userData);
+        } else {
+          setUser(data.session.user);
+        }
         navigate('/');
       }
     } catch (error) {

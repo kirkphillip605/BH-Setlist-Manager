@@ -81,10 +81,10 @@ const ResizableTable = ({ columns, data }) => {
         </thead>
         <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
           {data.map((row, rowIndex) => (
-            <tr key={row.song_id || rowIndex} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+            <tr key={row.id || rowIndex} className="hover:bg-gray-50 dark:hover:bg-gray-700">
               {columns.map((col) => (
                 <td
-                  key={`${row.song_id || rowIndex}-${col.key}`}
+                  key={`${row.id || rowIndex}-${col.key}`}
                   className={`px-6 py-4 whitespace-nowrap text-sm ${col.align === 'right' ? 'text-right' : 'text-left'} ${col.key === 'actions' ? 'font-medium' : 'text-gray-700 dark:text-gray-300'}`}
                   style={{ width: columnWidths[col.key] }}
                 >

@@ -10,9 +10,8 @@ const UserManagement = () => {
   const [error, setError] = useState(null);
   const [showAddUserForm, setShowAddUserForm] = useState(false);
   const [newUser, setNewUser] = useState({
-    first_name: '',
-    last_name: '',
-    username: '',
+    name: '',
+    role: '',
     email: '',
     password: '',
     user_level: 1,
@@ -71,9 +70,8 @@ const UserManagement = () => {
       const { data: userInsertData, error: userInsertError } = await supabase
         .from('users')
         .insert({
-          first_name: newUser.first_name,
-          last_name: newUser.last_name,
-          username: newUser.username,
+          name: newUser.name,
+          role: newUser.role,
           email: newUser.email,
           user_level: newUser.user_level,
           id: data.user.id,
@@ -85,9 +83,8 @@ const UserManagement = () => {
 
       fetchUsers();
       setNewUser({
-        first_name: '',
-        last_name: '',
-        username: '',
+        name: '',
+        role: '',
         email: '',
         password: '',
         user_level: 1,
@@ -105,9 +102,8 @@ const UserManagement = () => {
       const { error } = await supabase
         .from('users')
         .update({
-          first_name: editingUser.first_name,
-          last_name: editingUser.last_name,
-          username: editingUser.username,
+          name: editingUser.name,
+          role: editingUser.role,
           email: editingUser.email,
           user_level: parseInt(editingUser.user_level, 10), // Ensure user_level is an integer
         })
@@ -177,40 +173,36 @@ const UserManagement = () => {
           <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Add New User</h3>
           <form onSubmit={handleAddUser} className="space-y-4">
             <div>
-              <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">First Name</label>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
               <input
                 type="text"
-                id="first_name"
-                name="first_name"
-                value={newUser.first_name}
+                id="name"
+                name="name"
+                value={newUser.name}
                 onChange={handleInputChange}
                 required
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
               />
             </div>
             <div>
-              <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name</label>
-              <input
-                type="text"
-                id="last_name"
-                name="last_name"
-                value={newUser.last_name}
+              <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
+              <select
+                id="role"
+                name="role"
+                value={newUser.role}
                 onChange={handleInputChange}
-                required
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-              />
-            </div>
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                value={newUser.username}
-                onChange={handleInputChange}
-                required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-              />
+              >
+                <option value="">Select a role</option>
+                <option value="Bass Guitar">Bass Guitar</option>
+                <option value="Drums">Drums</option>
+                <option value="Lead Guitar">Lead Guitar</option>
+                <option value="Rhythm Guitar">Rhythm Guitar</option>
+                <option value="Keyboard">Keyboard</option>
+                <option value="Vocals">Vocals</option>
+                <option value="Sound Engineer">Sound Engineer</option>
+                <option value="Other">Other</option>
+              </select>
             </div>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
@@ -273,7 +265,7 @@ const UserManagement = () => {
                   Name
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
-                  Username
+                  Role
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                   Email
@@ -290,9 +282,9 @@ const UserManagement = () => {
               {users.map((user) => (
                 <tr key={user.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {user.first_name} {user.last_name}
+                    {user.name}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{user.username}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{user.role || 'Not specified'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{user.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{user.user_level}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -300,28 +292,28 @@ const UserManagement = () => {
                       <form onSubmit={handleUpdateUser} className="flex items-center justify-end space-x-2">
                         <input
                           type="text"
-                          name="first_name"
-                          value={editingUser.first_name || ''}
+                          name="name"
+                          value={editingUser.name || ''}
                           onChange={handleEditInputChange}
-                          placeholder="First Name"
+                          placeholder="Full Name"
                           className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
                         />
-                        <input
-                          type="text"
-                          name="last_name"
-                          value={editingUser.last_name || ''}
+                        <select
+                          name="role"
+                          value={editingUser.role || ''}
                           onChange={handleEditInputChange}
-                          placeholder="Last Name"
                           className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-                        />
-                        <input
-                          type="text"
-                          name="username"
-                          value={editingUser.username || ''}
-                          onChange={handleEditInputChange}
-                          placeholder="Username"
-                          className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-                        />
+                        >
+                          <option value="">Select a role</option>
+                          <option value="Bass Guitar">Bass Guitar</option>
+                          <option value="Drums">Drums</option>
+                          <option value="Lead Guitar">Lead Guitar</option>
+                          <option value="Rhythm Guitar">Rhythm Guitar</option>
+                          <option value="Keyboard">Keyboard</option>
+                          <option value="Vocals">Vocals</option>
+                          <option value="Sound Engineer">Sound Engineer</option>
+                          <option value="Other">Other</option>
+                        </select>
                         <input
                           type="email"
                           name="email"

@@ -95,7 +95,7 @@ const SongFormPage = () => {
       if (isEditing) {
         navigate(`/songs/${songId}`); // Go back to the song view page
       } else {
-        navigate('/manage-songs'); // Go back to the manage songs list
+        navigate('/songs'); // Go back to the manage songs list
       }
     } catch (err) {
       console.error('Error saving song:', err);
@@ -109,7 +109,7 @@ const SongFormPage = () => {
     if (isEditing) {
       navigate(`/songs/${songId}`); // Go back to the song view page
     } else {
-      navigate('/manage-songs'); // Go back to the manage songs list
+      navigate('/songs'); // Go back to the manage songs list
     }
   };
 
