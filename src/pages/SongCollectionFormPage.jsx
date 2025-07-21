@@ -15,6 +15,7 @@ const SongCollectionFormPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [collectionName, setCollectionName] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
   const [collectionSongs, setCollectionSongs] = useState([]);
   const [showSongSelector, setShowSongSelector] = useState(false);
 
@@ -37,6 +38,7 @@ const SongCollectionFormPage = () => {
     try {
       const data = await songCollectionsService.getSongCollectionById(collectionId);
       setCollectionName(data.name);
+      setIsPublic(data.is_public || false);
       // Transform the data structure to include song details
       const songs = data.song_collection_songs
         ?.map(cs => ({
@@ -89,6 +91,7 @@ const SongCollectionFormPage = () => {
       const collectionData = {
         name: collectionName,
         user_id: user.id,
+        is_public: isPublic,
         songs: collectionSongs.map((song, index) => ({
           song_id: song.id,
           song_order: index + 1
@@ -151,6 +154,19 @@ const SongCollectionFormPage = () => {
               required
             />
           </div>
+         
+         <div className="flex items-center">
+           <input
+             id="isPublic"
+             type="checkbox"
+             checked={isPublic}
+             onChange={(e) => setIsPublic(e.target.checked)}
+             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-600 rounded bg-slate-700"
+           />
+           <label htmlFor="isPublic" className="ml-2 block text-sm text-slate-300">
+             Make this collection public (visible to all users)
+           </label>
+         </div>
 
           <div className="flex justify-end space-x-3">
             <button

@@ -21,25 +21,54 @@ const UserManagement = () => {
 
   useEffect(() => {
     setPageTitle('User Management');
-    if (authUser?.user_level === 3) { // Only fetch users if admin
-      fetchUsers();
-    }
+    fetchUsers();
   }, [authUser, setPageTitle]);
 
   const fetchUsers = async () => {
+    // Check if user is admin first
+    if (!authUser || authUser.user_level !== 3) {
+      setError('You do not have permission to view this page.');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
-
+      // Use auth.admin.listUsers to get all users
+      const { data, error } = await supabase.auth.admin.listUsers();
+      
       if (error) {
         throw error;
       }
-      setUsers(data || []);
+
+      // Get user profiles from our users table
+      const userIds = data.users.map(user => user.id);
+      const { data: profiles, error: profileError } = await supabase
+        .from('users')
+        .select('*')
+        .in('id', userIds)
+        .order('created_at', { ascending: false });
+
+      if (profileError) {
+        throw profileError;
+      }
+      
+      // Merge auth data with profile data
+      const mergedUsers = data.users.map(authUser => {
+        const profile = profiles?.find(p => p.id === authUser.id);
+        return {
+          ...authUser,
+          ...profile,
+          email: authUser.email, // Use auth email as primary
+          last_sign_in_at: authUser.last_sign_in_at,
+          email_confirmed_at: authUser.email_confirmed_at
+        };
+      });
+      
+      setUsers(mergedUsers || []);
     } catch (error) {
+      console.error('Error fetching users:', error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -147,6 +176,23 @@ const UserManagement = () => {
       }
       
       alert('Invitation resent successfully!');
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+
+  const handleResetUserPassword = async (userEmail) => {
+    setError(null);
+    try {
+      const { error } = await supabase.auth.admin.resetPasswordForEmail(userEmail, {
+        redirectTo: `${window.location.origin}/auth/reset-password`
+      });
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      alert('Password reset email sent successfully!');
     } catch (error) {
       setError(error.message);
     }
@@ -273,6 +319,9 @@ const UserManagement = () => {
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                   User Level
                 </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
+                  Last Login
+                </th>
                 <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
                   Actions
                 </th>
@@ -287,6 +336,9 @@ const UserManagement = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{user.role || 'Not specified'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{user.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{user.user_level}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                    {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'Never'}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     {editingUser?.id === user.id ? (
                       <form onSubmit={handleUpdateUser} className="flex items-center justify-end space-x-2">
@@ -348,6 +400,12 @@ const UserManagement = () => {
                       </form>
                     ) : (
                       <div className="flex items-center justify-end space-x-2">
+                        <button
+                          onClick={() => handleResetUserPassword(user.email)}
+                          className="inline-flex items-center px-3 py-1 border border-yellow-300 rounded-md shadow-sm text-xs font-medium text-yellow-700 bg-yellow-50 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 dark:bg-yellow-900 dark:border-yellow-700 dark:text-yellow-200"
+                        >
+                          Reset Password
+                        </button>
                         <button
                           onClick={() => handleResendInvite(user.email)}
                           className="inline-flex items-center px-3 py-1 border border-blue-300 rounded-md shadow-sm text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-900 dark:border-blue-700 dark:text-blue-200"

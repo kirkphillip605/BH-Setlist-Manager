@@ -40,7 +40,7 @@ export const setlistsService = {
 
   // Create a new setlist
   async createSetlist(setlistData) {
-    const { name, user_id } = setlistData;
+    const { name, user_id, is_public = false } = setlistData;
 
     if (!name || !user_id) {
       throw new Error('Setlist name and user_id are required.');
@@ -63,7 +63,7 @@ export const setlistsService = {
 
     const { data: newSetlist, error: setlistError } = await supabase
       .from('setlists')
-      .insert([{ name, user_id }])
+      .insert([{ name, user_id, is_public }])
       .select()
       .single();
 
@@ -75,7 +75,7 @@ export const setlistsService = {
 
   // Update a setlist
   async updateSetlist(id, setlistData) {
-    const { name } = setlistData;
+    const { name, is_public } = setlistData;
 
     if (!name) {
       throw new Error('Setlist name is required.');
@@ -110,7 +110,7 @@ export const setlistsService = {
 
     const { data: updatedSetlist, error: setlistError } = await supabase
       .from('setlists')
-      .update({ name })
+      .update({ name, is_public })
       .eq('id', id)
       .select()
       .single();

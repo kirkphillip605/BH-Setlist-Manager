@@ -43,7 +43,7 @@ export const songCollectionsService = {
 
   // Create a new song collection
   async createSongCollection(collectionData) {
-    const { name, songs, user_id } = collectionData;
+    const { name, songs, user_id, is_public = false } = collectionData;
 
     if (!name || !user_id) {
       throw new Error('Collection name and user_id are required.');
@@ -66,7 +66,7 @@ export const songCollectionsService = {
 
     const { data: newCollection, error: collectionError } = await supabase
       .from('song_collections')
-      .insert([{ name, user_id }])
+      .insert([{ name, user_id, is_public }])
       .select()
       .single();
 
@@ -94,7 +94,7 @@ export const songCollectionsService = {
 
   // Update a song collection
   async updateSongCollection(id, collectionData) {
-    const { name, songs } = collectionData;
+    const { name, songs, is_public } = collectionData;
 
     if (!name) {
       throw new Error('Collection name is required.');
@@ -129,7 +129,7 @@ export const songCollectionsService = {
 
     const { data: updatedCollection, error: collectionError } = await supabase
       .from('song_collections')
-      .update({ name })
+      .update({ name, is_public })
       .eq('id', id)
       .select()
       .single();

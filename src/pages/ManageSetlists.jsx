@@ -162,6 +162,9 @@ const ManageSetlists = () => {
                         Setlist Name {renderSortIcon('name')}
                       </div>
                     </th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                      Visibility
+                    </th>
                     <th 
                       className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600 transition-colors"
                       onClick={() => handleSort('created_at')}
@@ -185,6 +188,17 @@ const ManageSetlists = () => {
                         >
                           {setlist.name}
                         </button>
+                      </td>
+                      <td className="px-4 sm:px-6 py-4 text-sm text-slate-300">
+                        {setlist.is_public ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                            Public
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">
+                            Private
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 sm:px-6 py-4 text-sm text-slate-300">
                         {new Date(setlist.created_at).toLocaleDateString()}

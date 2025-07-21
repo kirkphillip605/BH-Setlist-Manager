@@ -134,6 +134,14 @@ const Login = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 px-4">
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 p-6 sm:p-8 w-full max-w-md">
+        <div className="text-center mb-6">
+          <img 
+            src="/bhlogo.png" 
+            alt="Logo" 
+            className="mx-auto h-20 w-auto mb-4"
+          />
+        </div>
+        
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 text-center">Login</h2>
 
         {error && (

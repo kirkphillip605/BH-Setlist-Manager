@@ -4,6 +4,7 @@ import { Save, XCircle } from 'lucide-react';
 import ReactQuill from 'react-quill';
 import { songsService } from '../services/songsService';
 import { usePageTitle } from '../context/PageTitleContext';
+import { useAuth } from '../context/AuthContext';
 
 const keySignatures = [
   'C Major', 'G Major', 'D Major', 'A Major', 'E Major', 'B Major', 'F# Major', 'C# Major',
@@ -15,6 +16,7 @@ const keySignatures = [
 const SongFormPage = () => {
   const { songId } = useParams(); // Get songId from URL for editing
   const { setPageTitle } = usePageTitle();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
@@ -27,6 +29,14 @@ const SongFormPage = () => {
   });
 
   const isEditing = useMemo(() => !!songId, [songId]);
+
+  // Check permissions
+  useEffect(() => {
+    if (!user || user.user_level < 2) {
+      navigate('/songs');
+      return;
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     if (isEditing) {
@@ -118,6 +128,11 @@ const SongFormPage = () => {
     'list', 'bullet', 'indent',
     'link', 'image'
   ];
+
+  // Don't render if user doesn't have permission
+  if (!user || user.user_level < 2) {
+    return null;
+  }
 
   if (loading && isEditing) {
     return (

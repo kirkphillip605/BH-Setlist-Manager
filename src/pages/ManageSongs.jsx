@@ -160,6 +160,8 @@ const ManageSongs = () => {
       header: 'Actions',
       render: (song) => (
         <div className="flex justify-end space-x-2">
+          {user && user.user_level >= 2 && (
+            <>
           <button
             onClick={() => navigate(`/songs/edit/${song.id}`)} // Navigate to edit page
             className="text-indigo-600 hover:text-indigo-900 mr-3 dark:text-indigo-400 dark:hover:text-indigo-300"
@@ -167,6 +169,7 @@ const ManageSongs = () => {
           >
             <Edit size={18} />
           </button>
+          {user && user.user_level >= 2 && (
           <button
             onClick={() => handleDeleteSong(song.id)}
             className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
@@ -174,6 +177,9 @@ const ManageSongs = () => {
           >
             <Trash2 size={18} />
           </button>
+            </>
+          )}
+          )}
         </div>
       ),
       initialWidth: 120,

@@ -14,6 +14,7 @@ const SetlistFormPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [setlistName, setSetlistName] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
 
   const isEditing = !!setlistId;
 
@@ -33,6 +34,7 @@ const SetlistFormPage = () => {
     try {
       const data = await setlistsService.getSetlistById(setlistId);
       setSetlistName(data.name);
+      setIsPublic(data.is_public || false);
     } catch (err) {
       console.error('Error fetching setlist:', err);
       setError(err.message || 'Failed to load setlist');
@@ -54,7 +56,8 @@ const SetlistFormPage = () => {
     try {
       const setlistData = {
         name: setlistName,
-        user_id: user.id
+        user_id: user.id,
+        is_public: isPublic
       };
 
       if (isEditing) {
@@ -111,6 +114,19 @@ const SetlistFormPage = () => {
               placeholder="Enter setlist name..."
               required
             />
+          </div>
+          
+          <div className="flex items-center">
+            <input
+              id="isPublic"
+              type="checkbox"
+              checked={isPublic}
+              onChange={(e) => setIsPublic(e.target.checked)}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-600 rounded bg-slate-700"
+            />
+            <label htmlFor="isPublic" className="ml-2 block text-sm text-slate-300">
+              Make this setlist public (visible to all users)
+            </label>
           </div>
 
           <div className="flex justify-end space-x-3">
