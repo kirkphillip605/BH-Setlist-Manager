@@ -140,7 +140,12 @@ const SetlistDetailPage = () => {
                     {index + 1}
                   </div>
                   <div>
-                    <h3 className="text-lg font-medium text-slate-100">{set.name}</h3>
+                    <button
+                      onClick={() => navigate(`/setlists/${setlistId}/sets/${set.id}`)}
+                      className="text-lg font-medium text-blue-400 hover:text-blue-300 transition-colors text-left"
+                    >
+                      {set.name}
+                    </button>
                     <p className="text-sm text-slate-400">
                       Created {new Date(set.created_at).toLocaleDateString()}
                     </p>

@@ -169,7 +169,12 @@ const ManageSongCollections = () => {
                   {currentCollections.map((collection) => (
                     <tr key={collection.id} className="hover:bg-slate-700 transition-colors">
                       <td className="px-4 sm:px-6 py-4">
-                        <div className="text-sm font-medium text-slate-100">{collection.name}</div>
+                        <button
+                          onClick={() => navigate(`/song-collections/${collection.id}`)}
+                          className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors text-left"
+                        >
+                          {collection.name}
+                        </button>
                       </td>
                       <td className="px-4 sm:px-6 py-4 text-sm text-slate-300">
                         {new Date(collection.created_at).toLocaleDateString()}

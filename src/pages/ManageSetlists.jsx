@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { PlusCircle, Edit, Trash2, ChevronUp, ChevronDown, ListMusic } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, ChevronUp, ChevronDown, ListMusic, Printer } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 import { setlistsService } from '../services/setlistsService';
+import { generateSetlistPDF } from '../utils/pdfGenerator';
 
 const ManageSetlists = () => {
   const { setPageTitle } = usePageTitle();
@@ -52,6 +53,15 @@ const ManageSetlists = () => {
       setError(err.message || 'Failed to delete setlist. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePrintSetlist = async (setlist) => {
+    try {
+      await generateSetlistPDF(setlist);
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      setError('Failed to generate PDF. Please try again.');
     }
   };
 
@@ -181,6 +191,13 @@ const ManageSetlists = () => {
                       </td>
                       <td className="px-4 sm:px-6 py-4 text-right">
                         <div className="flex justify-end space-x-2">
+                          <button
+                            onClick={() => handlePrintSetlist(setlist)}
+                            className="p-2 text-green-400 hover:text-green-300 transition-colors"
+                            title="Print Setlist"
+                          >
+                            <Printer size={18} />
+                          </button>
                           <button
                             onClick={() => navigate(`/setlists/edit/${setlist.id}`)}
                             className="p-2 text-blue-400 hover:text-blue-300 transition-colors"

@@ -17,6 +17,8 @@ import SetlistFormPage from './pages/SetlistFormPage';
 import SetlistDetailPage from './pages/SetlistDetailPage';
 import SetFormPage from './pages/SetFormPage';
 import SongCollectionFormPage from './pages/SongCollectionFormPage';
+import SongCollectionDetailPage from './pages/SongCollectionDetailPage';
+import SetDetailPage from './pages/SetDetailPage';
 import PrivateRoute from './components/PrivateRoute';
 import Login from './pages/Login';
 import EditProfile from './pages/EditProfile';
@@ -84,6 +86,14 @@ const router = createBrowserRouter([
   {
     path: "/song-collections/edit/:collectionId",
     element: <PrivateRoute><Layout><SongCollectionFormPage /></Layout></PrivateRoute>
+  },
+  {
+    path: "/song-collections/:collectionId",
+    element: <PrivateRoute><Layout><SongCollectionDetailPage /></Layout></PrivateRoute>
+  },
+  {
+    path: "/setlists/:setlistId/sets/:setId",
+    element: <PrivateRoute><Layout><SetDetailPage /></Layout></PrivateRoute>
   },
   {
     path: "/profile",
