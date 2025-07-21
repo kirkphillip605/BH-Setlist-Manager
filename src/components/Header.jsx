@@ -28,7 +28,7 @@ const Header = () => {
     if (path === '/change-password') return 'Change Password';
     if (path === '/admin/users') return 'User Management';
     
-    return 'GigFlow';
+    return '';
   };
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
