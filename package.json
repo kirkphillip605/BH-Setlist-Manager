@@ -1,15 +1,13 @@
 {
-  "name": "setlist-manager",
+  "name": "music-app-frontend",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "client:dev": "cd client && npm run dev",
-    "client:build": "cd client && npm run build",
-    "client:preview": "cd client && npm run preview"
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.44.4",
