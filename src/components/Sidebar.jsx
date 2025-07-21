@@ -8,11 +8,11 @@ const Sidebar = () => {
 
   return (
     <div className="w-64 bg-gradient-to-br from-slate-600 via-blue-600 to-slate-800 p-4 flex flex-col dark:bg-gray-950">
-      <div className="text-2xl font-bold mb-8 text-232323-400">Setlist Console</div>
+      <div className="text-2xl font-bold mb-8 text-white-400">Setlist Console</div>
       <nav className="flex-1">
         <ul>
           <li className="mb-4">
-            <Link to="/" className="flex items-center text-white hover:text-white hover:bg-gray-700 dark:hover:bg-gray-800 p-2 rounded-md transition-colors duration-200">
+            <Link to="/" className="flex items-center text-white-300 hover:text-white hover:bg-gray-700 dark:hover:bg-gray-800 p-2 rounded-md transition-colors duration-200">
               <Home size={20} className="mr-3" />
               Dashboard
             </Link>
