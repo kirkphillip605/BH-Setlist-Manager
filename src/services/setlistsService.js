@@ -3,13 +3,26 @@ import { supabase } from '../supabaseClient';
 export const setlistsService = {
   // Get all setlists for the current user
   async getAllSetlists() {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    try {
     const { data, error } = await supabase
       .from('setlists')
       .select('*')
-      .order('name', { ascending: true });
+      .order('name', { ascending: true })
+      .abortSignal(controller.signal);
 
+      clearTimeout(timeoutId);
     if (error) throw new Error(error.message);
     return data;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        throw new Error('Request timed out. Please try again.');
+      }
+      throw err;
+    }
   },
 
   // Get a single setlist by ID with its sets

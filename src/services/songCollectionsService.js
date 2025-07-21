@@ -3,13 +3,26 @@ import { supabase } from '../supabaseClient';
 export const songCollectionsService = {
   // Get all song collections for the current user
   async getAllSongCollections() {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    try {
     const { data, error } = await supabase
       .from('song_collections')
       .select('*')
-      .order('name', { ascending: true });
+      .order('name', { ascending: true })
+      .abortSignal(controller.signal);
 
+      clearTimeout(timeoutId);
     if (error) throw new Error(error.message);
     return data;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        throw new Error('Request timed out. Please try again.');
+      }
+      throw err;
+    }
   },
 
   // Get a single song collection by ID with its songs
