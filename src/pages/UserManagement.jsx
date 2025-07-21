@@ -62,8 +62,8 @@ const UserManagement = () => {
     try {
       // Use Supabase auth admin to invite user by email
       const { data, error } = await supabase.auth.admin.inviteUserByEmail(
-        email: newUser.email,
-        options: {
+        newUser.email,
+        {
           data: {
             name: newUser.name,
             role: newUser.role,
