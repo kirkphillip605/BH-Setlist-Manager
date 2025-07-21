@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
     );
 
     return () => {
-      authListener?.unsubscribe();
+      authListener.subscription?.unsubscribe();
     };
   }, [navigate]); // Add navigate as a dependency
 
