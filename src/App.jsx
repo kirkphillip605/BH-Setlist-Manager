@@ -18,16 +18,18 @@ import ChangePassword from './pages/ChangePassword';
 import { useAuth } from './context/AuthContext';
 
 function App() {
-  const { user, loading } = useAuth();
+  const { user, loading, initialized } = useAuth();
 
-  if (loading) {
+  if (!initialized || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg text-gray-600">Loading...</div>
       </div>
     );
   }
 
+  // Add error boundary-like behavior
+  try {
   return (
     <Routes>
       <Route 
@@ -51,6 +53,14 @@ function App() {
       <Route path="/admin/users" element={<PrivateRoute><Layout><UserManagement /></Layout></PrivateRoute>} />
     </Routes>
   );
+  } catch (error) {
+    console.error('App render error:', error);
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="text-lg text-red-600">Something went wrong. Please refresh the page.</div>
+      </div>
+    );
+  }
 }
 
 export default App;

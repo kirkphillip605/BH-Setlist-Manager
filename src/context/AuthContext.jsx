@@ -10,57 +10,91 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
+
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        // Fetch user data from our users table
-        const { data: userData, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (userData && !error) {
-          setUser(userData);
-        } else {
-          setUser(session.user);
+        if (error) {
+          console.error('Session error:', error);
+          if (mounted) {
+            setUser(null);
+            setLoading(false);
+            setInitialized(true);
+          }
+          return;
         }
-      } else {
-        setUser(null);
+
+        if (session && mounted) {
+          // Fetch user data from our users table
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (userData && !userError && mounted) {
+            setUser(userData);
+          } else if (mounted) {
+            setUser(session.user);
+          }
+        } else if (mounted) {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        if (mounted) {
+          setUser(null);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+          setInitialized(true);
+        }
       }
-      setLoading(false);
     };
 
     getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (session) {
-          // Fetch user data from our users table
-          const { data: userData, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (userData && !error) {
-            setUser(userData);
+        if (!mounted) return;
+
+        try {
+          if (session) {
+            // Fetch user data from our users table
+            const { data: userData, error: userError } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+            
+            if (userData && !userError) {
+              setUser(userData);
+            } else {
+              setUser(session.user);
+            }
           } else {
-            setUser(session.user);
+            setUser(null);
           }
-        } else {
+        } catch (error) {
+          console.error('Auth state change error:', error);
           setUser(null);
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
     return () => {
+      mounted = false;
       subscription?.unsubscribe();
     };
-  }, []); // Remove navigate dependency
+  }, []);
 
   const signIn = async (email, password) => {
     try {
@@ -122,6 +156,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     loading,
+    initialized,
     signIn,
     signOut,
     resetPassword,
@@ -130,7 +165,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {initialized && children}
     </AuthContext.Provider>
   );
 };
