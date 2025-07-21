@@ -20,16 +20,18 @@ import { useAuth } from './context/AuthContext';
 function App() {
   const { user, loading, initialized } = useAuth();
 
+  // Show loading screen while auth is initializing
   if (!initialized || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-lg text-gray-600">Loading...</div>
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+          <div className="text-lg text-gray-600">Loading...</div>
+        </div>
       </div>
     );
   }
 
-  // Add error boundary-like behavior
-  try {
   return (
     <Routes>
       <Route 
@@ -53,14 +55,6 @@ function App() {
       <Route path="/admin/users" element={<PrivateRoute><Layout><UserManagement /></Layout></PrivateRoute>} />
     </Routes>
   );
-  } catch (error) {
-    console.error('App render error:', error);
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-lg text-red-600">Something went wrong. Please refresh the page.</div>
-      </div>
-    );
-  }
 }
 
 export default App;
