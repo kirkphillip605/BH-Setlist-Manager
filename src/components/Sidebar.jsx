@@ -12,7 +12,7 @@ const Sidebar = () => {
       <nav className="flex-1">
         <ul>
           <li className="mb-4">
-            <Link to="/" className="flex items-center text-gray-300 hover:text-white hover:bg-gray-700 dark:hover:bg-gray-800 p-2 rounded-md transition-colors duration-200">
+            <Link to="/" className="flex items-center text-white-300 hover:text-white hover:bg-gray-700 dark:hover:bg-gray-800 p-2 rounded-md transition-colors duration-200">
               <Home size={20} className="mr-3" />
               Dashboard
             </Link>
