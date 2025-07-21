@@ -14,13 +14,13 @@ const Header = ({ onToggleSidebar }) => {
   };
 
   return (
-    <header className="bg-white dark:bg-slate-800 shadow-md border-b border-gray-200 dark:border-slate-700">
+    <header className="bg-slate dark:bg-slate-800 shadow-md border-b border-gray-200 dark:border-slate-700">
       <div className="flex items-center justify-between px-4 py-3 lg:px-6 lg:py-4">
         {/* Mobile menu button */}
         <div className="flex items-center">
           <button
             onClick={onToggleSidebar}
-            className="lg:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gradient-to-b from-slate-800 via-blue-900 to-slate-900 transition-colors mr-3"
+            className="lg:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors mr-3"
           >
             <Menu size={24} />
           </button>
