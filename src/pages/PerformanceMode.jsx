@@ -307,7 +307,7 @@ const PerformanceMode = () => {
       ?.map(ss => ss.songs)
       .sort((a, b) => {
         const aOrder = currentSet.set_songs.find(ss => ss.songs.id === a.id)?.song_order || 0;
-        const bOrder = currentSet.set_songs.find(ss => ss.songs.id => b.id)?.song_order || 0;
+        const bOrder = currentSet.set_songs.find(ss => ss.songs.id === b.id)?.song_order || 0;
         return aOrder - bOrder;
       }) || [];
 
