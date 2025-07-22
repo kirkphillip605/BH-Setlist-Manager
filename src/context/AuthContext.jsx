@@ -213,7 +213,7 @@ export const AuthProvider = ({ children }) => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: `https://xpatopjcfwsyxmazvopp.supabase.co/auth/v1/callback`
         }
       });
       
