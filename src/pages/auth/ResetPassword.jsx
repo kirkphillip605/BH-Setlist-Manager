@@ -69,43 +69,43 @@ const ResetPassword = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
-        <div className="theme-card p-6 sm:p-8 auth-max-width text-center">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 px-4">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 p-6 sm:p-8 w-full max-w-md text-center">
           <div className="w-16 h-16 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
           </div>
-          <h2 className="text-heading-xl mb-4">Password Updated!</h2>
-          <p className="text-body mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Password Updated!</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
             Your password has been successfully updated. You'll be redirected to the dashboard.
           </p>
-          <div className="loading-spinner w-6 h-6 border-2 mx-auto"></div>
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
-      <div className="theme-card p-6 sm:p-8 auth-max-width">
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 px-4">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 p-6 sm:p-8 w-full max-w-md">
         <div className="text-center mb-6">
           <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
             <Lock className="w-8 h-8 text-blue-600 dark:text-blue-400" />
           </div>
-          <h2 className="text-heading-xl">Reset Your Password</h2>
-          <p className="text-muted mt-2">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Reset Your Password</h2>
+          <p className="text-gray-600 dark:text-gray-300 mt-2">
             Enter your new password below
           </p>
         </div>
 
         {error && (
-          <div className="alert-error" role="alert">
+          <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg mb-4" role="alert">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="section-spacing">
-          <div className="form-group">
-            <label htmlFor="password" className="form-label">New Password</label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
             <input
               type="password"
               id="password"
@@ -113,12 +113,12 @@ const ResetPassword = () => {
               value={formData.password}
               onChange={handleChange}
               required
-              className="input-theme"
+              className="block w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base dark:bg-slate-700 dark:text-gray-100 transition-colors"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="confirmPassword" className="form-label">Confirm New Password</label>
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm New Password</label>
             <input
               type="password"
               id="confirmPassword"
@@ -126,18 +126,18 @@ const ResetPassword = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
               required
-              className="input-theme"
+              className="block w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base dark:bg-slate-700 dark:text-gray-100 transition-colors"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary btn-large w-full"
+            className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? (
               <>
-                <div className="loading-spinner w-4 h-4 mr-2"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                 Updating Password...
               </>
             ) : (

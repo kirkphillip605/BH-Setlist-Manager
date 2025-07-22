@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { PlusCircle, Edit, Trash2, ChevronUp, ChevronDown, Music, Search, AlertTriangle } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, ChevronUp, ChevronDown, Music, Search } from 'lucide-react';
 import ResizableTable from '../components/ResizableTable';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -123,7 +123,7 @@ const ManageSongs = () => {
         </div>
       ),
       render: (song) => (
-        <Link to={`/songs/${song.id}`} className="text-link font-medium">
+        <Link to={`/songs/${song.id}`} className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
           {song.title}
         </Link>
       ),
@@ -164,7 +164,7 @@ const ManageSongs = () => {
             <>
           <button
             onClick={() => navigate(`/songs/edit/${song.id}`)} // Navigate to edit page
-            className="btn-icon text-blue-400 hover:text-blue-300"
+            className="text-indigo-600 hover:text-indigo-900 mr-3 dark:text-indigo-400 dark:hover:text-indigo-300"
             title="Edit Song"
           >
             <Edit size={18} />
@@ -172,7 +172,7 @@ const ManageSongs = () => {
           {user && user.user_level >= 2 && (
           <button
             onClick={() => handleDeleteSong(song.id)}
-            className="btn-icon text-red-400 hover:text-red-300"
+            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
             title="Delete Song"
           >
             <Trash2 size={18} />
@@ -189,11 +189,13 @@ const ManageSongs = () => {
   ], [sortColumn, sortDirection, handleSort, handleDeleteSong, navigate, user]);
 
   return (
-    <div className="content-max-width">
+    <div className="max-w-7xl mx-auto fade-in">
       {error && (
-        <div className="alert-error" role="alert">
+        <div className="bg-red-900/30 border border-red-800/50 text-red-200 px-4 py-3 rounded-xl mb-6 backdrop-blur-sm" role="alert">
           <div className="flex items-center space-x-2">
-            <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0" />
+            <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
             <div>
               <strong className="font-semibold">Error</strong>
               <span className="block sm:inline"> {error}</span>
@@ -202,21 +204,21 @@ const ManageSongs = () => {
         </div>
       )}
 
-      <div className="theme-card theme-card-content">
-        <div className="theme-card-header">
+      <div className="card-modern p-6 lg:p-8">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-blue-500/10 rounded-2xl flex items-center justify-center">
               <Music className="h-5 w-5 text-blue-400" />
             </div>
             <div>
-              <h1 className="text-heading-lg">Song Library</h1>
-              <p className="text-sm text-muted">Manage your music collection</p>
+              <h1 className="text-xl font-semibold text-zinc-100">Song Library</h1>
+              <p className="text-sm text-zinc-400">Manage your music collection</p>
             </div>
           </div>
           
           <div className="w-full sm:w-1/2 lg:w-1/3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-zinc-400" />
           <label htmlFor="search" className="sr-only">Search songs</label>
           <input
             type="text"
@@ -224,7 +226,7 @@ const ManageSongs = () => {
                 placeholder="Search songs..."
             value={searchTerm}
             onChange={handleSearchChange}
-                className="input-search"
+                className="w-full pl-10 pr-4 py-3 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-zinc-400"
           />
             </div>
         </div>
@@ -232,7 +234,7 @@ const ManageSongs = () => {
           {user && user.user_level >= 2 && (
             <button
               onClick={() => navigate('/songs/add')}
-              className="btn-primary btn-large"
+              className="inline-flex items-center px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 focus-ring shadow-lg btn-animate font-medium"
             >
               <PlusCircle size={20} className="mr-2" />
               Add Song
@@ -245,14 +247,14 @@ const ManageSongs = () => {
             <div className="animate-pulse space-y-4">
               {[1, 2, 3, 4, 5].map(i => (
                 <div key={i} className="flex items-center space-x-4">
-                  <div className="w-10 h-10 loading-skeleton rounded-xl"></div>
+                  <div className="w-10 h-10 bg-zinc-700 rounded-xl"></div>
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 loading-skeleton rounded w-3/4"></div>
-                    <div className="h-3 loading-skeleton rounded w-1/2"></div>
+                    <div className="h-4 bg-zinc-700 rounded w-3/4"></div>
+                    <div className="h-3 bg-zinc-700 rounded w-1/2"></div>
                   </div>
                   <div className="flex space-x-2">
-                    <div className="w-8 h-8 loading-skeleton rounded-lg"></div>
-                    <div className="w-8 h-8 loading-skeleton rounded-lg"></div>
+                    <div className="w-8 h-8 bg-zinc-700 rounded-lg"></div>
+                    <div className="w-8 h-8 bg-zinc-700 rounded-lg"></div>
                   </div>
                 </div>
               ))}
@@ -265,12 +267,12 @@ const ManageSongs = () => {
             <div className="w-24 h-24 bg-zinc-800 rounded-3xl flex items-center justify-center mx-auto mb-6">
               <Music className="h-12 w-12 text-zinc-600" />
             </div>
-            <h3 className="text-heading-lg mb-2">No songs in your library</h3>
-            <p className="text-muted mb-8 max-w-md mx-auto">Get started by adding your first song to build your music collection.</p>
+            <h3 className="text-xl font-semibold text-zinc-200 mb-2">No songs in your library</h3>
+            <p className="text-zinc-400 mb-8 max-w-md mx-auto">Get started by adding your first song to build your music collection.</p>
             {user && user.user_level >= 2 && (
               <button
                 onClick={() => navigate('/songs/add')}
-                className="btn-primary btn-large"
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 focus-ring shadow-lg btn-animate font-medium"
               >
                 <PlusCircle size={20} className="mr-2" />
                 Add Your First Song
@@ -286,33 +288,33 @@ const ManageSongs = () => {
             </div>
 
           {/* Pagination Controls */}
-            <div className="flex flex-col sm:flex-row justify-between items-center mt-6 space-y-4 sm:space-y-0 pt-4 border-t border-zinc-800">
+            <div className="flex flex-col sm:flex-row justify-between items-center mt-6 space-y-4 sm:space-y-0">
               <div className="flex items-center space-x-2">
-                <label htmlFor="items-per-page" className="text-sm text-muted font-medium">Show:</label>
+                <label htmlFor="items-per-page" className="text-sm text-zinc-400 font-medium">Show:</label>
                 <select
                   id="items-per-page"
                   value={itemsPerPage}
                   onChange={handleItemsPerPageChange}
-                  className="select-theme text-sm"
+                  className="px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                 >
                   <option value="5">5</option>
                   <option value="10">10</option>
                   <option value="20">20</option>
                   <option value="50">50</option>
                 </select>
-                <span className="text-sm text-muted">of {filteredSongs.length} songs</span>
+                <span className="text-sm text-zinc-400">of {filteredSongs.length} songs</span>
               </div>
               <nav className="flex items-center space-x-1" aria-label="Pagination">
                 <button
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="btn-secondary"
+                  className="px-3 py-2 rounded-xl border border-zinc-700 bg-zinc-800 text-sm font-medium text-zinc-300 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-animate"
                 >
                   <ChevronUp size={16} className="-rotate-90" />
                 </button>
                 
                 <div className="flex items-center space-x-2 px-4">
-                  <span className="text-sm text-muted">
+                  <span className="text-sm text-zinc-400">
                     Page {currentPage} of {totalPages}
                   </span>
                 </div>
@@ -320,7 +322,7 @@ const ManageSongs = () => {
                 <button
                   onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="btn-secondary"
+                  className="px-3 py-2 rounded-xl border border-zinc-700 bg-zinc-800 text-sm font-medium text-zinc-300 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-animate"
                 >
                   <ChevronDown size={16} className="-rotate-90" />
                 </button>

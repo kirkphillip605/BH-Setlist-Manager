@@ -41,11 +41,11 @@ const SongViewPage = () => {
 
   if (loading) {
     return (
-      <div className="form-max-width">
-        <div className="theme-card p-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="card-modern p-6">
           <div className="text-center py-8">
-            <div className="loading-spinner w-12 h-12 border-2 mx-auto mb-4"></div>
-            <p className="text-body">Loading song details...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-zinc-300">Loading song details...</p>
           </div>
         </div>
       </div>
@@ -54,8 +54,8 @@ const SongViewPage = () => {
 
   if (error) {
     return (
-      <div className="form-max-width">
-        <div className="alert-error">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-xl mb-4">
           <strong className="font-bold">Error!</strong>
           <span className="block sm:inline"> {error}</span>
         </div>
@@ -65,23 +65,23 @@ const SongViewPage = () => {
 
   if (!song) {
     return (
-      <div className="form-max-width">
-        <div className="theme-card p-6">
-          <p className="text-center text-body">Song not found.</p>
+      <div className="max-w-4xl mx-auto">
+        <div className="card-modern p-6">
+          <p className="text-center text-zinc-300">Song not found.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="form-max-width section-spacing">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="theme-card theme-card-content">
-        <div className="theme-card-header">
+      <div className="card-modern p-4 lg:p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => navigate('/songs')}
-              className="btn-icon"
+              className="p-2 text-zinc-400 hover:text-zinc-300 transition-colors rounded-lg hover:bg-zinc-700"
             >
               <ArrowLeft size={20} />
             </button>
@@ -90,8 +90,8 @@ const SongViewPage = () => {
                 <Music className="h-6 w-6 text-blue-400" />
               </div>
               <div>
-                <h1 className="text-heading-xl mb-1">{song.title}</h1>
-                <div className="flex items-center space-x-2 text-sm text-muted">
+                <h1 className="text-2xl font-bold text-zinc-100 mb-1">{song.title}</h1>
+                <div className="flex items-center space-x-2 text-sm text-zinc-400">
                   <span>{song.original_artist}</span>
                   {song.key_signature && (
                     <>
@@ -106,7 +106,7 @@ const SongViewPage = () => {
           {user && user.user_level >= 2 && (
             <button
               onClick={handleEditClick}
-              className="btn-primary"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all btn-animate shadow-lg font-medium"
             >
               <Edit size={18} className="mr-2" />
               Edit Song
@@ -116,14 +116,14 @@ const SongViewPage = () => {
       </div>
 
       {/* Lyrics */}
-      <div className="theme-card theme-card-content">
-        <h2 className="text-heading-lg mb-6 flex items-center">
-          <Music className="h-5 w-5 mr-2 text-muted" />
+      <div className="card-modern p-4 lg:p-6">
+        <h2 className="text-xl font-semibold text-zinc-100 mb-6 flex items-center">
+          <Music className="h-5 w-5 mr-2 text-zinc-400" />
           Lyrics
         </h2>
-        <div className="prose-theme">
+        <div className="prose-dark max-w-none">
           <div
-            className="ql-editor p-0 text-body leading-relaxed" 
+            className="ql-editor p-0 text-zinc-200 leading-relaxed" 
             dangerouslySetInnerHTML={{ __html: song.lyrics }}
           />
         </div>
