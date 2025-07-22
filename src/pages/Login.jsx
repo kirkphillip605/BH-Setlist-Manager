@@ -138,11 +138,7 @@ const Login = () => {
       <div className="relative w-full max-w-md fade-in">
         <div className="glass rounded-3xl p-8 shadow-2xl border border-zinc-800/50">
         <div className="text-center mb-6">
-          <img 
-            src="/bhlogo.png" 
-            alt="Logo" 
-            className="mx-auto h-16 w-auto mb-6 drop-shadow-lg"
-          /><hr /><br />
+          
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">Welcome Back</h1>
             <p className="text-zinc-400">Sign in to your setlist management system</p>
