@@ -54,8 +54,7 @@ const ResizableTable = ({ columns, data }) => {
 
   return (
     <div className="overflow-x-auto -mx-4 sm:mx-0">
-<table ref={tableRef} className="min-w-full divide-y divide-zinc-700 table-fixed">
-        <thead className="bg-slate-700">
+      <table ref={tableRef} className="min-w-full divide-y divide-zinc-700 table-fixed">
         <thead className="bg-zinc-800 border-b border-zinc-700">
           <tr>
             {columns.map((col, index) => (
