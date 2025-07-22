@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
-import { Edit, Trash2, PlusCircle, Mail, UserCheck } from 'lucide-react';
+import { Edit, Trash2, PlusCircle, Mail, UserCheck, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 
