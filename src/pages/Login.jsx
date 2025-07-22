@@ -133,7 +133,7 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 via-transparent to-blue-800/10"></div>
       
       <div className="relative w-full max-w-md fade-in">
         <div className="glass rounded-3xl p-8 shadow-2xl border border-zinc-800/50">
