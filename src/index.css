@@ -5,115 +5,222 @@
 @tailwind utilities;
 
 body {
-  font-family: 'Inter', sans-serif;
-  background-color: #f9fafb; /* Light background */
-  color: #111827; /* Dark text */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #0f0f23; /* Deep dark background */
+  color: #f1f5f9; /* Light text */
+  line-height: 1.6;
+  font-feature-settings: 'cv11', 'ss01';
+  font-variant-numeric: tabular-nums;
 }
 
-/* Enable dark mode */
-.dark {
-  color-scheme: dark;
-}
-
-/* Improved focus visibility */
-.focus\:ring-2:focus {
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-}
-
-.dark .focus\:ring-2:focus {
-  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.5);
-}
-
-/* Custom scrollbar for better aesthetics */
+/* Modern scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9; /* Light gray track */
-  border-radius: 10px;
-}
-
-.dark ::-webkit-scrollbar-track {
-  background: #1e293b; /* Dark track */
+  background: #1e1e3f;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1; /* Medium gray thumb */
-  border-radius: 10px;
-}
-
-.dark ::-webkit-scrollbar-thumb {
-  background: #475569; /* Dark thumb */
+  background: #3b3b5c;
+  border-radius: 3px;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8; /* Darker gray on hover */
+  background: #4c4c6d;
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #64748b; /* Lighter on hover in dark mode */
+/* Improved focus visibility */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-900;
+}
+
+/* Modern button animations */
+.btn-animate {
+  @apply transition-all duration-200 ease-in-out transform active:scale-95;
+}
+
+.btn-animate:hover {
+  @apply shadow-lg;
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(30, 30, 63, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom input styling */
+.input-modern {
+  @apply w-full px-4 py-3 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-xl 
+         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+         transition-all duration-200 ease-in-out placeholder-zinc-400;
+}
+
+.input-modern:focus {
+  @apply bg-zinc-750 shadow-lg;
+}
+
+/* Modern card styling */
+.card-modern {
+  @apply bg-zinc-800 rounded-2xl border border-zinc-700 shadow-xl 
+         transition-all duration-300 ease-in-out;
+}
+
+.card-modern:hover {
+  @apply border-zinc-600 shadow-2xl;
+}
+
+/* Status badges */
+.badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+}
+
+.badge-success {
+  @apply bg-emerald-900/50 text-emerald-300 border border-emerald-800;
+}
+
+.badge-secondary {
+  @apply bg-zinc-700 text-zinc-300 border border-zinc-600;
+}
+
+/* Modern table styling */
+.table-modern {
+  @apply w-full divide-y divide-zinc-700;
+}
+
+.table-modern th {
+  @apply px-6 py-4 text-left text-xs font-semibold text-zinc-300 uppercase tracking-wider
+         bg-zinc-800 border-b border-zinc-700;
+}
+
+.table-modern td {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-zinc-300 border-b border-zinc-800;
+}
+
+.table-modern tr:hover {
+  @apply bg-zinc-800/50;
 }
 
 /* Custom styles for Quill editor to match Tailwind forms */
 .quill {
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem; /* Tailwind rounded-md */
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* Tailwind shadow-sm */
-}
-
-.dark .quill {
-  border-color: #475569; /* slate-600 */
+  border: 1px solid #3f3f46;
+  border-radius: 0.75rem;
+  background-color: #18181b;
 }
 
 .quill .ql-toolbar {
-  border-bottom: 1px solid #d1d5db;
-  background-color: #f9fafb; /* Tailwind gray-50 */
-  border-top-left-radius: 0.375rem;
-  border-top-right-radius: 0.375rem;
-}
-
-.dark .quill .ql-toolbar {
-  background-color: #334155; /* slate-700 */
-  border-color: #475569; /* slate-600 */
+  border-bottom: 1px solid #3f3f46;
+  background-color: #27272a;
+  border-top-left-radius: 0.75rem;
+  border-top-right-radius: 0.75rem;
 }
 
 .quill .ql-container {
-  border: none; /* Remove default border as it's on the .quill container */
-  min-height: 200px; /* Adjust as needed */
-  font-family: 'Inter', sans-serif; /* Match body font */
-  font-size: 1rem; /* Default font size */
+  border: none;
+  min-height: 200px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  color: #f1f5f9;
+  background-color: #18181b;
 }
 
 .quill .ql-editor {
-  padding: 0.5rem 0.75rem; /* Tailwind px-3 py-2 */
+  padding: 1rem;
+  color: #f1f5f9;
 }
 
-.dark .quill .ql-editor {
-  color: #e2e8f0; /* slate-200 */
-  background-color: #1e293b; /* slate-800 */
-}
-
-/* Adjust toolbar button colors */
 .quill .ql-toolbar button {
-  color: #4b5563; /* Tailwind gray-600 */
-}
-
-.dark .quill .ql-toolbar button {
-  color: #d1d5db; /* slate-300 */
+  color: #a1a1aa;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
 }
 
 .quill .ql-toolbar button.ql-active,
 .quill .ql-toolbar button:hover {
-  background-color: #e5e7eb; /* Tailwind gray-200 */
-  color: #1f2937; /* Tailwind gray-800 */
+  background-color: #3f3f46;
+  color: #f1f5f9;
 }
 
-.dark .quill .ql-toolbar button.ql-active,
-.dark .quill .ql-toolbar button:hover {
-  background-color: #475569; /* slate-600 */
-  color: #f1f5f9; /* slate-100 */
+/* Animation classes */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile improvements */
+@media (max-width: 768px) {
+  .card-modern {
+    @apply mx-4 rounded-xl;
+  }
+  
+  .table-modern th,
+  .table-modern td {
+    @apply px-3 py-3;
+  }
+}
+
+/* Prose styling for better readability */
+.prose-dark {
+  @apply text-zinc-300 leading-relaxed;
+}
+
+.prose-dark h1 {
+  @apply text-zinc-100 font-bold text-2xl mb-4;
+}
+
+.prose-dark h2 {
+  @apply text-zinc-100 font-semibold text-xl mb-3 mt-6;
+}
+
+.prose-dark p {
+  @apply mb-4;
+}
+
+.prose-dark a {
+  @apply text-blue-400 hover:text-blue-300 transition-colors;
+}
+
+.prose-dark ul {
+  @apply list-disc list-inside mb-4 space-y-2;
+}
+
+.prose-dark ol {
+  @apply list-decimal list-inside mb-4 space-y-2;
+}
+
+.prose-dark blockquote {
+  @apply border-l-4 border-zinc-600 pl-4 italic text-zinc-400 mb-4;
+}
+
+.prose-dark strong {
+  @apply font-semibold text-zinc-100;
+}
+
+.prose-dark em {
+  @apply italic;
+}
+
+.prose-dark img {
+  @apply rounded-xl max-w-full h-auto shadow-lg;
 }
 
 /* Prose styles for rendering Quill content */

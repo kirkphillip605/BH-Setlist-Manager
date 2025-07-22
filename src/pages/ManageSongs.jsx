@@ -189,102 +189,140 @@ const ManageSongs = () => {
   ], [sortColumn, sortDirection, handleSort, handleDeleteSong, navigate, user]);
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto fade-in">
       {error && (
-        <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg mb-4" role="alert">
-          <strong className="font-bold">Error!</strong>
-          <span className="block sm:inline"> {error}</span>
+        <div className="bg-red-900/30 border border-red-800/50 text-red-200 px-4 py-3 rounded-xl mb-6 backdrop-blur-sm" role="alert">
+          <div className="flex items-center space-x-2">
+            <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+              <strong className="font-semibold">Error</strong>
+              <span className="block sm:inline"> {error}</span>
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-4 lg:p-6">
+      <div className="card-modern p-6 lg:p-8">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-blue-500/10 rounded-2xl flex items-center justify-center">
+              <Music className="h-5 w-5 text-blue-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-zinc-100">Song Library</h1>
+              <p className="text-sm text-zinc-400">Manage your music collection</p>
+            </div>
+          </div>
+          
           <div className="w-full sm:w-1/2 lg:w-1/3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-zinc-400" />
           <label htmlFor="search" className="sr-only">Search songs</label>
           <input
             type="text"
             id="search"
-            placeholder="Search by artist or title..."
+                placeholder="Search songs..."
             value={searchTerm}
             onChange={handleSearchChange}
-            className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="w-full pl-10 pr-4 py-3 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-zinc-400"
           />
+            </div>
         </div>
-        {/* Navigate to add song page */}
-        <button
-          onClick={() => navigate('/songs/add')}
-          className="inline-flex items-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-        >
-          <PlusCircle size={20} className="mr-2" />
-          Add New Song
-        </button>
-        </div>
-
-        {loading && <p className="text-center text-slate-300 py-8">Loading songs...</p>}
-
-        {!loading && songs.length === 0 && !error && (
-          <div className="text-center py-12">
-            <p className="text-slate-300 text-lg mb-2">No songs found</p>
-            <p className="text-slate-400 mb-6">Add your first song to get started</p>
+          
+          {user && user.user_level >= 2 && (
             <button
               onClick={() => navigate('/songs/add')}
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="inline-flex items-center px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 focus-ring shadow-lg btn-animate font-medium"
             >
               <PlusCircle size={20} className="mr-2" />
               Add Song
             </button>
+          )}
+        </div>
+
+        {loading && (
+          <div className="py-12">
+            <div className="animate-pulse space-y-4">
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} className="flex items-center space-x-4">
+                  <div className="w-10 h-10 bg-zinc-700 rounded-xl"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-zinc-700 rounded w-3/4"></div>
+                    <div className="h-3 bg-zinc-700 rounded w-1/2"></div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <div className="w-8 h-8 bg-zinc-700 rounded-lg"></div>
+                    <div className="w-8 h-8 bg-zinc-700 rounded-lg"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!loading && songs.length === 0 && !error && (
+          <div className="text-center py-12">
+            <div className="w-24 h-24 bg-zinc-800 rounded-3xl flex items-center justify-center mx-auto mb-6">
+              <Music className="h-12 w-12 text-zinc-600" />
+            </div>
+            <h3 className="text-xl font-semibold text-zinc-200 mb-2">No songs in your library</h3>
+            <p className="text-zinc-400 mb-8 max-w-md mx-auto">Get started by adding your first song to build your music collection.</p>
+            {user && user.user_level >= 2 && (
+              <button
+                onClick={() => navigate('/songs/add')}
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 focus-ring shadow-lg btn-animate font-medium"
+              >
+                <PlusCircle size={20} className="mr-2" />
+                Add Your First Song
+              </button>
+            )}
           </div>
         )}
 
         {!loading && songs.length > 0 && (
           <>
-          <ResizableTable columns={tableColumns} data={currentSongs} />
+            <div className="bg-zinc-900/50 rounded-xl overflow-hidden border border-zinc-800">
+              <ResizableTable columns={tableColumns} data={currentSongs} />
+            </div>
 
           {/* Pagination Controls */}
             <div className="flex flex-col sm:flex-row justify-between items-center mt-6 space-y-4 sm:space-y-0">
               <div className="flex items-center space-x-2">
-                <label htmlFor="items-per-page" className="text-sm text-slate-300">Items per page:</label>
+                <label htmlFor="items-per-page" className="text-sm text-zinc-400 font-medium">Show:</label>
                 <select
                   id="items-per-page"
                   value={itemsPerPage}
                   onChange={handleItemsPerPageChange}
-                  className="block w-20 px-3 py-2 bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                  className="px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                 >
                   <option value="5">5</option>
                   <option value="10">10</option>
                   <option value="20">20</option>
                   <option value="50">50</option>
                 </select>
+                <span className="text-sm text-zinc-400">of {filteredSongs.length} songs</span>
               </div>
-              <nav className="flex space-x-1" aria-label="Pagination">
+              <nav className="flex items-center space-x-1" aria-label="Pagination">
                 <button
                   onClick={() => paginate(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="px-3 py-2 rounded-lg border border-slate-600 bg-slate-700 text-sm font-medium text-slate-300 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-3 py-2 rounded-xl border border-zinc-700 bg-zinc-800 text-sm font-medium text-zinc-300 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-animate"
                 >
-                  <ChevronUp size={16} className="rotate-270" />
+                  <ChevronUp size={16} className="-rotate-90" />
                 </button>
-                {[...Array(Math.min(5, totalPages)).keys()].map(i => {
-                  const pageNum = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
-                  if (pageNum > totalPages) return null;
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => paginate(pageNum)}
-                      className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                        currentPage === pageNum 
-                          ? 'bg-blue-600 border-blue-600 text-white' 
-                          : 'border-slate-600 bg-slate-700 text-slate-300 hover:bg-slate-600'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
+                
+                <div className="flex items-center space-x-2 px-4">
+                  <span className="text-sm text-zinc-400">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                </div>
+                
                 <button
                   onClick={() => paginate(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-2 rounded-lg border border-slate-600 bg-slate-700 text-sm font-medium text-slate-300 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-3 py-2 rounded-xl border border-zinc-700 bg-zinc-800 text-sm font-medium text-zinc-300 hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-animate"
                 >
                   <ChevronDown size={16} className="-rotate-90" />
                 </button>

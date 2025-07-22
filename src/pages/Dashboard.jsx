@@ -66,45 +66,60 @@ const Dashboard = () => {
     }
   };
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+    <div className="max-w-7xl mx-auto fade-in">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {/* Quick Stats Cards */}
         <button
           onClick={() => navigate('/songs')}
-          className="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6 text-left hover:bg-slate-700 transition-colors"
+          className="card-modern p-6 text-left hover:scale-105 btn-animate group"
         >
-          <h3 className="text-lg font-semibold text-slate-100 mb-2">Total Songs</h3>
-          <div className="flex items-center">
-            <Music className="h-8 w-8 text-blue-400 mr-3" />
-            <p className="text-3xl font-bold text-blue-400">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold text-zinc-100">Songs</h3>
+            <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+              <Music className="h-6 w-6 text-blue-400" />
+            </div>
+          </div>
+          <div className="flex items-baseline space-x-2">
+            <p className="text-3xl font-bold text-zinc-100 tracking-tight">
               {loading ? '...' : stats.totalSongs}
             </p>
+            <p className="text-sm text-zinc-400">in library</p>
           </div>
         </button>
         
         <button
           onClick={() => navigate('/setlists')}
-          className="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6 text-left hover:bg-slate-700 transition-colors"
+          className="card-modern p-6 text-left hover:scale-105 btn-animate group"
         >
-          <h3 className="text-lg font-semibold text-slate-100 mb-2">Setlists</h3>
-          <div className="flex items-center">
-            <ListMusic className="h-8 w-8 text-blue-400 mr-3" />
-            <p className="text-3xl font-bold text-blue-400">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold text-zinc-100">Setlists</h3>
+            <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+              <ListMusic className="h-6 w-6 text-emerald-400" />
+            </div>
+          </div>
+          <div className="flex items-baseline space-x-2">
+            <p className="text-3xl font-bold text-zinc-100 tracking-tight">
               {loading ? '...' : stats.totalSetlists}
             </p>
+            <p className="text-sm text-zinc-400">created</p>
           </div>
         </button>
         
         <button
           onClick={() => navigate('/song-collections')}
-          className="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6 text-left hover:bg-slate-700 transition-colors"
+          className="card-modern p-6 text-left hover:scale-105 btn-animate group"
         >
-          <h3 className="text-lg font-semibold text-slate-100 mb-2">Collections</h3>
-          <div className="flex items-center">
-            <Collection className="h-8 w-8 text-blue-400 mr-3" />
-            <p className="text-3xl font-bold text-blue-400">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-semibold text-zinc-100">Collections</h3>
+            <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+              <Collection className="h-6 w-6 text-purple-400" />
+            </div>
+          </div>
+          <div className="flex items-baseline space-x-2">
+            <p className="text-3xl font-bold text-zinc-100 tracking-tight">
               {loading ? '...' : stats.totalCollections}
             </p>
+            <p className="text-sm text-zinc-400">curated</p>
           </div>
         </button>
       </div>
@@ -112,36 +127,56 @@ const Dashboard = () => {
       {/* Recent Data Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Songs */}
-        <div className="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-slate-100">Recent Songs</h2>
+        <div className="card-modern p-6 slide-up">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-xl font-semibold text-zinc-100 mb-1">Recent Songs</h2>
+              <p className="text-sm text-zinc-400">Latest additions to your library</p>
+            </div>
             <Link 
               to="/songs" 
-              className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+              className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors hover:underline"
             >
               View All
             </Link>
           </div>
           {loading ? (
-            <p className="text-slate-400">Loading...</p>
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="animate-pulse flex space-x-3">
+                  <div className="w-10 h-10 bg-zinc-700 rounded-xl"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-zinc-700 rounded w-3/4"></div>
+                    <div className="h-3 bg-zinc-700 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : recentSongs.length === 0 ? (
-            <p className="text-slate-400">No songs yet. <Link to="/songs/add" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">Add your first song</Link></p>
+            <div className="text-center py-8">
+              <Music className="h-12 w-12 text-zinc-600 mx-auto mb-3" />
+              <p className="text-zinc-400 mb-2">No songs yet</p>
+              <Link to="/songs/add" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors text-sm">Add your first song</Link>
+            </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {recentSongs.map((song) => (
-                <div key={song.id} className="flex justify-between items-start">
-                  <div>
+                <div key={song.id} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-zinc-700/30 transition-colors group">
+                  <div className="w-10 h-10 bg-zinc-700 rounded-xl flex items-center justify-center group-hover:bg-zinc-600 transition-colors">
+                    <Music size={16} className="text-zinc-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
                     <Link 
                       to={`/songs/${song.id}`}
-                      className="text-sm font-medium text-slate-100 hover:text-blue-400 transition-colors"
+                      className="text-sm font-medium text-zinc-100 hover:text-blue-400 transition-colors block truncate"
                     >
                       {song.title}
                     </Link>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-zinc-400 truncate">
                       {song.original_artist} {song.key_signature && `• ${song.key_signature}`}
                     </p>
                   </div>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-zinc-500 whitespace-nowrap">
                     {new Date(song.created_at).toLocaleDateString()}
                   </span>
                 </div>
@@ -151,46 +186,70 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Setlists */}
-        <div className="bg-slate-800 rounded-xl shadow-lg border border-slate-700 p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-slate-100">Recent Setlists</h2>
+        <div className="card-modern p-6 slide-up">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h2 className="text-xl font-semibold text-zinc-100 mb-1">Recent Setlists</h2>
+              <p className="text-sm text-zinc-400">Your latest performance setlists</p>
+            </div>
             <Link 
               to="/setlists" 
-              className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+              className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors hover:underline"
             >
               View All
             </Link>
           </div>
           {loading ? (
-            <p className="text-slate-400">Loading...</p>
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="animate-pulse flex space-x-3">
+                  <div className="w-10 h-10 bg-zinc-700 rounded-xl"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-zinc-700 rounded w-3/4"></div>
+                    <div className="h-3 bg-zinc-700 rounded w-1/2"></div>
+                  </div>
+                  <div className="flex space-x-1">
+                    <div className="w-6 h-6 bg-zinc-700 rounded"></div>
+                    <div className="w-6 h-6 bg-zinc-700 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : recentSetlists.length === 0 ? (
-            <p className="text-slate-400">No setlists yet. <Link to="/setlists/add" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">Create your first setlist</Link></p>
+            <div className="text-center py-8">
+              <ListMusic className="h-12 w-12 text-zinc-600 mx-auto mb-3" />
+              <p className="text-zinc-400 mb-2">No setlists yet</p>
+              <Link to="/setlists/add" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors text-sm">Create your first setlist</Link>
+            </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {recentSetlists.map((setlist) => (
-                <div key={setlist.id} className="flex justify-between items-center">
-                  <div className="flex-1 min-w-0">
+                <div key={setlist.id} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-zinc-700/30 transition-colors group">
+                  <div className="w-10 h-10 bg-zinc-700 rounded-xl flex items-center justify-center group-hover:bg-zinc-600 transition-colors">
+                    <ListMusic size={16} className="text-zinc-400" />
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
                     <Link 
                       to={`/setlists/${setlist.id}`}
-                      className="text-sm font-medium text-slate-100 hover:text-blue-400 block truncate transition-colors"
+                      className="text-sm font-medium text-zinc-100 hover:text-blue-400 block truncate transition-colors"
                     >
                       {setlist.name}
                     </Link>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-zinc-400">
                       {new Date(setlist.created_at).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="flex items-center space-x-2 ml-4">
+                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={() => handlePrintSetlist(setlist)}
-                      className="p-1 text-green-400 hover:text-green-300 transition-colors"
+                      className="p-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-lg transition-all btn-animate"
                       title="Print Setlist"
                     >
                       <Printer size={16} />
                     </button>
                     <Link
                       to={`/setlists/edit/${setlist.id}`}
-                      className="p-1 text-blue-400 hover:text-blue-300 transition-colors"
+                      className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-all btn-animate"
                       title="Edit Setlist"
                     >
                       <Edit size={16} />

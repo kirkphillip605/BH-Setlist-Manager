@@ -14,11 +14,11 @@ const Layout = ({ children }) => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen bg-zinc-950 overflow-hidden">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden"
+          className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden fade-in"
           onClick={closeSidebar}
         />
       )}
@@ -27,8 +27,11 @@ const Layout = ({ children }) => {
       
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header onToggleSidebar={toggleSidebar} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4 lg:p-6">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-zinc-950 p-4 lg:p-8 relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-zinc-900/20 via-transparent to-zinc-900/20 pointer-events-none"></div>
+          <div className="relative z-10 max-w-full">
           {children}
+          </div>
         </main>
       </div>
     </div>
