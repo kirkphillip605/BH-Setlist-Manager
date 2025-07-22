@@ -33,7 +33,6 @@ const AuthCallback = () => {
           } else {
             // User exists and profile is complete
             console.log('✅ Auth callback - user authenticated:', userProfile);
-            console.log('✅ Auth callback - access token:', session.access_token);
             navigate('/');
           }
         } else {
