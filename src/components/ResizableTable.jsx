@@ -54,14 +54,15 @@ const ResizableTable = ({ columns, data }) => {
 
   return (
     <div className="overflow-x-auto -mx-4 sm:mx-0">
-      <table ref={tableRef} className="min-w-full divide-y divide-slate-600 table-fixed">
+<table ref={tableRef} className="min-w-full divide-y divide-zinc-700 table-fixed">
         <thead className="bg-slate-700">
+        <thead className="bg-zinc-800 border-b border-zinc-700">
           <tr>
             {columns.map((col, index) => (
               <th
                 key={col.key}
                 scope="col"
-                className={`relative px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider ${col.sortable ? 'cursor-pointer hover:bg-slate-600' : ''} ${col.align === 'right' ? 'text-right' : ''}`}
+                className={`relative px-4 sm:px-6 py-3 text-left text-xs font-medium text-zinc-300 uppercase tracking-wider ${col.sortable ? 'cursor-pointer hover:bg-zinc-600' : ''} ${col.align === 'right' ? 'text-right' : ''}`}
                 style={{ width: columnWidths[col.key] }}
                 onClick={col.sortable ? col.onSort : undefined}
               >
@@ -79,13 +80,13 @@ const ResizableTable = ({ columns, data }) => {
             ))}
           </tr>
         </thead>
-        <tbody className="bg-slate-800 divide-y divide-slate-600">
+        <tbody className="bg-zinc-800 divide-y divide-zinc-700">
           {data.map((row, rowIndex) => (
-            <tr key={row.id || rowIndex} className="hover:bg-slate-700 transition-colors">
+            <tr key={row.id || rowIndex} className="hover:bg-zinc-700 transition-colors">
               {columns.map((col) => (
                 <td
                   key={`${row.id || rowIndex}-${col.key}`}
-                  className={`px-4 sm:px-6 py-4 whitespace-nowrap text-sm ${col.align === 'right' ? 'text-right' : 'text-left'} ${col.key === 'actions' ? 'font-medium' : 'text-slate-300'}`}
+                  className={`px-4 sm:px-6 py-4 whitespace-nowrap text-sm ${col.align === 'right' ? 'text-right' : 'text-left'} ${col.key === 'actions' ? 'font-medium' : 'text-zinc-300'}`}
                   style={{ width: columnWidths[col.key] }}
                 >
                   {col.render(row)}
