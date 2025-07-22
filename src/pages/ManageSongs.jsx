@@ -123,7 +123,7 @@ const ManageSongs = () => {
         </div>
       ),
       render: (song) => (
-        <Link to={`/songs/${song.id}`} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium">
+        <Link to={`/songs/${song.id}`} className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
           {song.title}
         </Link>
       ),

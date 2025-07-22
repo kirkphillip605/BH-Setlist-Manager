@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Edit } from 'lucide-react';
+import { Edit, ArrowLeft, Music } from 'lucide-react';
 import { songsService } from '../services/songsService';
 import { usePageTitle } from '../context/PageTitleContext';
+import { useAuth } from '../context/AuthContext';
 
 const SongViewPage = () => {
   const { songId } = useParams();
   const { setPageTitle } = usePageTitle();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [song, setSong] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -39,16 +41,21 @@ const SongViewPage = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6 bg-white rounded-lg shadow-md dark:bg-gray-800 dark:text-gray-200">
-        <p className="text-center text-gray-600 dark:text-gray-400">Loading song details...</p>
+      <div className="max-w-4xl mx-auto">
+        <div className="card-modern p-6">
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-zinc-300">Loading song details...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto p-6 bg-white rounded-lg shadow-md dark:bg-gray-800 dark:text-gray-200">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 dark:bg-red-900 dark:text-red-200 dark:border-red-700" role="alert">
+      <div className="max-w-4xl mx-auto">
+        <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-xl mb-4">
           <strong className="font-bold">Error!</strong>
           <span className="block sm:inline"> {error}</span>
         </div>
@@ -58,41 +65,68 @@ const SongViewPage = () => {
 
   if (!song) {
     return (
-      <div className="container mx-auto p-6 bg-white rounded-lg shadow-md dark:bg-gray-800 dark:text-gray-200">
-        <p className="text-center text-gray-600 dark:text-gray-400">Song not found.</p>
+      <div className="max-w-4xl mx-auto">
+        <div className="card-modern p-6">
+          <p className="text-center text-zinc-300">Song not found.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 bg-white rounded-lg shadow-md dark:bg-gray-800 dark:text-gray-200">
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <h1 className="text-4xl font-extrabold text-gray-800 dark:text-gray-100 mb-1">{song.title}</h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400">{song.original_artist}</p>
-          {song.key_signature && (
-            <p className="text-md text-gray-500 dark:text-gray-400 mt-2">Key: {song.key_signature}</p>
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="card-modern p-4 lg:p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => navigate('/songs')}
+              className="p-2 text-zinc-400 hover:text-zinc-300 transition-colors rounded-lg hover:bg-zinc-700"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center">
+                <Music className="h-6 w-6 text-blue-400" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-zinc-100 mb-1">{song.title}</h1>
+                <div className="flex items-center space-x-2 text-sm text-zinc-400">
+                  <span>{song.original_artist}</span>
+                  {song.key_signature && (
+                    <>
+                      <span>•</span>
+                      <span>Key: {song.key_signature}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          {user && user.user_level >= 2 && (
+            <button
+              onClick={handleEditClick}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all btn-animate shadow-lg font-medium"
+            >
+              <Edit size={18} className="mr-2" />
+              Edit Song
+            </button>
           )}
         </div>
-        <button
-          onClick={handleEditClick}
-          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          title="Edit Song"
-        >
-          <Edit size={18} className="mr-2" />
-          Edit
-        </button>
       </div>
 
-      <hr className="my-6 border-gray-200 dark:border-gray-700" />
-
-      <div className="prose dark:prose-invert max-w-none">
-        <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-100 mb-4">Lyrics</h2>
-        {/* Render HTML content from Quill editor */}
-        <div
-          className="ql-editor p-0" // Apply Quill editor styles for rendering
-          dangerouslySetInnerHTML={{ __html: song.lyrics }}
-        />
+      {/* Lyrics */}
+      <div className="card-modern p-4 lg:p-6">
+        <h2 className="text-xl font-semibold text-zinc-100 mb-6 flex items-center">
+          <Music className="h-5 w-5 mr-2 text-zinc-400" />
+          Lyrics
+        </h2>
+        <div className="prose-dark max-w-none">
+          <div
+            className="ql-editor p-0 text-zinc-200 leading-relaxed" 
+            dangerouslySetInnerHTML={{ __html: song.lyrics }}
+          />
+        </div>
       </div>
     </div>
   );

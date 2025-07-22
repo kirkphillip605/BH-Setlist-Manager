@@ -61,7 +61,7 @@ const ResizableTable = ({ columns, data }) => {
               <th
                 key={col.key}
                 scope="col"
-                className={`relative px-4 sm:px-6 py-3 text-left text-xs font-medium text-zinc-300 uppercase tracking-wider ${col.sortable ? 'cursor-pointer hover:bg-zinc-600' : ''} ${col.align === 'right' ? 'text-right' : ''}`}
+                className={`relative px-4 sm:px-6 py-3 text-left text-xs font-medium text-zinc-300 uppercase tracking-wider ${col.sortable ? 'cursor-pointer hover:bg-zinc-700' : ''} ${col.align === 'right' ? 'text-right' : ''}`}
                 style={{ width: columnWidths[col.key] }}
                 onClick={col.sortable ? col.onSort : undefined}
               >

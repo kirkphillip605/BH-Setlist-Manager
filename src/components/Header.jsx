@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { User, LogOut, Menu, Settings, UserCircle, Lock } from 'lucide-react';
+import { User, LogOut, Menu, Settings, UserCircle, Lock, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { usePageTitle } from '../context/PageTitleContext';
 import { Link } from 'react-router-dom';
 
-const Header = ({ onToggleSidebar }) => {
+const Header = ({ onToggleSidebar, sidebarCollapsed, onToggleCollapse }) => {
   const { user, signOut } = useAuth();
-  const { pageTitle } = usePageTitle();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const toggleDropdown = () => {
@@ -25,11 +23,20 @@ const Header = ({ onToggleSidebar }) => {
             <Menu size={24} />
           </button>
           
-          {/* Page title */}
-          <div className="text-xl lg:text-2xl font-bold text-zinc-100 tracking-tight">
-            {pageTitle}
+          {/* Collapse button for desktop */}
+          <div className="hidden lg:flex items-center">
+            <button
+              onClick={onToggleCollapse}
+              className="p-2 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700 transition-all duration-200 btn-animate"
+              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {sidebarCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+            </button>
           </div>
         </div>
+        
+        {/* Spacer to push user menu to the right */}
+        <div className="flex-1"></div>
 
         {/* User menu */}
         {user && (
@@ -52,6 +59,7 @@ const Header = ({ onToggleSidebar }) => {
                   <div className="px-3 py-2 border-b border-zinc-700/50 mb-2">
                     <p className="text-sm font-medium text-zinc-100">{user.name}</p>
                     <p className="text-xs text-zinc-400">{user.email}</p>
+                    <p className="text-xs text-zinc-500 mt-1">Level {user.user_level} User</p>
                   </div>
                   <Link
                     to="/profile"

@@ -111,7 +111,7 @@ const ManageSetlists = () => {
         </div>
       )}
 
-      <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-4 lg:p-6">
+      <div className="card-modern p-4 lg:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0">
           <div className="w-full sm:w-1/2 lg:w-1/3">
             <input
@@ -119,28 +119,28 @@ const ManageSetlists = () => {
               placeholder="Search setlists..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              className="input-modern"
             />
           </div>
           <button
             onClick={() => navigate('/setlists/add')}
-            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors font-medium"
+            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all btn-animate shadow-lg font-medium"
           >
             <PlusCircle size={20} className="mr-2" />
             New Setlist
           </button>
         </div>
 
-        {loading && <p className="text-center text-slate-300 py-8">Loading setlists...</p>}
+        {loading && <p className="text-center text-zinc-300 py-8">Loading setlists...</p>}
 
         {!loading && setlists.length === 0 && !error && (
           <div className="text-center py-12">
-            <ListMusic className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-            <p className="text-slate-300 text-lg mb-2">No setlists found</p>
-            <p className="text-slate-400 mb-6">Create your first setlist to get started</p>
+            <ListMusic className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
+            <p className="text-zinc-300 text-lg mb-2">No setlists found</p>
+            <p className="text-zinc-400 mb-6">Create your first setlist to get started</p>
             <button
               onClick={() => navigate('/setlists/add')}
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all btn-animate font-medium"
             >
               <PlusCircle size={20} className="mr-2" />
               Create Setlist
@@ -151,36 +151,36 @@ const ManageSetlists = () => {
         {!loading && setlists.length > 0 && (
           <>
             <div className="overflow-x-auto -mx-4 sm:mx-0">
-              <table className="min-w-full divide-y divide-slate-600">
-                <thead className="bg-slate-700">
+              <table className="min-w-full divide-y divide-zinc-700">
+                <thead className="bg-zinc-800">
                   <tr>
                     <th 
-                      className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600 transition-colors"
+                      className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-zinc-300 uppercase tracking-wider cursor-pointer hover:bg-zinc-700 transition-colors"
                       onClick={() => handleSort('name')}
                     >
                       <div className="flex items-center">
                         Setlist Name {renderSortIcon('name')}
                       </div>
                     </th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-zinc-300 uppercase tracking-wider">
                       Visibility
                     </th>
                     <th 
-                      className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600 transition-colors"
+                      className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-zinc-300 uppercase tracking-wider cursor-pointer hover:bg-zinc-700 transition-colors"
                       onClick={() => handleSort('created_at')}
                     >
                       <div className="flex items-center">
                         Created {renderSortIcon('created_at')}
                       </div>
                     </th>
-                    <th className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
+                    <th className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-zinc-300 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-slate-800 divide-y divide-slate-700">
+                <tbody className="bg-zinc-800 divide-y divide-zinc-700">
                   {currentSetlists.map((setlist) => (
-                    <tr key={setlist.id} className="hover:bg-slate-700 transition-colors">
+                    <tr key={setlist.id} className="hover:bg-zinc-700 transition-colors">
                       <td className="px-4 sm:px-6 py-4">
                         <button
                           onClick={() => navigate(`/setlists/${setlist.id}`)}
@@ -189,18 +189,18 @@ const ManageSetlists = () => {
                           {setlist.name}
                         </button>
                       </td>
-                      <td className="px-4 sm:px-6 py-4 text-sm text-slate-300">
+                      <td className="px-4 sm:px-6 py-4 text-sm text-zinc-300">
                         {setlist.is_public ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                          <span className="badge badge-success">
                             Public
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">
+                          <span className="badge badge-secondary">
                             Private
                           </span>
                         )}
                       </td>
-                      <td className="px-4 sm:px-6 py-4 text-sm text-slate-300">
+                      <td className="px-4 sm:px-6 py-4 text-sm text-zinc-300">
                         {new Date(setlist.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-4 sm:px-6 py-4 text-right">
@@ -242,7 +242,7 @@ const ManageSetlists = () => {
                     id="items-per-page"
                     value={itemsPerPage}
                     onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                    className="block w-20 px-3 py-2 bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                    className="block w-20 px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                   >
                     <option value="5">5</option>
                     <option value="10">10</option>
@@ -254,17 +254,17 @@ const ManageSetlists = () => {
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
-                    className="px-3 py-2 rounded-lg border border-slate-600 bg-slate-700 text-slate-300 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-2 rounded-lg border border-zinc-600 bg-zinc-700 text-zinc-300 hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Previous
                   </button>
-                  <span className="px-4 py-2 text-slate-300">
+                  <span className="px-4 py-2 text-zinc-300">
                     {currentPage} of {totalPages}
                   </span>
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-2 rounded-lg border border-slate-600 bg-slate-700 text-slate-300 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-2 rounded-lg border border-zinc-600 bg-zinc-700 text-zinc-300 hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Next
                   </button>
