@@ -156,7 +156,7 @@ const Login = () => {
           </div>
         )}
 
-        <hr /><form onSubmit={handleSubmit} className="space-y-4">
+        <hr /><br /><form onSubmit={handleSubmit} className="space-y-4">
           <button
             type="button"
             onClick={handleGoogleSignIn}
