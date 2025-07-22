@@ -55,17 +55,17 @@ export const AuthProvider = ({ children }) => {
           id: authUser.id, // Use auth user ID directly
           email: authUser.email,
           name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email.split('@')[0],
-          user_level: 1
+          user_level: authUser.user_metadata?.user_level || 1
         };
         
         const { data: insertedUser, error: insertError } = await supabase
           .from('users')
-          .insert([newUserData])
+          .upsert([newUserData], { onConflict: 'id' })
           .select()
           .single();
           
         if (insertError) {
-          console.error('Error creating user record:', insertError);
+          console.error('Error upserting user record:', insertError);
           // Return user data even if insert fails (for fallback)
           return newUserData;
         }
@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }) => {
           id: authUser.id,
           email: authUser.email,
           name: authUser.user_metadata?.name || authUser.email.split('@')[0],
-          user_level: 1
+          user_level: authUser.user_metadata?.user_level || 1
         };
       }
     };
