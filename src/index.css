@@ -63,7 +63,7 @@ body {
 }
 
 .input-modern:focus {
-  @apply bg-zinc-750 shadow-lg;
+  @apply bg-zinc-700 shadow-lg;
 }
 
 /* Modern card styling */
