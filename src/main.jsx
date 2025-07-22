@@ -25,6 +25,7 @@ import EditProfile from './pages/EditProfile';
 import UserManagement from './pages/UserManagement';
 import Profile from './pages/Profile';
 import ChangePassword from './pages/ChangePassword';
+import PerformanceMode from './pages/PerformanceMode';
 import MagicLinkLogin from './pages/auth/MagicLinkLogin';
 import AuthCallback from './pages/auth/AuthCallback';
 import InviteComplete from './pages/auth/InviteComplete';
@@ -135,6 +136,10 @@ const router = createBrowserRouter([
   {
     path: "/admin/users",
     element: <PrivateRoute><Layout><UserManagement /></Layout></PrivateRoute>
+  },
+  {
+    path: "/performance",
+    element: <PrivateRoute><Layout><PerformanceMode /></Layout></PrivateRoute>
   }
 ], {
   future: {

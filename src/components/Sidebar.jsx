@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Music, ListMusic, LayoutTemplate, Users, X, Headphones, User, LogOut, Settings, UserCircle, Lock, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Home, Music, ListMusic, LayoutTemplate, Users, X, Headphones, User, LogOut, Settings, UserCircle, Lock, PanelLeftClose, PanelLeftOpen, Play } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Sidebar = ({ isOpen, onClose, collapsed }) => {
@@ -23,6 +23,7 @@ const Sidebar = ({ isOpen, onClose, collapsed }) => {
     { path: '/songs', label: 'Songs', icon: Music },
     { path: '/song-collections', label: 'Collections', icon: LayoutTemplate },
     { path: '/setlists', label: 'Setlists', icon: ListMusic },
+    { path: '/performance', label: 'Performance Mode', icon: Play },
   ];
 
   const adminItems = user?.user_level === 3 ? [
