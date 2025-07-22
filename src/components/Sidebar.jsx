@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Music, ListMusic, LayoutTemplate, Users, X, Headphones } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -36,26 +36,27 @@ const Sidebar = ({ isOpen, onClose, collapsed }) => {
         flex flex-col shadow-2xl
       `}>
         {/* Header */}
-        <div className={`flex items-center ${collapsed ? 'justify-center p-4' : 'justify-between p-4 lg:p-6'} border-b border-zinc-800`}>
+        <div className={`flex items-center ${collapsed ? 'justify-center p-4' : 'justify-between p-4 lg:p-6'} border-b border-zinc-800 bg-zinc-900`}>
           {!collapsed && (
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
               <Headphones size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-zinc-100 tracking-tight">Bad Habits</h1>
-              <p className="text-xs text-zinc-400">Setlist Management</p>
+              <h1 className="text-lg font-bold text-heading tracking-tight">Bad Habits</h1>
+              <p className="text-xs text-muted">Setlist Management</p>
             </div>
           </div>
           )}
           {collapsed && (
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg"
+                 title="Bad Habits Setlist Management">
               <Headphones size={20} className="text-white" />
             </div>
           )}
           <button
             onClick={onClose}
-            className={`lg:hidden p-2 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all duration-200 btn-animate ${collapsed ? 'hidden' : ''}`}
+            className={`mobile-only btn-icon ${collapsed ? 'hidden' : ''}`}
           >
             <X size={20} />
           </button>
@@ -70,17 +71,14 @@ const Sidebar = ({ isOpen, onClose, collapsed }) => {
               onClick={onClose}
               title={collapsed ? label : ''}
               className={`
-                group flex items-center ${collapsed ? 'px-3 py-3 justify-center' : 'px-3 py-3'} rounded-2xl text-sm font-medium transition-all duration-200 relative
-                ${isActive(path) 
-                  ? 'bg-blue-600 text-white shadow-lg' 
-                  : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'
-                }
+                isActive(path) ? 'nav-item-active' : 'nav-item-inactive'
+              } + (collapsed ? ' justify-center' : '')
               `}
             >
-              <Icon size={20} className={`mr-3 ${isActive(path) ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-300'}`} />
+              <Icon size={20} className={collapsed ? '' : (isActive(path) ? 'nav-icon-active' : 'nav-icon-inactive')} />
               {!collapsed && (
               <div className="flex-1">
-                <div className={`font-medium ${isActive(path) ? 'text-white' : 'text-zinc-300'}`}>{label}</div>
+                <div className={`font-medium ${isActive(path) ? 'text-white' : 'text-body'}`}>{label}</div>
               </div>
               )}
             </Link>
@@ -91,7 +89,7 @@ const Sidebar = ({ isOpen, onClose, collapsed }) => {
             <>
               {!collapsed && (
               <div className="pt-8 pb-4">
-                <span className="text-zinc-500 uppercase font-bold text-xs px-3 tracking-wider">
+                <span className="text-subtle uppercase font-bold text-xs px-3 tracking-wider">
                   Administration
                 </span>
               </div>
@@ -103,17 +101,17 @@ const Sidebar = ({ isOpen, onClose, collapsed }) => {
                   onClick={onClose}
                   title={collapsed ? label : ''}
                   className={`
-                    group flex items-center ${collapsed ? 'px-3 py-3 justify-center' : 'px-3 py-3'} rounded-2xl text-sm font-medium transition-all duration-200 relative
+                    nav-item group ${collapsed ? 'justify-center' : ''}
                     ${isActive(path) 
                       ? 'bg-emerald-600 text-white shadow-lg' 
-                      : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'
+                      : 'text-muted hover:text-heading hover:bg-zinc-800'
                     }
                   `}
                 >
-                  <Icon size={20} className={`${isActive(path) ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-300'} ${collapsed ? '' : 'mr-3'}`} />
+                  <Icon size={20} className={`${isActive(path) ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-300'} ${collapsed ? '' : 'nav-icon'}`} />
                   {!collapsed && (
                   <div className="flex-1">
-                    <div className={`font-medium ${isActive(path) ? 'text-white' : 'text-zinc-300'}`}>{label}</div>
+                    <div className={`font-medium ${isActive(path) ? 'text-white' : 'text-body'}`}>{label}</div>
                   </div>
                   )}
                 </Link>

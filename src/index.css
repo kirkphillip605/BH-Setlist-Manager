@@ -1,296 +1,643 @@
-@import 'react-quill/dist/quill.snow.css'; /* Import Quill's snow theme styles */
+@import 'react-quill/dist/quill.snow.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: #0f0f23; /* Deep dark background */
-  color: #f1f5f9; /* Light text */
-  line-height: 1.6;
-  font-feature-settings: 'cv11', 'ss01';
-  font-variant-numeric: tabular-nums;
+/* =============================================================================
+   BASE STYLES & THEME VARIABLES
+============================================================================= */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-zinc-950 text-zinc-100 min-h-screen;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    font-feature-settings: 'cv11', 'ss01';
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-1.5 h-1.5;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-zinc-900 rounded;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-zinc-700 rounded hover:bg-zinc-600;
+  }
+
+  /* Focus styles */
+  *:focus {
+    outline: none;
+  }
+
+  *:focus-visible {
+    @apply ring-2 ring-blue-500 ring-offset-2 ring-offset-zinc-900;
+  }
 }
 
-/* Modern scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* =============================================================================
+   COMPONENT LAYER - THEME CLASSES
+============================================================================= */
+
+@layer components {
+  
+  /* =============================================================================
+     LAYOUT COMPONENTS
+  ============================================================================= */
+  
+  .app-container {
+    @apply flex h-screen bg-zinc-950 overflow-hidden;
+  }
+
+  .main-content {
+    @apply flex-1 flex flex-col overflow-hidden;
+  }
+
+  .page-content {
+    @apply flex-1 overflow-x-hidden overflow-y-auto bg-zinc-950 p-4 lg:p-8 relative;
+  }
+
+  .page-background {
+    @apply absolute inset-0 bg-gradient-to-br from-zinc-900/10 via-transparent to-zinc-900/10 pointer-events-none;
+  }
+
+  .page-container {
+    @apply relative z-10 max-w-full fade-in;
+  }
+
+  /* =============================================================================
+     CARD COMPONENTS
+  ============================================================================= */
+
+  .theme-card {
+    @apply bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl transition-all duration-300;
+  }
+
+  .theme-card-hover {
+    @apply theme-card hover:border-zinc-700 hover:shadow-2xl hover:scale-[1.02];
+  }
+
+  .theme-card-interactive {
+    @apply theme-card-hover cursor-pointer transform transition-transform duration-200 active:scale-[0.98];
+  }
+
+  .theme-card-content {
+    @apply p-4 lg:p-6;
+  }
+
+  .theme-card-header {
+    @apply flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-6;
+  }
+
+  /* =============================================================================
+     BUTTON COMPONENTS
+  ============================================================================= */
+
+  .btn-base {
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95;
+  }
+
+  .btn-primary {
+    @apply btn-base bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500 shadow-lg hover:shadow-xl;
+  }
+
+  .btn-secondary {
+    @apply btn-base bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700 hover:text-zinc-100 focus-visible:ring-zinc-500;
+  }
+
+  .btn-danger {
+    @apply btn-base bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500 shadow-lg hover:shadow-xl;
+  }
+
+  .btn-ghost {
+    @apply btn-base text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 focus-visible:ring-zinc-500;
+  }
+
+  .btn-icon {
+    @apply p-2 rounded-xl text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-all duration-200 transform active:scale-95;
+  }
+
+  .btn-large {
+    @apply px-6 py-3 text-base;
+  }
+
+  /* =============================================================================
+     INPUT COMPONENTS
+  ============================================================================= */
+
+  .input-base {
+    @apply w-full px-4 py-3 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-xl transition-all duration-200 placeholder-zinc-400;
+  }
+
+  .input-theme {
+    @apply input-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:bg-zinc-700 focus:bg-zinc-700;
+  }
+
+  .input-search {
+    @apply input-theme pl-10;
+  }
+
+  .select-theme {
+    @apply input-theme cursor-pointer;
+  }
+
+  .textarea-theme {
+    @apply input-theme min-h-24 resize-vertical;
+  }
+
+  .checkbox-theme {
+    @apply h-4 w-4 text-blue-600 focus:ring-blue-500 border-zinc-700 rounded bg-zinc-800;
+  }
+
+  /* =============================================================================
+     TEXT COMPONENTS
+  ============================================================================= */
+
+  .text-heading {
+    @apply text-zinc-100 font-semibold;
+  }
+
+  .text-heading-xl {
+    @apply text-heading text-2xl;
+  }
+
+  .text-heading-lg {
+    @apply text-heading text-xl;
+  }
+
+  .text-heading-md {
+    @apply text-heading text-lg;
+  }
+
+  .text-body {
+    @apply text-zinc-300;
+  }
+
+  .text-muted {
+    @apply text-zinc-400;
+  }
+
+  .text-subtle {
+    @apply text-zinc-500;
+  }
+
+  .text-link {
+    @apply text-blue-400 hover:text-blue-300 transition-colors cursor-pointer;
+  }
+
+  .text-link-underline {
+    @apply text-link hover:underline;
+  }
+
+  /* =============================================================================
+     TABLE COMPONENTS
+  ============================================================================= */
+
+  .table-theme {
+    @apply min-w-full divide-y divide-zinc-700;
+  }
+
+  .table-header {
+    @apply bg-zinc-800 border-b border-zinc-700;
+  }
+
+  .table-header-cell {
+    @apply px-4 sm:px-6 py-3 text-left text-xs font-medium text-zinc-300 uppercase tracking-wider;
+  }
+
+  .table-header-cell-sortable {
+    @apply table-header-cell cursor-pointer hover:bg-zinc-700 transition-colors;
+  }
+
+  .table-body {
+    @apply bg-zinc-800 divide-y divide-zinc-700;
+  }
+
+  .table-row {
+    @apply hover:bg-zinc-700 transition-colors;
+  }
+
+  .table-cell {
+    @apply px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-zinc-300;
+  }
+
+  .table-cell-actions {
+    @apply table-cell text-right;
+  }
+
+  /* =============================================================================
+     NAVIGATION COMPONENTS
+  ============================================================================= */
+
+  .nav-item {
+    @apply group flex items-center px-3 py-3 rounded-2xl text-sm font-medium transition-all duration-200 relative;
+  }
+
+  .nav-item-active {
+    @apply nav-item bg-blue-600 text-white shadow-lg;
+  }
+
+  .nav-item-inactive {
+    @apply nav-item text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800;
+  }
+
+  .nav-icon {
+    @apply mr-3;
+  }
+
+  .nav-icon-active {
+    @apply nav-icon text-white;
+  }
+
+  .nav-icon-inactive {
+    @apply nav-icon text-zinc-500 group-hover:text-zinc-300;
+  }
+
+  /* =============================================================================
+     BADGE COMPONENTS
+  ============================================================================= */
+
+  .badge-base {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply badge-base bg-emerald-900/50 text-emerald-300 border border-emerald-800;
+  }
+
+  .badge-secondary {
+    @apply badge-base bg-zinc-700 text-zinc-300 border border-zinc-600;
+  }
+
+  .badge-warning {
+    @apply badge-base bg-yellow-900/50 text-yellow-300 border border-yellow-800;
+  }
+
+  .badge-danger {
+    @apply badge-base bg-red-900/50 text-red-300 border border-red-800;
+  }
+
+  /* =============================================================================
+     DROPDOWN COMPONENTS
+  ============================================================================= */
+
+  .dropdown-menu {
+    @apply absolute right-0 mt-3 w-56 bg-zinc-900/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-zinc-700 z-50 fade-in;
+  }
+
+  .dropdown-content {
+    @apply p-2;
+  }
+
+  .dropdown-header {
+    @apply px-3 py-2 border-b border-zinc-700 mb-2;
+  }
+
+  .dropdown-item {
+    @apply flex items-center space-x-3 px-3 py-2 text-sm text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800 rounded-xl transition-all duration-200;
+  }
+
+  .dropdown-divider {
+    @apply border-t border-zinc-700 mt-2 pt-2;
+  }
+
+  /* =============================================================================
+     MODAL & OVERLAY COMPONENTS
+  ============================================================================= */
+
+  .overlay {
+    @apply fixed inset-0 z-50 overflow-y-auto;
+  }
+
+  .overlay-backdrop {
+    @apply fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity;
+  }
+
+  .modal-container {
+    @apply flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0;
+  }
+
+  .modal-content {
+    @apply inline-block align-bottom bg-zinc-900 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all border border-zinc-700;
+  }
+
+  /* =============================================================================
+     FORM COMPONENTS
+  ============================================================================= */
+
+  .form-group {
+    @apply space-y-2;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-zinc-300;
+  }
+
+  .form-error {
+    @apply text-sm text-red-400 mt-1;
+  }
+
+  .form-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+  }
+
+  .form-actions {
+    @apply flex justify-end space-x-3 pt-4;
+  }
+
+  /* =============================================================================
+     ALERT COMPONENTS
+  ============================================================================= */
+
+  .alert-base {
+    @apply px-4 py-3 rounded-xl mb-4 border;
+  }
+
+  .alert-error {
+    @apply alert-base bg-red-900/30 border-red-800/50 text-red-200;
+  }
+
+  .alert-success {
+    @apply alert-base bg-emerald-900/30 border-emerald-800/50 text-emerald-200;
+  }
+
+  .alert-warning {
+    @apply alert-base bg-yellow-900/30 border-yellow-800/50 text-yellow-200;
+  }
+
+  .alert-info {
+    @apply alert-base bg-blue-900/30 border-blue-800/50 text-blue-200;
+  }
+
+  /* =============================================================================
+     LOADING & ANIMATION COMPONENTS
+  ============================================================================= */
+
+  .loading-spinner {
+    @apply animate-spin rounded-full h-5 w-5 border-2 border-transparent border-t-current;
+  }
+
+  .loading-skeleton {
+    @apply animate-pulse bg-zinc-700 rounded;
+  }
+
+  .fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+
+  .scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+
+  /* =============================================================================
+     SPACING & LAYOUT UTILITIES
+  ============================================================================= */
+
+  .section-spacing {
+    @apply space-y-6;
+  }
+
+  .content-max-width {
+    @apply max-w-7xl mx-auto;
+  }
+
+  .form-max-width {
+    @apply max-w-4xl mx-auto;
+  }
+
+  .auth-max-width {
+    @apply max-w-md mx-auto;
+  }
+
+  /* =============================================================================
+     RESPONSIVE UTILITIES
+  ============================================================================= */
+
+  .mobile-menu-button {
+    @apply lg:hidden btn-icon;
+  }
+
+  .desktop-only {
+    @apply hidden lg:block;
+  }
+
+  .mobile-only {
+    @apply lg:hidden;
+  }
 }
 
-::-webkit-scrollbar-track {
-  background: #1e1e3f;
-  border-radius: 3px;
+/* =============================================================================
+   UTILITIES LAYER - CUSTOM UTILITIES
+============================================================================= */
+
+@layer utilities {
+  
+  /* Animation keyframes */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Utility classes for specific needs */
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  .backdrop-blur-strong {
+    backdrop-filter: blur(20px);
+  }
+
+  .border-gradient {
+    background: linear-gradient(zinc-900, zinc-900) padding-box,
+                linear-gradient(to right, transparent, zinc-700, transparent) border-box;
+    border: 1px solid transparent;
+  }
 }
 
-::-webkit-scrollbar-thumb {
-  background: #3b3b5c;
-  border-radius: 3px;
-  transition: background 0.2s ease;
-}
+/* =============================================================================
+   QUILL EDITOR THEMING
+============================================================================= */
 
-::-webkit-scrollbar-thumb:hover {
-  background: #4c4c6d;
-}
-
-/* Improved focus visibility */
-.focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-900;
-}
-
-/* Modern button animations */
-.btn-animate {
-  @apply transition-all duration-200 ease-in-out transform active:scale-95;
-}
-
-.btn-animate:hover {
-  @apply shadow-lg;
-}
-
-/* Glass morphism effect */
-.glass {
-  background: rgba(30, 30, 63, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Custom input styling */
-.input-modern {
-  @apply w-full px-4 py-3 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-xl 
-         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-         transition-all duration-200 ease-in-out placeholder-zinc-400;
-}
-
-.input-modern:focus {
-  @apply bg-zinc-700 shadow-lg;
-}
-
-/* Modern card styling */
-.card-modern {
-  @apply bg-zinc-800 rounded-2xl border border-zinc-700 shadow-xl 
-         transition-all duration-300 ease-in-out;
-}
-
-.card-modern:hover {
-  @apply border-zinc-600 shadow-2xl;
-}
-
-/* Status badges */
-.badge {
-  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
-}
-
-.badge-success {
-  @apply bg-emerald-900/50 text-emerald-300 border border-emerald-800;
-}
-
-.badge-secondary {
-  @apply bg-zinc-700 text-zinc-300 border border-zinc-600;
-}
-
-/* Modern table styling */
-.table-modern {
-  @apply w-full divide-y divide-zinc-700;
-}
-
-.table-modern th {
-  @apply px-6 py-4 text-left text-xs font-semibold text-zinc-300 uppercase tracking-wider
-         bg-zinc-800 border-b border-zinc-700;
-}
-
-.table-modern td {
-  @apply px-6 py-4 whitespace-nowrap text-sm text-zinc-300 border-b border-zinc-800;
-}
-
-.table-modern tr:hover {
-  @apply bg-zinc-800/50;
-}
-
-/* Custom styles for Quill editor to match Tailwind forms */
 .quill {
-  border: 1px solid #3f3f46;
-  border-radius: 0.75rem;
-  background-color: #18181b;
+  @apply border border-zinc-700 rounded-2xl bg-zinc-800;
 }
 
 .quill .ql-toolbar {
-  border-bottom: 1px solid #3f3f46;
-  background-color: #27272a;
-  border-top-left-radius: 0.75rem;
-  border-top-right-radius: 0.75rem;
+  @apply border-b border-zinc-700 bg-zinc-800 rounded-t-2xl;
 }
 
 .quill .ql-container {
-  border: none;
+  @apply border-none bg-zinc-800 rounded-b-2xl;
   min-height: 200px;
-  font-family: 'Inter', sans-serif;
+  font-family: inherit;
   font-size: 0.875rem;
   color: #f1f5f9;
-  background-color: #18181b;
 }
 
 .quill .ql-editor {
-  padding: 1rem;
-  color: #f1f5f9;
+  @apply p-4 text-zinc-100;
 }
 
 .quill .ql-toolbar button {
-  color: #a1a1aa;
-  border-radius: 0.375rem;
-  transition: all 0.2s ease;
+  @apply text-zinc-400 rounded-lg transition-all duration-200;
 }
 
 .quill .ql-toolbar button.ql-active,
 .quill .ql-toolbar button:hover {
-  background-color: #3f3f46;
-  color: #f1f5f9;
+  @apply bg-zinc-700 text-zinc-100;
 }
 
-/* Animation classes */
-.fade-in {
-  animation: fadeIn 0.3s ease-in-out;
+/* =============================================================================
+   PROSE STYLING FOR CONTENT
+============================================================================= */
+
+.prose-theme {
+  @apply text-zinc-300 leading-relaxed max-w-none;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.slide-up {
-  animation: slideUp 0.4s ease-out;
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Mobile improvements */
-@media (max-width: 768px) {
-  .card-modern {
-    @apply mx-4 rounded-xl;
-  }
-  
-  .table-modern th,
-  .table-modern td {
-    @apply px-3 py-3;
-  }
-}
-
-/* Prose styling for better readability */
-.prose-dark {
-  @apply text-zinc-300 leading-relaxed;
-}
-
-.prose-dark h1 {
+.prose-theme h1 {
   @apply text-zinc-100 font-bold text-2xl mb-4;
 }
 
-.prose-dark h2 {
+.prose-theme h2 {
   @apply text-zinc-100 font-semibold text-xl mb-3 mt-6;
 }
 
-.prose-dark p {
+.prose-theme p {
   @apply mb-4;
 }
 
-.prose-dark a {
+.prose-theme a {
   @apply text-blue-400 hover:text-blue-300 transition-colors;
 }
 
-.prose-dark ul {
+.prose-theme ul {
   @apply list-disc list-inside mb-4 space-y-2;
 }
 
-.prose-dark ol {
+.prose-theme ol {
   @apply list-decimal list-inside mb-4 space-y-2;
 }
 
-.prose-dark blockquote {
+.prose-theme blockquote {
   @apply border-l-4 border-zinc-600 pl-4 italic text-zinc-400 mb-4;
 }
 
-.prose-dark strong {
+.prose-theme strong {
   @apply font-semibold text-zinc-100;
 }
 
-.prose-dark em {
+.prose-theme em {
   @apply italic;
 }
 
-.prose-dark img {
-  @apply rounded-xl max-w-full h-auto shadow-lg;
+.prose-theme img {
+  @apply rounded-2xl max-w-full h-auto shadow-lg;
 }
 
 /* Prose styles for rendering Quill content */
-.prose :where(h1):not(:where([class~="not-prose"] *)) {
-  font-size: 2.25em; /* text-4xl */
-  font-weight: 800; /* font-extrabold */
+.prose-theme :where(h1):not(:where([class~="not-prose"] *)) {
+  font-size: 2.25em;
+  font-weight: 800;
   margin-top: 0;
   margin-bottom: 0.5em;
 }
 
-.prose :where(h2):not(:where([class~="not-prose"] *)) {
-  font-size: 1.5em; /* text-2xl */
-  font-weight: 600; /* font-semibold */
+.prose-theme :where(h2):not(:where([class~="not-prose"] *)) {
+  font-size: 1.5em;
+  font-weight: 600;
   margin-top: 1.5em;
   margin-bottom: 0.75em;
 }
 
-.prose :where(p):not(:where([class~="not-prose"] *)) {
+.prose-theme :where(p):not(:where([class~="not-prose"] *)) {
   margin-top: 1em;
   margin-bottom: 1em;
 }
 
-.prose :where(ul):not(:where([class~="not-prose"] *)) {
+.prose-theme :where(ul):not(:where([class~="not-prose"] *)) {
   list-style-type: disc;
   margin-left: 1.25em;
   padding-left: 0.25em;
 }
 
-.prose :where(ol):not(:where([class~="not-prose"] *)) {
+.prose-theme :where(ol):not(:where([class~="not-prose"] *)) {
   list-style-type: decimal;
   margin-left: 1.25em;
   padding-left: 0.25em;
 }
 
-.prose :where(li):not(:where([class~="not-prose"] *)) {
+.prose-theme :where(li):not(:where([class~="not-prose"] *)) {
   margin-top: 0.5em;
   margin-bottom: 0.5em;
 }
 
-.prose :where(blockquote):not(:where([class~="not-prose"] *)) {
-  border-left: 0.25rem solid #d1d5db; /* gray-300 */
+.prose-theme :where(blockquote):not(:where([class~="not-prose"] *)) {
+  border-left: 0.25rem solid #4b5563;
   padding-left: 1rem;
   font-style: italic;
-  color: #6b7280; /* gray-500 */
+  color: #9ca3af;
 }
 
-.dark .prose :where(blockquote):not(:where([class~="not-prose"] *)) {
-  border-left-color: #4b5563; /* dark gray-600 */
-  color: #9ca3af; /* dark gray-400 */
-}
-
-.prose :where(a):not(:where([class~="not-prose"] *)) {
-  color: #4f46e5; /* indigo-600 */
+.prose-theme :where(a):not(:where([class~="not-prose"] *)) {
+  color: #60a5fa;
   text-decoration: underline;
 }
 
-.dark .prose :where(a):not(:where([class~="not-prose"] *)) {
-  color: #818cf8; /* indigo-400 */
+.prose-theme :where(strong):not(:where([class~="not-prose"] *)) {
+  font-weight: 700;
+  color: #f1f5f9;
 }
 
-.prose :where(strong):not(:where([class~="not-prose"] *)) {
-  font-weight: 700; /* font-bold */
-}
-
-.prose :where(em):not(:where([class~="not-prose"] *)) {
+.prose-theme :where(em):not(:where([class~="not-prose"] *)) {
   font-style: italic;
 }
 
-.prose :where(img):not(:where([class~="not-prose"] *)) {
+.prose-theme :where(img):not(:where([class~="not-prose"] *)) {
   max-width: 100%;
   height: auto;
-  border-radius: 0.375rem; /* rounded-md */
+  border-radius: 0.75rem;
 }

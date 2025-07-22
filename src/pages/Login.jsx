@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext'; // Import useAuth hook
+import { Headphones, Mail, LogIn, ArrowRight } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -12,10 +13,9 @@ const Login = () => {
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
   const navigate = useNavigate();
-  const { signIn, signInWithGoogle, resetPassword, user } = useAuth(); // Use signIn from useAuth
+  const { signIn, signInWithGoogle, resetPassword, user } = useAuth();
 
-  // If user is already logged in, redirect to dashboard
-  React.useEffect(() => {
+  useEffect(() => {
     if (user) {
       navigate('/', { replace: true });
     }
@@ -27,8 +27,8 @@ const Login = () => {
     setLoading(true);
 
     try {
-      await signIn(email, password); // Use signIn from useAuth
-      navigate('/', { replace: true }); // Redirect to dashboard on successful login
+      await signIn(email, password);
+      navigate('/', { replace: true });
     } catch (error) {
       setError(error.message);
     } finally {
@@ -67,10 +67,13 @@ const Login = () => {
   if (showForgotPassword) {
     if (forgotPasswordSuccess) {
       return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 px-4">
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 p-6 sm:p-8 w-full max-w-md text-center">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Check Your Email</h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
+        <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
+          <div className="theme-card p-6 sm:p-8 auth-max-width text-center">
+            <div className="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Mail className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-heading-xl mb-4">Check Your Email</h2>
+            <p className="text-body mb-6">
               We've sent a password reset link to <strong>{forgotPasswordEmail}</strong>
             </p>
             <button
@@ -79,7 +82,7 @@ const Login = () => {
                 setForgotPasswordSuccess(false);
                 setForgotPasswordEmail('');
               }}
-              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+              className="text-link-underline"
             >
               Back to Login
             </button>
@@ -89,42 +92,62 @@ const Login = () => {
     }
 
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 px-4">
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 p-6 sm:p-8 w-full max-w-md">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 text-center">Forgot Password</h2>
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
+        <div className="theme-card p-6 sm:p-8 auth-max-width">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Mail className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-heading-xl">Forgot Password</h2>
+            <p className="text-muted mt-2">Enter your email to reset your password</p>
+          </div>
 
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg mb-4" role="alert">
+            <div className="alert-error" role="alert">
+              <strong className="font-semibold">Error!</strong>
               {error}
             </div>
           )}
 
-          <form onSubmit={handleForgotPassword} className="space-y-4">
-            <div>
-              <label htmlFor="forgotEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+          <form onSubmit={handleForgotPassword} className="section-spacing">
+            <div className="form-group">
+              <label htmlFor="forgotEmail" className="form-label">Email Address</label>
               <input
                 type="email"
                 id="forgotEmail"
                 value={forgotPasswordEmail}
                 onChange={(e) => setForgotPasswordEmail(e.target.value)}
                 required
-                className="block w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base dark:bg-slate-700 dark:text-gray-100 transition-colors"
+                className="input-theme"
+                placeholder="Enter your email address"
               />
             </div>
             <button
               type="submit"
               disabled={forgotPasswordLoading}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="btn-primary btn-large w-full"
             >
-              {forgotPasswordLoading ? 'Sending...' : 'Send Reset Link'}
+              {forgotPasswordLoading ? (
+                <>
+                  <div className="loading-spinner mr-2"></div>
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Mail size={16} className="mr-2" />
+                  Send Reset Link
+                </>
+              )}
             </button>
-            <button
+            <div className="text-center">
+              <button
               type="button"
               onClick={() => setShowForgotPassword(false)}
-              className="w-full text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+              className="text-link-underline"
             >
               Back to Login
             </button>
+            </div>
           </form>
         </div>
       </div>
@@ -132,36 +155,39 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-gradient-to-br from-zinc-900/20 via-transparent to-zinc-800/20"></div>
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4 relative">
+      <div className="page-background"></div>
       
-      <div className="relative w-full max-w-md fade-in">
-        <div className="bg-zinc-900/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-zinc-700/50">
+      <div className="relative auth-max-width fade-in">
+        <div className="theme-card p-8">
         <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Headphones size={24} className="text-white" />
+          </div>
           
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-white tracking-tight">Bad Habits Band</h1>
-            <p className="text-zinc-400">Setlist Management Platform</p>
+            <h1 className="text-heading-xl tracking-tight">Bad Habits Band</h1>
+            <p className="text-muted">Setlist Management Platform</p>
           </div>
         </div>
       
         {error && (
-          <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-xl mb-6" role="alert">
+          <div className="alert-error" role="alert">
             <div className="flex items-center space-x-2">
-              <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <span className="text-sm">{error}</span>
+              <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-xs">!</span>
+              </div>
+              <span className="text-sm font-medium">{error}</span>
             </div>
           </div>
         )}
 
-        <hr /><br /><form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="section-spacing">
           <button
             type="button"
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full flex justify-center items-center py-3 px-4 border border-zinc-600 rounded-xl text-base font-medium text-zinc-200 bg-zinc-800 hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed btn-animate mb-6"
+            className="btn-secondary btn-large w-full mb-6"
           >
             <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
               <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -174,35 +200,35 @@ const Login = () => {
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-zinc-600" />
+              <div className="w-full border-t border-zinc-700" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-zinc-900/95 text-zinc-400 rounded-lg">Or continue with email</span>
+              <span className="px-4 bg-zinc-900 text-muted rounded-lg">Or continue with email</span>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-2">Email Address</label>
+          <div className="section-spacing">
+            <div className="form-group">
+              <label htmlFor="email" className="form-label">Email Address</label>
             <input
               type="email"
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="input-modern"
+              className="input-theme"
               placeholder="Enter your email"
             />
             </div>
-          <div>
-              <label htmlFor="password" className="block text-sm font-medium text-zinc-300 mb-2">Password</label>
+          <div className="form-group">
+              <label htmlFor="password" className="form-label">Password</label>
             <input
               type="password"
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="input-modern"
+              className="input-theme"
               placeholder="Enter your password"
             />
           </div>
@@ -211,36 +237,35 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex justify-center items-center py-3 px-4 rounded-xl text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed btn-animate shadow-lg"
+            className="btn-primary btn-large w-full"
           >
             {loading ? (
               <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                <div className="loading-spinner mr-2"></div>
                 Signing in...
               </>
             ) : (
               <>
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-                </svg>
+                <LogIn size={16} className="mr-2" />
                 Sign In
               </>
             )}
           </button>
 
-          <div className="flex flex-col space-y-3 text-center pt-4 border-t border-zinc-700">
+          <div className="flex flex-col space-y-3 text-center pt-6 border-t border-zinc-700">
             <button
               type="button"
               onClick={() => setShowForgotPassword(true)}
-              className="text-sm text-zinc-400 hover:text-zinc-300 transition-colors"
+              className="text-sm text-link"
             >
               Forgot your password?
             </button>
             <Link
               to="/auth/magic-link"
-              className="text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium"
+              className="text-sm text-link font-medium inline-flex items-center justify-center"
             >
-              Or sign in with magic link →
+              Or sign in with magic link
+              <ArrowRight size={14} className="ml-1" />
             </Link>
           </div>
         </form>
