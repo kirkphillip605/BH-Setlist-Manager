@@ -140,8 +140,8 @@ const Login = () => {
         <div className="text-center mb-6">
           
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">Welcome Back</h1>
-            <p className="text-zinc-400">Sign in to your setlist management system</p>
+            <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">Bad Habits Band</h1>
+            <p className="text-zinc-400">Setlist Management Platform</p>
           </div>
         </div>
       
