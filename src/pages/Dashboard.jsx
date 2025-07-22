@@ -6,6 +6,7 @@ import { usePageTitle } from '../context/PageTitleContext';
 import { songsService } from '../services/songsService';
 import { setlistsService } from '../services/setlistsService';
 import { songCollectionsService } from '../services/songCollectionsService';
+import { performanceService } from '../services/performanceService';
 import { generateSetlistPDF } from '../utils/pdfGenerator';
 
 const Dashboard = () => {
@@ -19,11 +20,33 @@ const Dashboard = () => {
   const [recentSongs, setRecentSongs] = useState([]);
   const [recentSetlists, setRecentSetlists] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeSession, setActiveSession] = useState(null);
 
   useEffect(() => {
     setPageTitle('Dashboard');
     fetchDashboardData();
+    checkForActiveSession();
   }, [setPageTitle]);
+
+  const checkForActiveSession = async () => {
+    try {
+      // Check all setlists for active sessions
+      const setlists = await setlistsService.getAllSetlists();
+      for (const setlist of setlists) {
+        try {
+          const session = await performanceService.getActiveSession(setlist.id);
+          if (session && session.leader_id !== user.id) {
+            setActiveSession({ ...session, setlist });
+            break;
+          }
+        } catch (err) {
+          // No active session for this setlist, continue
+        }
+      }
+    } catch (err) {
+      console.error('Error checking for active sessions:', err);
+    }
+  };
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -82,6 +105,32 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      
+      {/* Active Performance Session Card */}
+      {activeSession && (
+        <div className="card-modern p-6 mb-8 border-l-4 border-l-green-500 bg-gradient-to-r from-green-500/10 to-transparent">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-zinc-100 mb-1">🎭 Performance Mode Active</h3>
+              <p className="text-zinc-300 mb-1">
+                <span className="font-medium">{activeSession.setlist.name}</span> is being performed
+              </p>
+              <p className="text-zinc-400 text-sm">
+                Led by {activeSession.users?.name || 'Unknown'} • Started {new Date(activeSession.created_at).toLocaleTimeString()}
+              </p>
+            </div>
+            <button
+              onClick={() => navigate(`/performance?setlist=${activeSession.setlist.id}`)}
+              className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all btn-animate shadow-lg font-medium"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+              </svg>
+              Join as Follower
+            </button>
+          </div>
+        </div>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {/* Quick Stats Cards */}

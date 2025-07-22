@@ -178,6 +178,13 @@ const PerformanceMode = () => {
         songData = await songsService.getSongById(song.id);
       }
       
+      // Update the performance session for followers to see the change
+      if (isLeader && session) {
+        await performanceService.updateSession(session.id, {
+          current_song_id: songData.id
+        });
+      }
+      
       setCurrentSong(songData);
       setCurrentSongLyrics(songData.lyrics);
       setIsSearchSong(true);
