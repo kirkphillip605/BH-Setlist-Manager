@@ -138,9 +138,7 @@ const Login = () => {
       <div className="relative w-full max-w-md fade-in">
         <div className="glass rounded-3xl p-8 shadow-2xl border border-zinc-800/50">
         <div className="text-center mb-6">
-          <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
+          
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">Welcome Back</h1>
             <p className="text-zinc-400">Sign in to your setlist management system</p>
@@ -158,7 +156,7 @@ const Login = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <hr /><form onSubmit={handleSubmit} className="space-y-4">
           <button
             type="button"
             onClick={handleGoogleSignIn}
