@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { PlusCircle, Edit, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, ChevronUp, ChevronDown, Music, Search } from 'lucide-react';
 import ResizableTable from '../components/ResizableTable';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
