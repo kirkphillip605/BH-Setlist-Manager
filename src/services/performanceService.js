@@ -1,6 +1,69 @@
 import { supabase } from '../supabaseClient';
+import { songsService } from './songsService';
+import { setlistsService } from './setlistsService';
+import { setsService } from './setsService';
+
+// Performance mode storage keys
+const STORAGE_KEYS = {
+  SETLIST_DATA: 'performanceMode_setlistData',
+  SONGS_DATA: 'performanceMode_songsData',
+  SESSION_ID: 'performanceMode_sessionId'
+};
 
 export const performanceService = {
+  // Prefetch and cache all setlist data
+  async prefetchSetlistData(setlistId) {
+    try {
+      // Get full setlist with sets
+      const setlistData = await setlistsService.getSetlistById(setlistId);
+      
+      // Get all songs for all sets
+      const allSongs = {};
+      for (const set of setlistData.sets || []) {
+        const setData = await setsService.getSetById(set.id);
+        for (const setSong of setData.set_songs || []) {
+          if (!allSongs[setSong.songs.id]) {
+            // Get full song data with lyrics
+            const fullSong = await songsService.getSongById(setSong.songs.id);
+            allSongs[setSong.songs.id] = fullSong;
+          }
+        }
+      }
+      
+      // Store in browser storage
+      localStorage.setItem(STORAGE_KEYS.SETLIST_DATA, JSON.stringify(setlistData));
+      localStorage.setItem(STORAGE_KEYS.SONGS_DATA, JSON.stringify(allSongs));
+      
+      return { setlistData, songsData: allSongs };
+    } catch (error) {
+      console.error('Error prefetching setlist data:', error);
+      throw error;
+    }
+  },
+
+  // Get cached setlist data
+  getCachedSetlistData() {
+    try {
+      const setlistData = localStorage.getItem(STORAGE_KEYS.SETLIST_DATA);
+      const songsData = localStorage.getItem(STORAGE_KEYS.SONGS_DATA);
+      
+      return {
+        setlistData: setlistData ? JSON.parse(setlistData) : null,
+        songsData: songsData ? JSON.parse(songsData) : null
+      };
+    } catch (error) {
+      console.error('Error reading cached data:', error);
+      return { setlistData: null, songsData: null };
+    }
+  },
+
+  // Clear performance mode cache
+  clearCache() {
+    localStorage.removeItem(STORAGE_KEYS.SETLIST_DATA);
+    localStorage.removeItem(STORAGE_KEYS.SONGS_DATA);
+    localStorage.removeItem(STORAGE_KEYS.SESSION_ID);
+  },
+
   // Create a new performance session
   async createSession(setlistId, userId) {
     // First, end any existing active sessions for this setlist
@@ -48,6 +111,10 @@ export const performanceService = {
       .single();
 
     if (error) throw new Error(error.message);
+    
+    // Store session ID for reference
+    localStorage.setItem(STORAGE_KEYS.SESSION_ID, data.id);
+    
     return data;
   },
 
@@ -87,6 +154,9 @@ export const performanceService = {
 
   // End a performance session
   async endSession(sessionId) {
+    // Clear cache when ending session
+    this.clearCache();
+    
     const { error } = await supabase
       .from('performance_sessions')
       .update({ is_active: false })

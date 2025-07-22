@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Play, SkipBack, SkipForward, X, Music } from 'lucide-react';
+import { ArrowLeft, Play, SkipBack, SkipForward, X, Music, Search, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 import { setlistsService } from '../services/setlistsService';
@@ -25,11 +25,19 @@ const PerformanceMode = () => {
   const [inPerformance, setInPerformance] = useState(!!setlistId);
   const [session, setSession] = useState(null);
   const [setlistData, setSetlistData] = useState(null);
+  const [songsData, setSongsData] = useState({});
   const [currentSet, setCurrentSet] = useState(null);
   const [currentSong, setCurrentSong] = useState(null);
   const [currentSongLyrics, setCurrentSongLyrics] = useState('');
   const [isLeader, setIsLeader] = useState(false);
   const [subscription, setSubscription] = useState(null);
+
+  // Search functionality
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [allSongs, setAllSongs] = useState([]);
+  const [isSearchSong, setIsSearchSong] = useState(false);
+  const [previousSetSong, setPreviousSetSong] = useState(null);
 
   useEffect(() => {
     setPageTitle('Performance Mode');
@@ -58,6 +66,15 @@ const PerformanceMode = () => {
     }
   };
 
+  const fetchAllSongs = async () => {
+    try {
+      const songs = await songsService.getAllSongs();
+      setAllSongs(songs);
+    } catch (err) {
+      console.error('Error fetching all songs:', err);
+    }
+  };
+
   const initializePerformanceMode = async (setlistId) => {
     setLoading(true);
     setError(null);
@@ -65,25 +82,32 @@ const PerformanceMode = () => {
       // Check for existing active session
       const activeSession = await performanceService.getActiveSession(setlistId);
       
+      let sessionData;
       if (activeSession) {
         // Join existing session as follower
-        setSession(activeSession);
+        sessionData = activeSession;
         setIsLeader(activeSession.leader_id === user.id);
-        await loadPerformanceData(setlistId, activeSession);
       } else {
         // Create new session as leader
-        const newSession = await performanceService.createSession(setlistId, user.id);
-        setSession(newSession);
+        sessionData = await performanceService.createSession(setlistId, user.id);
         setIsLeader(true);
-        await loadPerformanceData(setlistId, newSession);
+        
+        // Prefetch all setlist data for offline support
+        await performanceService.prefetchSetlistData(setlistId);
       }
+
+      setSession(sessionData);
+      await loadPerformanceData(setlistId, sessionData);
 
       // Subscribe to session updates
       const sub = performanceService.subscribeToSession(
-        activeSession?.id || session?.id,
+        sessionData.id,
         handleSessionUpdate
       );
       setSubscription(sub);
+
+      // Fetch all songs for search functionality
+      await fetchAllSongs();
 
     } catch (err) {
       setError(err.message);
@@ -94,21 +118,26 @@ const PerformanceMode = () => {
 
   const loadPerformanceData = async (setlistId, sessionData) => {
     try {
-      // Load full setlist with sets and songs
-      const fullSetlist = await setlistsService.getSetlistById(setlistId);
-      setSetlistData(fullSetlist);
+      // Try to load from cache first
+      const cached = performanceService.getCachedSetlistData();
+      
+      if (cached.setlistData && cached.songsData) {
+        setSetlistData(cached.setlistData);
+        setSongsData(cached.songsData);
+      } else {
+        // Fallback to API calls
+        const fullSetlist = await setlistsService.getSetlistById(setlistId);
+        setSetlistData(fullSetlist);
+      }
 
-      // Load detailed set data
+      // Load current set and song
       if (sessionData.current_set_id) {
         const setData = await setsService.getSetById(sessionData.current_set_id);
         setCurrentSet(setData);
       }
 
-      // Load current song lyrics
       if (sessionData.current_song_id) {
-        const songData = await songsService.getSongById(sessionData.current_song_id);
-        setCurrentSong(songData);
-        setCurrentSongLyrics(songData.lyrics);
+        await loadCurrentSong(sessionData.current_song_id);
       }
 
       setInPerformance(true);
@@ -118,9 +147,50 @@ const PerformanceMode = () => {
     }
   };
 
+  const loadCurrentSong = async (songId) => {
+    try {
+      // Try cached data first
+      if (songsData[songId]) {
+        const songData = songsData[songId];
+        setCurrentSong(songData);
+        setCurrentSongLyrics(songData.lyrics);
+        setIsSearchSong(false);
+      } else {
+        // Fallback to API
+        const songData = await songsService.getSongById(songId);
+        setCurrentSong(songData);
+        setCurrentSongLyrics(songData.lyrics);
+        setIsSearchSong(false);
+      }
+    } catch (err) {
+      console.error('Error loading current song:', err);
+    }
+  };
+
+  const loadSearchSong = async (song) => {
+    try {
+      // Store previous set song for navigation
+      setPreviousSetSong(currentSong);
+      
+      // Load full song data if not cached
+      let songData = songsData[song.id] || song;
+      if (!songData.lyrics) {
+        songData = await songsService.getSongById(song.id);
+      }
+      
+      setCurrentSong(songData);
+      setCurrentSongLyrics(songData.lyrics);
+      setIsSearchSong(true);
+      setShowSearch(false);
+      setSearchQuery('');
+    } catch (err) {
+      console.error('Error loading search song:', err);
+      setError('Failed to load selected song');
+    }
+  };
+
   const handleSessionUpdate = (payload) => {
-    if (payload.new) {
-      // Update session data and reload current song if changed
+    if (payload.new && !isLeader) {
       setSession(payload.new);
       if (payload.new.current_song_id !== currentSong?.id) {
         loadCurrentSong(payload.new.current_song_id);
@@ -137,16 +207,6 @@ const PerformanceMode = () => {
       setCurrentSet(setData);
     } catch (err) {
       console.error('Error loading current set:', err);
-    }
-  };
-
-  const loadCurrentSong = async (songId) => {
-    try {
-      const songData = await songsService.getSongById(songId);
-      setCurrentSong(songData);
-      setCurrentSongLyrics(songData.lyrics);
-    } catch (err) {
-      console.error('Error loading current song:', err);
     }
   };
 
@@ -171,6 +231,8 @@ const PerformanceMode = () => {
         current_set_id: set.id,
         current_song_id: firstSong?.id || null
       });
+      
+      setIsSearchSong(false);
     } catch (err) {
       setError(err.message);
     }
@@ -183,13 +245,15 @@ const PerformanceMode = () => {
       await performanceService.updateSession(session.id, {
         current_song_id: song.id
       });
+      
+      setIsSearchSong(false);
     } catch (err) {
       setError(err.message);
     }
   };
 
   const getCurrentSongIndex = () => {
-    if (!currentSet || !currentSong) return -1;
+    if (!currentSet || !currentSong || isSearchSong) return -1;
     const songs = currentSet.set_songs
       ?.map(ss => ss.songs)
       .sort((a, b) => {
@@ -201,7 +265,16 @@ const PerformanceMode = () => {
   };
 
   const handlePreviousSong = async () => {
-    if (!isLeader || !session || !currentSet) return;
+    if (!isLeader || !session) return;
+
+    // If currently viewing a search song, go back to the previous set song
+    if (isSearchSong && previousSetSong) {
+      await loadCurrentSong(previousSetSong.id);
+      setPreviousSetSong(null);
+      return;
+    }
+
+    if (!currentSet) return;
 
     const songs = currentSet.set_songs
       ?.map(ss => ss.songs)
@@ -219,13 +292,22 @@ const PerformanceMode = () => {
   };
 
   const handleNextSong = async () => {
-    if (!isLeader || !session || !currentSet) return;
+    if (!isLeader || !session) return;
+
+    // If currently viewing a search song, go back to the set
+    if (isSearchSong && previousSetSong) {
+      await loadCurrentSong(previousSetSong.id);
+      setPreviousSetSong(null);
+      return;
+    }
+
+    if (!currentSet) return;
 
     const songs = currentSet.set_songs
       ?.map(ss => ss.songs)
       .sort((a, b) => {
         const aOrder = currentSet.set_songs.find(ss => ss.songs.id === a.id)?.song_order || 0;
-        const bOrder = currentSet.set_songs.find(ss => ss.songs.id === b.id)?.song_order || 0;
+        const bOrder = currentSet.set_songs.find(ss => ss.songs.id => b.id)?.song_order || 0;
         return aOrder - bOrder;
       }) || [];
 
@@ -244,6 +326,8 @@ const PerformanceMode = () => {
       if (subscription) {
         subscription.unsubscribe();
       }
+      // Clear cache on exit
+      performanceService.clearCache();
       navigate('/setlists');
     } catch (err) {
       console.error('Error exiting performance:', err);
@@ -251,12 +335,15 @@ const PerformanceMode = () => {
     }
   };
 
+  const filteredSongs = allSongs.filter(song =>
+    song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    song.original_artist.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   if (!inPerformance) {
-    // Setlist selection screen
     return (
       <div className="min-h-screen bg-zinc-950 p-4">
         <div className="max-w-2xl mx-auto">
-          {/* Header */}
           <div className="mb-8">
             <div className="flex items-center space-x-4 mb-4">
               <button
@@ -284,7 +371,6 @@ const PerformanceMode = () => {
             </div>
           )}
 
-          {/* Setlist Selection */}
           <div className="card-modern p-6">
             <div className="mb-6">
               <label htmlFor="setlist-select" className="block text-sm font-medium text-zinc-300 mb-3">
@@ -321,7 +407,6 @@ const PerformanceMode = () => {
     );
   }
 
-  // Performance mode screen
   const currentSetSongs = currentSet?.set_songs
     ?.map(ss => ss.songs)
     .sort((a, b) => {
@@ -331,12 +416,12 @@ const PerformanceMode = () => {
     }) || [];
 
   const currentIndex = getCurrentSongIndex();
-  const canGoPrevious = currentIndex > 0;
-  const canGoNext = currentIndex < currentSetSongs.length - 1;
+  const canGoPrevious = (currentIndex > 0 && !isSearchSong) || (isSearchSong && previousSetSong);
+  const canGoNext = (currentIndex < currentSetSongs.length - 1 && !isSearchSong) || (isSearchSong && previousSetSong);
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex">
-      {/* Sidebar */}
+    <div className="h-screen bg-zinc-950 flex overflow-hidden">
+      {/* Performance Sidebar */}
       <div className="w-80 bg-zinc-900 border-r border-zinc-800 flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-zinc-800">
@@ -346,6 +431,11 @@ const PerformanceMode = () => {
           <p className="text-sm text-zinc-400">
             {isLeader ? 'Leader' : 'Follower'} • {currentSet?.name}
           </p>
+          {isSearchSong && (
+            <p className="text-xs text-amber-400 mt-1">
+              🎵 Search Song Active
+            </p>
+          )}
         </div>
 
         {/* Sets Navigation (Leader only) */}
@@ -358,7 +448,7 @@ const PerformanceMode = () => {
                 const set = setlistData.sets.find(s => s.id === e.target.value);
                 if (set) handleSetChange(set);
               }}
-              className="input-modern"
+              className="input-modern text-sm"
             >
               {setlistData.sets.map((set) => (
                 <option key={set.id} value={set.id}>
@@ -369,25 +459,71 @@ const PerformanceMode = () => {
           </div>
         )}
 
+        {/* Search Songs (Leader only) */}
+        {isLeader && (
+          <div className="p-4 border-b border-zinc-800">
+            <div className="relative">
+              <button
+                onClick={() => setShowSearch(!showSearch)}
+                className="w-full inline-flex items-center justify-center px-3 py-2 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-all btn-animate text-sm font-medium"
+              >
+                <Search size={16} className="mr-2" />
+                Search Songs
+                <ChevronDown size={16} className={`ml-2 transition-transform ${showSearch ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {showSearch && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl z-50 max-h-80 overflow-hidden">
+                  <div className="p-3 border-b border-zinc-700">
+                    <input
+                      type="text"
+                      placeholder="Search songs..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 text-zinc-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="max-h-60 overflow-y-auto">
+                    {filteredSongs.slice(0, 20).map((song) => (
+                      <button
+                        key={song.id}
+                        onClick={() => loadSearchSong(song)}
+                        className="w-full text-left p-3 hover:bg-zinc-700 transition-colors border-b border-zinc-800 last:border-b-0"
+                      >
+                        <p className="text-sm font-medium text-zinc-100">{song.title}</p>
+                        <p className="text-xs text-zinc-400">{song.original_artist}</p>
+                      </button>
+                    ))}
+                    {filteredSongs.length === 0 && searchQuery && (
+                      <p className="p-3 text-sm text-zinc-400">No songs found</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Songs List */}
         <div className="flex-1 overflow-y-auto p-4">
           <div className="space-y-2">
             {currentSetSongs.map((song, index) => (
               <button
                 key={song.id}
-                onClick={() => isLeader && handleSongSelect(song)}
-                disabled={!isLeader}
+                onClick={() => isLeader && !isSearchSong && handleSongSelect(song)}
+                disabled={!isLeader || isSearchSong}
                 className={`w-full text-left p-3 rounded-xl transition-all ${
-                  currentSong?.id === song.id
+                  currentSong?.id === song.id && !isSearchSong
                     ? 'bg-blue-600 text-white shadow-lg'
-                    : isLeader 
+                    : isLeader && !isSearchSong
                       ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100'
                       : 'bg-zinc-800 text-zinc-300 cursor-default'
-                }`}
+                } ${isSearchSong ? 'opacity-50' : ''}`}
               >
                 <div className="flex items-center space-x-3">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                    currentSong?.id === song.id
+                    currentSong?.id === song.id && !isSearchSong
                       ? 'bg-blue-500 text-white'
                       : 'bg-zinc-700 text-zinc-400'
                   }`}>
@@ -404,17 +540,6 @@ const PerformanceMode = () => {
             ))}
           </div>
         </div>
-
-        {/* Exit Button */}
-        <div className="p-4 border-t border-zinc-800">
-          <button
-            onClick={handleExitPerformance}
-            className="w-full inline-flex items-center justify-center px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all btn-animate shadow-lg font-medium"
-          >
-            <X size={20} className="mr-2" />
-            Exit Performance Mode
-          </button>
-        </div>
       </div>
 
       {/* Main Content Area */}
@@ -425,9 +550,16 @@ const PerformanceMode = () => {
             <div className="max-w-4xl mx-auto">
               <div className="mb-6">
                 <h1 className="text-3xl font-bold text-zinc-100 mb-2">{currentSong.title}</h1>
-                <p className="text-xl text-zinc-400">
-                  {currentSong.original_artist} {currentSong.key_signature && `• ${currentSong.key_signature}`}
-                </p>
+                <div className="flex items-center space-x-2">
+                  <p className="text-xl text-zinc-400">
+                    {currentSong.original_artist} {currentSong.key_signature && `• ${currentSong.key_signature}`}
+                  </p>
+                  {isSearchSong && (
+                    <span className="px-2 py-1 bg-amber-600 text-white text-xs font-medium rounded-full">
+                      Search Song
+                    </span>
+                  )}
+                </div>
               </div>
               <div 
                 className="prose prose-invert prose-lg max-w-none text-zinc-200 leading-relaxed"
@@ -444,29 +576,41 @@ const PerformanceMode = () => {
           )}
         </div>
 
-        {/* Navigation Controls (Leader only) */}
-        {isLeader && (
-          <div className="absolute bottom-0 left-0 right-0 bg-zinc-900/95 backdrop-blur border-t border-zinc-800 p-4">
-            <div className="flex justify-center space-x-4">
-              <button
-                onClick={handlePreviousSong}
-                disabled={!canGoPrevious}
-                className="inline-flex items-center px-6 py-3 bg-zinc-700 text-zinc-300 rounded-xl hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-animate shadow-lg font-medium"
-              >
-                <SkipBack size={20} className="mr-2" />
-                Previous
-              </button>
-              <button
-                onClick={handleNextSong}
-                disabled={!canGoNext}
-                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-animate shadow-lg font-medium"
-              >
-                Next
-                <SkipForward size={20} className="ml-2" />
-              </button>
-            </div>
+        {/* Fixed Bottom Controls */}
+        <div className="absolute bottom-0 left-0 right-0 bg-zinc-900/95 backdrop-blur border-t border-zinc-800 p-4">
+          <div className="flex justify-between items-center max-w-4xl mx-auto">
+            {/* Exit Button */}
+            <button
+              onClick={handleExitPerformance}
+              className="inline-flex items-center px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all btn-animate shadow-lg font-medium"
+            >
+              <X size={20} className="mr-2" />
+              Exit Performance Mode
+            </button>
+
+            {/* Navigation Controls (Leader only) */}
+            {isLeader && (
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={handlePreviousSong}
+                  disabled={!canGoPrevious}
+                  className="inline-flex items-center px-6 py-3 bg-zinc-700 text-zinc-300 rounded-xl hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-animate shadow-lg font-medium"
+                >
+                  <SkipBack size={20} className="mr-2" />
+                  Previous
+                </button>
+                <button
+                  onClick={handleNextSong}
+                  disabled={!canGoNext}
+                  className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-animate shadow-lg font-medium"
+                >
+                  Next
+                  <SkipForward size={20} className="ml-2" />
+                </button>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
