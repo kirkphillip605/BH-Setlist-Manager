@@ -190,7 +190,7 @@ const PerformanceMode = () => {
   };
 
   const handleSessionUpdate = (payload) => {
-    if (payload.new && !isLeader) {
+    if (payload.new) {
       setSession(payload.new);
       if (payload.new.current_song_id !== currentSong?.id) {
         loadCurrentSong(payload.new.current_song_id);
@@ -232,6 +232,11 @@ const PerformanceMode = () => {
         current_song_id: firstSong?.id || null
       });
       
+      // Update local state immediately for leader
+      setCurrentSet(setData);
+      if (firstSong) {
+        await loadCurrentSong(firstSong.id);
+      }
       setIsSearchSong(false);
     } catch (err) {
       setError(err.message);
@@ -246,6 +251,8 @@ const PerformanceMode = () => {
         current_song_id: song.id
       });
       
+      // Update local state immediately for leader
+      await loadCurrentSong(song.id);
       setIsSearchSong(false);
     } catch (err) {
       setError(err.message);
@@ -269,6 +276,9 @@ const PerformanceMode = () => {
 
     // If currently viewing a search song, go back to the previous set song
     if (isSearchSong && previousSetSong) {
+      await performanceService.updateSession(session.id, {
+        current_song_id: previousSetSong.id
+      });
       await loadCurrentSong(previousSetSong.id);
       setPreviousSetSong(null);
       return;
@@ -287,7 +297,10 @@ const PerformanceMode = () => {
     const currentIndex = getCurrentSongIndex();
     if (currentIndex > 0) {
       const previousSong = songs[currentIndex - 1];
-      await handleSongSelect(previousSong);
+      await performanceService.updateSession(session.id, {
+        current_song_id: previousSong.id
+      });
+      await loadCurrentSong(previousSong.id);
     }
   };
 
@@ -296,6 +309,9 @@ const PerformanceMode = () => {
 
     // If currently viewing a search song, go back to the set
     if (isSearchSong && previousSetSong) {
+      await performanceService.updateSession(session.id, {
+        current_song_id: previousSetSong.id
+      });
       await loadCurrentSong(previousSetSong.id);
       setPreviousSetSong(null);
       return;
@@ -314,7 +330,10 @@ const PerformanceMode = () => {
     const currentIndex = getCurrentSongIndex();
     if (currentIndex < songs.length - 1) {
       const nextSong = songs[currentIndex + 1];
-      await handleSongSelect(nextSong);
+      await performanceService.updateSession(session.id, {
+        current_song_id: nextSong.id
+      });
+      await loadCurrentSong(nextSong.id);
     }
   };
 
