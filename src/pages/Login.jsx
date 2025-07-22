@@ -142,7 +142,7 @@ const Login = () => {
             src="/bhlogo.png" 
             alt="Logo" 
             className="mx-auto h-16 w-auto mb-6 drop-shadow-lg"
-          />
+          /><hr />
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">Welcome Back</h1>
             <p className="text-zinc-400">Sign in to your setlist management system</p>
