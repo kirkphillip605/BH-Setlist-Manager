@@ -32,38 +32,24 @@ const UserManagement = () => {
     setLoading(true);
     setError(null);
     try {
-      // Use auth.admin.listUsers to get all users
-      const { data, error } = await supabase.auth.admin.listUsers();
-      
-      if (error) {
-        throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
       }
 
-      // Get user profiles from our users table
-      const userIds = data.users.map(user => user.id);
-      const { data: profiles, error: profileError } = await supabase
-        .from('users')
-        .select('*')
-        .in('id', userIds)
-        .order('created_at', { ascending: false });
-
-      if (profileError) {
-        throw profileError;
-      }
-      
-      // Merge auth data with profile data
-      const mergedUsers = data.users.map(authUser => {
-        const profile = profiles?.find(p => p.id === authUser.id);
-        return {
-          ...authUser,
-          ...profile,
-          email: authUser.email, // Use auth email as primary
-          last_sign_in_at: authUser.last_sign_in_at,
-          email_confirmed_at: authUser.email_confirmed_at
-        };
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-list-users`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        }
       });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to fetch users');
+      }
       
-      setUsers(mergedUsers || []);
+      setUsers(result.users || []);
     } catch (error) {
       console.error('Error fetching users:', error);
       setError(error.message);
@@ -85,22 +71,30 @@ const UserManagement = () => {
   const handleAddUser = async (e) => {
     e.preventDefault();
     setError(null);
+    setLoading(true);
     try {
-      // Use Supabase auth admin to invite user by email
-      const { data, error } = await supabase.auth.admin.inviteUserByEmail(
-        newUser.email,
-        {
-          data: {
-            name: newUser.name,
-            role: newUser.role,
-            user_level: newUser.user_level,
-          },
-          redirectTo: `${window.location.origin}/auth/invite-complete`
-        }
-      );
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
 
-      if (error) {
-        throw new Error(error.message);
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-invite-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          email: newUser.email,
+          name: newUser.name,
+          role: newUser.role,
+          user_level: parseInt(newUser.user_level, 10)
+        })
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to invite user');
       }
 
       fetchUsers();
@@ -114,6 +108,8 @@ const UserManagement = () => {
       alert('Invitation sent successfully! The user will receive an email to complete their profile.');
     } catch (error) {
       setError(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -164,12 +160,25 @@ const UserManagement = () => {
   const handleResendInvite = async (userEmail) => {
     setError(null);
     try {
-      const { error } = await supabase.auth.admin.inviteUserByEmail(userEmail, {
-        redirectTo: `${window.location.origin}/auth/invite-complete`
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-invite-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          email: userEmail
+        })
       });
       
-      if (error) {
-        throw new Error(error.message);
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to resend invitation');
       }
       
       alert('Invitation resent successfully!');
@@ -181,12 +190,25 @@ const UserManagement = () => {
   const handleResetUserPassword = async (userEmail) => {
     setError(null);
     try {
-      const { error } = await supabase.auth.admin.resetPasswordForEmail(userEmail, {
-        redirectTo: `${window.location.origin}/auth/reset-password`
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          email: userEmail
+        })
       });
       
-      if (error) {
-        throw new Error(error.message);
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to reset password');
       }
       
       alert('Password reset email sent successfully!');
@@ -309,10 +331,11 @@ const UserManagement = () => {
               <div>
                 <button
                   type="submit"
+                  disabled={loading}
                   className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors font-medium"
                 >
                   <Mail size={16} className="mr-2" />
-                  Send Invitation
+                  {loading ? 'Sending...' : 'Send Invitation'}
                 </button>
               </div>
             </form>
