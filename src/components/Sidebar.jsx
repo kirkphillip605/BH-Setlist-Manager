@@ -42,8 +42,8 @@ const Sidebar = ({ isOpen, onClose }) => {
               <Headphones size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-zinc-100 tracking-tight">SetList Pro</h1>
-              <p className="text-xs text-zinc-400">Music Management</p>
+              <h1 className="text-lg font-bold text-zinc-100 tracking-tight">Bad Habits</h1>
+              <p className="text-xs text-zinc-400">Setlist Management</p>
             </div>
           </div>
           <button
