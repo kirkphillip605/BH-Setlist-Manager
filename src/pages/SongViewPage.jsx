@@ -74,14 +74,14 @@ const SongViewPage = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 fade-in">
       {/* Header */}
       <div className="card-modern p-4 lg:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => navigate('/songs')}
-              className="p-2 text-zinc-400 hover:text-zinc-300 transition-colors rounded-lg hover:bg-zinc-700"
+              className="p-2 text-zinc-400 hover:text-zinc-300 hover:bg-zinc-700 transition-all duration-200 rounded-xl btn-animate"
             >
               <ArrowLeft size={20} />
             </button>
@@ -117,13 +117,13 @@ const SongViewPage = () => {
 
       {/* Lyrics */}
       <div className="card-modern p-4 lg:p-6">
-        <h2 className="text-xl font-semibold text-zinc-100 mb-6 flex items-center">
+        <div className="flex items-center mb-6">
           <Music className="h-5 w-5 mr-2 text-zinc-400" />
-          Lyrics
-        </h2>
-        <div className="prose-dark max-w-none">
+          <h2 className="text-xl font-semibold text-zinc-100">Song Lyrics</h2>
+        </div>
+        <div className="prose prose-invert max-w-none">
           <div
-            className="ql-editor p-0 text-zinc-200 leading-relaxed" 
+            className="text-zinc-200 leading-relaxed text-base" 
             dangerouslySetInnerHTML={{ __html: song.lyrics }}
           />
         </div>

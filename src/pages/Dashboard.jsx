@@ -67,6 +67,22 @@ const Dashboard = () => {
   };
   return (
     <div className="max-w-7xl mx-auto fade-in">
+      {/* Page Header */}
+      <div className="mb-8">
+        <div className="flex items-center space-x-3 mb-2">
+          <div className="w-10 h-10 bg-blue-500/10 rounded-2xl flex items-center justify-center">
+            <svg className="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v1H8V5z"></path>
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-zinc-100">Dashboard</h1>
+            <p className="text-zinc-400">Welcome back to your setlist manager</p>
+          </div>
+        </div>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {/* Quick Stats Cards */}
         <button

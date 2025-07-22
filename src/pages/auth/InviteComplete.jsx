@@ -16,14 +16,25 @@ const InviteComplete = () => {
   });
 
   useEffect(() => {
-    // Get user data from URL parameters or session
+    // Get user data from current session
     const checkInviteData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user && user.user_metadata) {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) throw error;
+        
+        if (user?.user_metadata) {
+          setFormData(prev => ({
+            ...prev,
+            name: user.user_metadata.full_name || user.user_metadata.name || '',
+            role: user.user_metadata.role || ''
+          }));
+        }
+      } catch (error) {
+        console.error('Error getting user data:', error);
         setFormData(prev => ({
           ...prev,
-          name: user.user_metadata.name || '',
-          role: user.user_metadata.role || ''
+          name: '',
+          role: ''
         }));
       }
     };
@@ -89,27 +100,27 @@ const InviteComplete = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900 px-4">
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 p-6 sm:p-8 w-full max-w-md">
+    <div className="flex items-center justify-center min-h-screen bg-zinc-950 px-4">
+      <div className="card-modern p-6 sm:p-8 w-full max-w-md fade-in">
         <div className="text-center mb-6">
           <div className="w-16 h-16 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
             <User className="w-8 h-8 text-green-600 dark:text-green-400" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Complete Your Profile</h2>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">
+          <h2 className="text-2xl font-bold text-zinc-100">Complete Your Profile</h2>
+          <p className="text-zinc-300 mt-2">
             Set up your account to get started
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg mb-4" role="alert">
+          <div className="bg-red-900/30 border border-red-800/50 text-red-200 px-4 py-3 rounded-xl mb-6 backdrop-blur-sm" role="alert">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
+            <label htmlFor="name" className="block text-sm font-medium text-zinc-300 mb-2">Full Name</label>
             <input
               type="text"
               id="name"
@@ -117,18 +128,18 @@ const InviteComplete = () => {
               value={formData.name}
               onChange={handleChange}
               required
-              className="block w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base dark:bg-slate-700 dark:text-gray-100 transition-colors"
+              className="input-modern"
             />
           </div>
 
           <div>
-            <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role</label>
+            <label htmlFor="role" className="block text-sm font-medium text-zinc-300 mb-2">Role</label>
             <select
               id="role"
               name="role"
               value={formData.role}
               onChange={handleChange}
-              className="block w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base dark:bg-slate-700 dark:text-gray-100 transition-colors"
+              className="input-modern"
             >
               <option value="">Select a role</option>
               <option value="Bass Guitar">Bass Guitar</option>
@@ -143,7 +154,7 @@ const InviteComplete = () => {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+            <label htmlFor="password" className="block text-sm font-medium text-zinc-300 mb-2">Password</label>
             <input
               type="password"
               id="password"
@@ -151,12 +162,12 @@ const InviteComplete = () => {
               value={formData.password}
               onChange={handleChange}
               required
-              className="block w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base dark:bg-slate-700 dark:text-gray-100 transition-colors"
+              className="input-modern"
             />
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm Password</label>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-zinc-300 mb-2">Confirm Password</label>
             <input
               type="password"
               id="confirmPassword"
@@ -164,7 +175,7 @@ const InviteComplete = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
               required
-              className="block w-full px-4 py-3 border border-gray-300 dark:border-slate-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base dark:bg-slate-700 dark:text-gray-100 transition-colors"
+              className="input-modern"
             />
           </div>
 

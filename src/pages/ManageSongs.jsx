@@ -190,6 +190,19 @@ const ManageSongs = () => {
 
   return (
     <div className="max-w-7xl mx-auto fade-in">
+      {/* Page Header */}
+      <div className="mb-8">
+        <div className="flex items-center space-x-3 mb-2">
+          <div className="w-10 h-10 bg-blue-500/10 rounded-2xl flex items-center justify-center">
+            <Music className="h-5 w-5 text-blue-400" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-zinc-100">Song Library</h1>
+            <p className="text-zinc-400">Manage your music collection</p>
+          </div>
+        </div>
+      </div>
+      
       {error && (
         <div className="bg-red-900/30 border border-red-800/50 text-red-200 px-4 py-3 rounded-xl mb-6 backdrop-blur-sm" role="alert">
           <div className="flex items-center space-x-2">
@@ -206,16 +219,6 @@ const ManageSongs = () => {
 
       <div className="card-modern p-6 lg:p-8">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-500/10 rounded-2xl flex items-center justify-center">
-              <Music className="h-5 w-5 text-blue-400" />
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold text-zinc-100">Song Library</h1>
-              <p className="text-sm text-zinc-400">Manage your music collection</p>
-            </div>
-          </div>
-          
           <div className="w-full sm:w-1/2 lg:w-1/3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-zinc-400" />

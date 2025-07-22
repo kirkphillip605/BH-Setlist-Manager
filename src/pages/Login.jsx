@@ -132,11 +132,11 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-gradient-to-br from-zinc-900/20 via-transparent to-zinc-800/20"></div>
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4 relative">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/5 via-transparent to-zinc-900/10"></div>
       
       <div className="relative w-full max-w-md fade-in">
-        <div className="bg-zinc-900/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-zinc-700/50">
+        <div className="card-modern p-8 shadow-2xl">
         <div className="text-center mb-6">
           
           <div className="space-y-2">
@@ -146,7 +146,7 @@ const Login = () => {
         </div>
       
         {error && (
-          <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-xl mb-6" role="alert">
+          <div className="bg-red-900/30 border border-red-800/50 text-red-200 px-4 py-3 rounded-xl mb-6 backdrop-blur-sm" role="alert">
             <div className="flex items-center space-x-2">
               <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -161,7 +161,7 @@ const Login = () => {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full flex justify-center items-center py-3 px-4 border border-zinc-600 rounded-xl text-base font-medium text-zinc-200 bg-zinc-800 hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed btn-animate mb-6"
+            className="w-full flex justify-center items-center py-3 px-4 border border-zinc-700 rounded-xl text-base font-medium text-zinc-200 bg-zinc-800 hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed btn-animate mb-6"
           >
             <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
               <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -177,7 +177,7 @@ const Login = () => {
               <div className="w-full border-t border-zinc-600" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-zinc-900/95 text-zinc-400 rounded-lg">Or continue with email</span>
+              <span className="px-4 bg-zinc-800 text-zinc-400 rounded-lg">Or continue with email</span>
             </div>
           </div>
 
@@ -211,7 +211,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex justify-center items-center py-3 px-4 rounded-xl text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-not-allowed btn-animate shadow-lg"
+            className="w-full flex justify-center items-center py-3 px-4 rounded-xl text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed btn-animate shadow-lg"
           >
             {loading ? (
               <>
@@ -232,15 +232,18 @@ const Login = () => {
             <button
               type="button"
               onClick={() => setShowForgotPassword(true)}
-              className="text-sm text-zinc-400 hover:text-zinc-300 transition-colors"
+              className="text-sm text-zinc-400 hover:text-blue-400 transition-colors"
             >
               Forgot your password?
             </button>
             <Link
               to="/auth/magic-link"
-              className="text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium"
+              className="text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium inline-flex items-center justify-center"
             >
-              Or sign in with magic link →
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+              </svg>
+              Sign in with magic link
             </Link>
           </div>
         </form>

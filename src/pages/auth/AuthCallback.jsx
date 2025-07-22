@@ -8,26 +8,31 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Auth callback error:', error);
-          navigate('/login?error=auth_callback_failed');
+          navigate('/login');
           return;
         }
 
-        if (data.session) {
-          // Check if user needs to complete their profile
-          const { data: userProfile } = await supabase
+        if (session?.user) {
+          // Check if user exists and has complete profile in our users table
+          const { data: userProfile, error: profileError } = await supabase
             .from('users')
             .select('*')
-            .eq('id', data.session.user.id)
+            .eq('id', session.user.id)
             .single();
 
-          // If user doesn't have a complete profile, redirect to complete setup
-          if (!userProfile || !userProfile.name) {
+          if (profileError && profileError.code === 'PGRST116') {
+            // User doesn't exist in our table, needs to complete profile
+            navigate('/auth/invite-complete');
+          } else if (!userProfile?.name || userProfile.name.trim() === '') {
+            // User exists but profile is incomplete
             navigate('/auth/invite-complete');
           } else {
+            // User exists and profile is complete
+            console.log('✅ Auth callback - user authenticated:', userProfile);
             navigate('/');
           }
         } else {

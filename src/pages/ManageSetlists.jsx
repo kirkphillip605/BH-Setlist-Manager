@@ -103,9 +103,22 @@ const ManageSetlists = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto fade-in">
+      {/* Page Header */}
+      <div className="mb-8">
+        <div className="flex items-center space-x-3 mb-2">
+          <div className="w-10 h-10 bg-emerald-500/10 rounded-2xl flex items-center justify-center">
+            <ListMusic className="h-5 w-5 text-emerald-400" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-zinc-100">Setlists</h1>
+            <p className="text-zinc-400">Manage your performance setlists</p>
+          </div>
+        </div>
+      </div>
+      
       {error && (
-        <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg mb-4">
+        <div className="bg-red-900/30 border border-red-800/50 text-red-200 px-4 py-3 rounded-xl mb-6 backdrop-blur-sm" role="alert">
           <strong className="font-bold">Error!</strong>
           <span className="block sm:inline"> {error}</span>
         </div>
@@ -150,7 +163,7 @@ const ManageSetlists = () => {
 
         {!loading && setlists.length > 0 && (
           <>
-            <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="bg-zinc-900/50 rounded-xl overflow-hidden border border-zinc-800">
               <table className="min-w-full divide-y divide-zinc-700">
                 <thead className="bg-zinc-800">
                   <tr>

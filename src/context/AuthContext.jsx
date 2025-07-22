@@ -17,26 +17,30 @@ export const AuthProvider = ({ children }) => {
 
     const fetchUserData = async (authUser) => {
       try {
-        // First check if user exists in our users table
+        // Fetch user data from our users table with proper error handling
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('*')
           .eq('id', authUser.id)
           .single();
         
+        if (userError) {
+          if (userError.code === 'PGRST116') {
+            // User doesn't exist in our table, create them
+            return await createUserRecord(authUser);
+          } else {
+            throw userError;
+          }
+        }
+        
         if (userData) {
+          // Ensure user_level is properly set
+          console.log('✅ User data loaded:', userData);
           return userData;
         }
         
-        // If user doesn't exist (error code PGRST116), create user record
-        if (userError && userError.code === 'PGRST116') {
-          return await createUserRecord(authUser);
-        }
-        
-        // If other error, throw it
-        if (userError) {
-          throw userError;
-        }
+        // Fallback to create user record
+        return await createUserRecord(authUser);
         
       } catch (error) {
         console.error('Error in fetchUserData:', error);
@@ -50,7 +54,7 @@ export const AuthProvider = ({ children }) => {
         const newUserData = {
           id: authUser.id, // Use auth user ID directly
           email: authUser.email,
-          name: authUser.user_metadata?.name || authUser.email.split('@')[0],
+          name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email.split('@')[0],
           user_level: 1
         };
         
@@ -116,6 +120,7 @@ export const AuthProvider = ({ children }) => {
         if (session && mounted) {
           const userData = await fetchUserData(session.user);
           if (userData && mounted) {
+            console.log('✅ Setting user:', userData);
             setUser(userData);
           }
         } else if (mounted) {
@@ -149,6 +154,7 @@ export const AuthProvider = ({ children }) => {
           if (session?.user) {
             const userData = await fetchUserData(session.user);
             if (userData && mounted) {
+              console.log('✅ Auth state change - setting user:', userData);
               setUser(userData);
             }
           } else {

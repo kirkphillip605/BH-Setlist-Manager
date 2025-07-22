@@ -197,24 +197,43 @@ const UserManagement = () => {
 
   if (!authUser || authUser.user_level !== 3) {
     return (
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
-          <p className="text-center text-slate-300">You do not have permission to view this page.</p>
+      <div className="max-w-7xl mx-auto fade-in">
+        <div className="card-modern p-6 text-center">
+          <div className="w-16 h-16 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-zinc-100 mb-2">Access Denied</h2>
+          <p className="text-zinc-300">You do not have permission to view this page.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto fade-in">
+      {/* Page Header */}
+      <div className="mb-8">
+        <div className="flex items-center space-x-3 mb-2">
+          <div className="w-10 h-10 bg-emerald-500/10 rounded-2xl flex items-center justify-center">
+            <Users className="h-5 w-5 text-emerald-400" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-zinc-100">User Management</h1>
+            <p className="text-zinc-400">Manage system users and permissions</p>
+          </div>
+        </div>
+      </div>
+      
       {error && (
-        <div className="bg-red-900/50 border border-red-700 text-red-200 px-4 py-3 rounded-lg mb-4" role="alert">
+        <div className="bg-red-900/30 border border-red-800/50 text-red-200 px-4 py-3 rounded-xl mb-6 backdrop-blur-sm" role="alert">
           <strong className="font-bold">Error!</strong>
           <span className="block sm:inline"> {error}</span>
         </div>
       )}
 
-      <div className="bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-4 lg:p-6">
+      <div className="card-modern p-4 lg:p-6">
         <div className="flex justify-between items-center mb-4">
           <button
             onClick={() => setShowAddUserForm(!showAddUserForm)}
@@ -226,11 +245,11 @@ const UserManagement = () => {
         </div>
 
         {showAddUserForm && (
-          <div className="p-4 border border-slate-600 rounded-lg bg-slate-700 mb-4">
-            <h3 className="text-lg font-semibold text-slate-200 mb-2">Add New User</h3>
+          <div className="p-4 border border-zinc-700 rounded-xl bg-zinc-800 mb-4">
+            <h3 className="text-lg font-semibold text-zinc-100 mb-4">Add New User</h3>
             <form onSubmit={handleAddUser} className="space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-slate-300">Full Name</label>
+                <label htmlFor="name" className="block text-sm font-medium text-zinc-300 mb-2">Full Name</label>
                 <input
                   type="text"
                   id="name"
@@ -238,17 +257,17 @@ const UserManagement = () => {
                   value={newUser.name}
                   onChange={handleInputChange}
                   required
-                  className="mt-1 block w-full px-3 py-2 bg-slate-600 border border-slate-500 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="input-modern"
                 />
               </div>
               <div>
-                <label htmlFor="role" className="block text-sm font-medium text-slate-300">Role</label>
+                <label htmlFor="role" className="block text-sm font-medium text-zinc-300 mb-2">Role</label>
                 <select
                   id="role"
                   name="role"
                   value={newUser.role}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full px-3 py-2 bg-slate-600 border border-slate-500 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="input-modern"
                 >
                   <option value="">Select a role</option>
                   <option value="Bass Guitar">Bass Guitar</option>
@@ -262,7 +281,7 @@ const UserManagement = () => {
                 </select>
               </div>
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-slate-300">Email</label>
+                <label htmlFor="email" className="block text-sm font-medium text-zinc-300 mb-2">Email</label>
                 <input
                   type="email"
                   id="email"
@@ -270,17 +289,17 @@ const UserManagement = () => {
                   value={newUser.email}
                   onChange={handleInputChange}
                   required
-                  className="mt-1 block w-full px-3 py-2 bg-slate-600 border border-slate-500 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="input-modern"
                 />
               </div>
               <div>
-                <label htmlFor="user_level" className="block text-sm font-medium text-slate-300">User Level</label>
+                <label htmlFor="user_level" className="block text-sm font-medium text-zinc-300 mb-2">User Level</label>
                 <select
                   id="user_level"
                   name="user_level"
                   value={newUser.user_level}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full px-3 py-2 bg-slate-600 border border-slate-500 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="input-modern"
                 >
                   <option value="1">User</option>
                   <option value="2">Editor</option>
@@ -301,13 +320,16 @@ const UserManagement = () => {
         )}
 
         {loading ? (
-          <p className="text-center text-slate-300">Loading users...</p>
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-zinc-300">Loading users...</p>
+          </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="bg-zinc-900/50 rounded-xl overflow-hidden border border-zinc-800">
             <table className="min-w-full divide-y divide-slate-600">
-              <thead className="bg-slate-700">
+              <thead className="bg-zinc-800">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-zinc-300 uppercase tracking-wider">
                     Name
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
