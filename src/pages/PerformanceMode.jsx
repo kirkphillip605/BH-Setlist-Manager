@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Play, SkipBack, SkipForward, X, Music, Search, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Play, SkipBack, SkipForward, X, Music, Search, ChevronDown, Loader } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 import { setlistsService } from '../services/setlistsService';
@@ -30,7 +30,8 @@ const PerformanceMode = () => {
   const [currentSong, setCurrentSong] = useState(null);
   const [currentSongLyrics, setCurrentSongLyrics] = useState('');
   const [isLeader, setIsLeader] = useState(false);
-  const [subscription, setSubscription] = useState(null);
+  const subscriptionRef = useRef(null);
+  const mountedRef = useRef(true);
 
   // Search functionality
   const [showSearch, setShowSearch] = useState(false);
@@ -40,127 +41,159 @@ const PerformanceMode = () => {
   const [previousSetSong, setPreviousSetSong] = useState(null);
 
   useEffect(() => {
+    mountedRef.current = true;
     setPageTitle('Performance Mode');
+    
     if (setlistId) {
       initializePerformanceMode(setlistId);
     } else {
       fetchSetlists();
     }
+    
     return () => {
-      if (subscription) {
-        subscription.unsubscribe();
+      mountedRef.current = false;
+      if (subscriptionRef.current) {
+        performanceService.unsubscribeFromSession(session?.id);
+        subscriptionRef.current = null;
       }
     };
   }, [setlistId]);
 
   const fetchSetlists = async () => {
+    if (!mountedRef.current) return;
+    
     setLoading(true);
     setError(null);
     try {
       const data = await setlistsService.getAllSetlists();
-      setSetlists(data);
+      if (mountedRef.current) {
+        setSetlists(data);
+      }
     } catch (err) {
-      setError(err.message);
+      if (mountedRef.current) {
+        setError(err.message);
+      }
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   const fetchAllSongs = async () => {
     try {
       const songs = await songsService.getAllSongs();
-      setAllSongs(songs);
+      if (mountedRef.current) {
+        setAllSongs(songs);
+      }
     } catch (err) {
       console.error('Error fetching all songs:', err);
     }
   };
 
   const initializePerformanceMode = async (setlistId) => {
+    if (!mountedRef.current) return;
+    
     setLoading(true);
     setError(null);
+    
     try {
       // Check for existing active session
       const activeSession = await performanceService.getActiveSession(setlistId);
       
       let sessionData;
       if (activeSession) {
-        // Join existing session as follower
         sessionData = activeSession;
         setIsLeader(activeSession.leader_id === user.id);
       } else {
-        // Create new session as leader
         sessionData = await performanceService.createSession(setlistId, user.id);
         setIsLeader(true);
-        
-        // Prefetch all setlist data for offline support
         await performanceService.prefetchSetlistData(setlistId);
       }
 
-      setSession(sessionData);
-      await loadPerformanceData(setlistId, sessionData);
+      if (mountedRef.current) {
+        setSession(sessionData);
+        await loadPerformanceData(setlistId, sessionData);
 
-      // Subscribe to session updates
-      const sub = performanceService.subscribeToSession(
-        sessionData.id,
-        handleSessionUpdate
-      );
-      setSubscription(sub);
+        // Subscribe to session updates
+        subscriptionRef.current = performanceService.subscribeToSession(
+          sessionData.id,
+          handleSessionUpdate
+        );
 
-      // Fetch all songs for search functionality
-      await fetchAllSongs();
+        // Fetch all songs for search functionality
+        await fetchAllSongs();
+      }
 
     } catch (err) {
-      setError(err.message);
+      if (mountedRef.current) {
+        setError(err.message);
+      }
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   const loadPerformanceData = async (setlistId, sessionData) => {
+    if (!mountedRef.current) return;
+    
     try {
-      // Try to load from cache first
       const cached = performanceService.getCachedSetlistData();
       
       if (cached.setlistData && cached.songsData) {
-        setSetlistData(cached.setlistData);
-        setSongsData(cached.songsData);
+        if (mountedRef.current) {
+          setSetlistData(cached.setlistData);
+          setSongsData(cached.songsData);
+        }
       } else {
-        // Fallback to API calls
         const fullSetlist = await setlistsService.getSetlistById(setlistId);
-        setSetlistData(fullSetlist);
+        if (mountedRef.current) {
+          setSetlistData(fullSetlist);
+        }
       }
 
-      // Load current set and song
       if (sessionData.current_set_id) {
         const setData = await setsService.getSetById(sessionData.current_set_id);
-        setCurrentSet(setData);
+        if (mountedRef.current) {
+          setCurrentSet(setData);
+        }
       }
 
       if (sessionData.current_song_id) {
         await loadCurrentSong(sessionData.current_song_id);
       }
 
-      setInPerformance(true);
+      if (mountedRef.current) {
+        setInPerformance(true);
+      }
     } catch (err) {
       console.error('Error loading performance data:', err);
-      setError(err.message);
+      if (mountedRef.current) {
+        setError(err.message);
+      }
     }
   };
 
   const loadCurrentSong = async (songId) => {
+    if (!mountedRef.current) return;
+    
     try {
-      // Try cached data first
       if (songsData[songId]) {
         const songData = songsData[songId];
-        setCurrentSong(songData);
-        setCurrentSongLyrics(songData.lyrics);
-        setIsSearchSong(false);
+        if (mountedRef.current) {
+          setCurrentSong(songData);
+          setCurrentSongLyrics(songData.lyrics);
+          setIsSearchSong(false);
+        }
       } else {
-        // Fallback to API
         const songData = await songsService.getSongById(songId);
-        setCurrentSong(songData);
-        setCurrentSongLyrics(songData.lyrics);
-        setIsSearchSong(false);
+        if (mountedRef.current) {
+          setCurrentSong(songData);
+          setCurrentSongLyrics(songData.lyrics);
+          setIsSearchSong(false);
+        }
       }
     } catch (err) {
       console.error('Error loading current song:', err);
@@ -168,35 +201,57 @@ const PerformanceMode = () => {
   };
 
   const loadSearchSong = async (song) => {
+    if (!mountedRef.current) return;
+    
     try {
-      // Store previous set song for navigation
-      setPreviousSetSong(currentSong);
+      if (mountedRef.current) {
+        setPreviousSetSong(currentSong);
+      }
       
-      // Load full song data if not cached
       let songData = songsData[song.id] || song;
       if (!songData.lyrics) {
         songData = await songsService.getSongById(song.id);
       }
       
-      // Update the performance session for followers to see the change
       if (isLeader && session) {
         await performanceService.updateSession(session.id, {
           current_song_id: songData.id
         });
       }
       
-      setCurrentSong(songData);
-      setCurrentSongLyrics(songData.lyrics);
-      setIsSearchSong(true);
-      setShowSearch(false);
-      setSearchQuery('');
+      if (mountedRef.current) {
+        setCurrentSong(songData);
+        setCurrentSongLyrics(songData.lyrics);
+        setIsSearchSong(true);
+        setShowSearch(false);
+        setSearchQuery('');
+      }
     } catch (err) {
       console.error('Error loading search song:', err);
-      setError('Failed to load selected song');
+      if (mountedRef.current) {
+        setError('Failed to load selected song');
+      }
     }
   };
 
+  // Optimized session update handler
   const handleSessionUpdate = (payload) => {
+    if (!mountedRef.current || !payload.new) return;
+    
+    const newSession = payload.new;
+    
+    // Update session state
+    setSession(newSession);
+    
+    // Handle song changes
+    if (newSession.current_song_id !== currentSong?.id) {
+      loadCurrentSong(newSession.current_song_id);
+    }
+    
+    // Handle set changes
+    if (newSession.current_set_id !== currentSet?.id) {
+      loadCurrentSet(newSession.current_set_id);
+    }
     if (payload.new) {
       setSession(payload.new);
       if (payload.new.current_song_id !== currentSong?.id) {
@@ -209,9 +264,13 @@ const PerformanceMode = () => {
   };
 
   const loadCurrentSet = async (setId) => {
+    if (!mountedRef.current) return;
+    
     try {
       const setData = await setsService.getSetById(setId);
-      setCurrentSet(setData);
+      if (mountedRef.current) {
+        setCurrentSet(setData);
+      }
     } catch (err) {
       console.error('Error loading current set:', err);
     }
@@ -225,6 +284,7 @@ const PerformanceMode = () => {
     navigate(`/performance?setlist=${selectedSetlistId}`);
   };
 
+  // Optimized set change handler
   const handleSetChange = async (set) => {
     if (!isLeader || !session) return;
 
@@ -240,16 +300,21 @@ const PerformanceMode = () => {
       });
       
       // Update local state immediately for leader
-      setCurrentSet(setData);
-      if (firstSong) {
-        await loadCurrentSong(firstSong.id);
+      if (mountedRef.current) {
+        setCurrentSet(setData);
+        setIsSearchSong(false);
+        if (firstSong) {
+          await loadCurrentSong(firstSong.id);
+        }
       }
-      setIsSearchSong(false);
     } catch (err) {
-      setError(err.message);
+      if (mountedRef.current) {
+        setError(err.message);
+      }
     }
   };
 
+  // Optimized song selection handler
   const handleSongSelect = async (song) => {
     if (!isLeader || !session) return;
 
@@ -259,10 +324,14 @@ const PerformanceMode = () => {
       });
       
       // Update local state immediately for leader
-      await loadCurrentSong(song.id);
-      setIsSearchSong(false);
+      if (mountedRef.current) {
+        await loadCurrentSong(song.id);
+        setIsSearchSong(false);
+      }
     } catch (err) {
-      setError(err.message);
+      if (mountedRef.current) {
+        setError(err.message);
+      }
     }
   };
 
@@ -346,13 +415,16 @@ const PerformanceMode = () => {
 
   const handleExitPerformance = async () => {
     try {
+      // Clean up subscriptions first
+      if (subscriptionRef.current) {
+        performanceService.unsubscribeFromSession(session?.id);
+        subscriptionRef.current = null;
+      }
+      
       if (isLeader && session) {
         await performanceService.endSession(session.id);
       }
-      if (subscription) {
-        subscription.unsubscribe();
-      }
-      // Clear cache on exit
+      
       performanceService.clearCache();
       navigate('/setlists');
     } catch (err) {
@@ -365,6 +437,11 @@ const PerformanceMode = () => {
     song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     song.original_artist.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Show loading state
+  if (loading && !inPerformance) {
+    return <div className="flex items-center justify-center min-h-screen bg-zinc-950"><Loader className="animate-spin" /></div>;
+  }
 
   if (!inPerformance) {
     return (
@@ -433,6 +510,17 @@ const PerformanceMode = () => {
     );
   }
 
+  // Performance mode loading state
+  if (loading) {
+    return (
+      <div className="h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="text-center">
+          <Loader className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" />
+          <p className="text-zinc-300">Initializing performance mode...</p>
+        </div>
+      </div>
+    );
+  }
   const currentSetSongs = currentSet?.set_songs
     ?.map(ss => ss.songs)
     .sort((a, b) => {

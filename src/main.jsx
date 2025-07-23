@@ -4,6 +4,7 @@ import './index.css';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { PageTitleProvider } from './context/PageTitleContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -149,9 +150,11 @@ const router = createBrowserRouter([
 });
 
 ReactDOM.createRoot(document.getElementById('root')).render(
+  <ErrorBoundary>
   <AuthProvider>
     <PageTitleProvider>
       <RouterProvider router={router} />
     </PageTitleProvider>
   </AuthProvider>
+  </ErrorBoundary>
 );

@@ -10,38 +10,49 @@ const STORAGE_KEYS = {
   SESSION_ID: 'performanceMode_sessionId'
 };
 
-export const performanceService = {
+class PerformanceService {
+  constructor() {
+    this.activeSubscriptions = new Map();
+  }
+
   // Prefetch and cache all setlist data
   async prefetchSetlistData(setlistId) {
     try {
-      // Get full setlist with sets
       const setlistData = await setlistsService.getSetlistById(setlistId);
-      
-      // Get all songs for all sets
       const allSongs = {};
+      
+      // Efficiently fetch all songs
+      const allSongIds = new Set();
       for (const set of setlistData.sets || []) {
         const setData = await setsService.getSetById(set.id);
         for (const setSong of setData.set_songs || []) {
-          if (!allSongs[setSong.songs.id]) {
-            // Get full song data with lyrics
-            const fullSong = await songsService.getSongById(setSong.songs.id);
-            allSongs[setSong.songs.id] = fullSong;
-          }
+          allSongIds.add(setSong.songs.id);
         }
       }
       
-      // Store in browser storage
-      localStorage.setItem(STORAGE_KEYS.SETLIST_DATA, JSON.stringify(setlistData));
-      localStorage.setItem(STORAGE_KEYS.SONGS_DATA, JSON.stringify(allSongs));
+      // Batch fetch songs
+      const songIds = Array.from(allSongIds);
+      for (const songId of songIds) {
+        const fullSong = await songsService.getSongById(songId);
+        allSongs[songId] = fullSong;
+      }
+      
+      // Store in browser storage with error handling
+      try {
+        localStorage.setItem(STORAGE_KEYS.SETLIST_DATA, JSON.stringify(setlistData));
+        localStorage.setItem(STORAGE_KEYS.SONGS_DATA, JSON.stringify(allSongs));
+      } catch (storageError) {
+        console.warn('Failed to cache data in localStorage:', storageError);
+      }
       
       return { setlistData, songsData: allSongs };
     } catch (error) {
       console.error('Error prefetching setlist data:', error);
       throw error;
     }
-  },
+  }
 
-  // Get cached setlist data
+  // Get cached setlist data with error handling
   getCachedSetlistData() {
     try {
       const setlistData = localStorage.getItem(STORAGE_KEYS.SETLIST_DATA);
@@ -49,27 +60,31 @@ export const performanceService = {
       
       return {
         setlistData: setlistData ? JSON.parse(setlistData) : null,
-        songsData: songsData ? JSON.parse(songsData) : null
+        songsData: songsData ? JSON.parse(songsData) : {}
       };
     } catch (error) {
       console.error('Error reading cached data:', error);
-      return { setlistData: null, songsData: null };
+      return { setlistData: null, songsData: {} };
     }
-  },
+  }
 
   // Clear performance mode cache
   clearCache() {
-    localStorage.removeItem(STORAGE_KEYS.SETLIST_DATA);
-    localStorage.removeItem(STORAGE_KEYS.SONGS_DATA);
-    localStorage.removeItem(STORAGE_KEYS.SESSION_ID);
-  },
+    try {
+      Object.values(STORAGE_KEYS).forEach(key => {
+        localStorage.removeItem(key);
+      });
+    } catch (error) {
+      console.warn('Error clearing cache:', error);
+    }
+  }
 
   // Create a new performance session
   async createSession(setlistId, userId) {
-    // First, end any existing active sessions for this setlist
+    // End any existing sessions for this setlist
     await this.endActiveSessionsForSetlist(setlistId);
 
-    // Get the first set from the setlist
+    // Get the first set and song
     const { data: setlistData } = await supabase
       .from('setlists')
       .select(`
@@ -89,14 +104,12 @@ export const performanceService = {
       .order('song_order', { foreignTable: 'sets.set_songs', ascending: true })
       .single();
 
-    if (!setlistData || !setlistData.sets || setlistData.sets.length === 0) {
+    if (!setlistData?.sets?.length) {
       throw new Error('Setlist has no sets');
     }
 
     const firstSet = setlistData.sets[0];
-    const firstSong = firstSet.set_songs && firstSet.set_songs.length > 0 
-      ? firstSet.set_songs[0].songs 
-      : null;
+    const firstSong = firstSet.set_songs?.[0]?.songs || null;
 
     const { data, error } = await supabase
       .from('performance_sessions')
@@ -113,10 +126,14 @@ export const performanceService = {
     if (error) throw new Error(error.message);
     
     // Store session ID for reference
-    localStorage.setItem(STORAGE_KEYS.SESSION_ID, data.id);
+    try {
+      localStorage.setItem(STORAGE_KEYS.SESSION_ID, data.id);
+    } catch (storageError) {
+      console.warn('Failed to store session ID:', storageError);
+    }
     
     return data;
-  },
+  }
 
   // Get active session for a setlist
   async getActiveSession(setlistId) {
@@ -137,7 +154,7 @@ export const performanceService = {
       throw new Error(error.message);
     }
     return data;
-  },
+  }
 
   // Update current song/set in session
   async updateSession(sessionId, updates) {
@@ -150,12 +167,12 @@ export const performanceService = {
 
     if (error) throw new Error(error.message);
     return data;
-  },
+  }
 
   // End a performance session
   async endSession(sessionId) {
-    // Clear cache when ending session
     this.clearCache();
+    this.cleanupSubscriptions();
     
     const { error } = await supabase
       .from('performance_sessions')
@@ -163,9 +180,9 @@ export const performanceService = {
       .eq('id', sessionId);
 
     if (error) throw new Error(error.message);
-  },
+  }
 
-  // End all active sessions for a setlist (cleanup)
+  // End all active sessions for a setlist
   async endActiveSessionsForSetlist(setlistId) {
     const { error } = await supabase
       .from('performance_sessions')
@@ -174,11 +191,14 @@ export const performanceService = {
       .eq('is_active', true);
 
     if (error) throw new Error(error.message);
-  },
+  }
 
-  // Subscribe to session changes
+  // Subscribe to session changes with proper cleanup
   subscribeToSession(sessionId, callback) {
-    return supabase
+    // Clean up existing subscription if any
+    this.unsubscribeFromSession(sessionId);
+    
+    const subscription = supabase
       .channel(`performance_session_${sessionId}`)
       .on(
         'postgres_changes',
@@ -188,8 +208,34 @@ export const performanceService = {
           table: 'performance_sessions',
           filter: `id=eq.${sessionId}`
         },
-        callback
+        (payload) => {
+          // Use setImmediate to defer callback execution
+          setImmediate(() => callback(payload));
+        }
       )
       .subscribe();
+
+    this.activeSubscriptions.set(sessionId, subscription);
+    return subscription;
   }
-};
+
+  // Unsubscribe from specific session
+  unsubscribeFromSession(sessionId) {
+    const subscription = this.activeSubscriptions.get(sessionId);
+    if (subscription) {
+      supabase.removeChannel(subscription);
+      this.activeSubscriptions.delete(sessionId);
+    }
+  }
+
+  // Clean up all subscriptions
+  cleanupSubscriptions() {
+    for (const [sessionId, subscription] of this.activeSubscriptions) {
+      supabase.removeChannel(subscription);
+    }
+    this.activeSubscriptions.clear();
+  }
+}
+
+// Export singleton instance
+export const performanceService = new PerformanceService();

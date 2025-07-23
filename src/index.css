@@ -34,11 +34,6 @@ body {
   background: #4c4c6d;
 }
 
-/* Improved focus visibility */
-.focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-900;
-}
-
 /* Modern button animations */
 .btn-animate {
   @apply transition-all duration-200 ease-in-out transform active:scale-95;
@@ -46,13 +41,6 @@ body {
 
 .btn-animate:hover {
   @apply shadow-lg;
-}
-
-/* Glass morphism effect */
-.glass {
-  background: rgba(30, 30, 63, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Custom input styling */
@@ -87,24 +75,6 @@ body {
 
 .badge-secondary {
   @apply bg-zinc-700 text-zinc-300 border border-zinc-600;
-}
-
-/* Modern table styling */
-.table-modern {
-  @apply w-full divide-y divide-zinc-700;
-}
-
-.table-modern th {
-  @apply px-6 py-4 text-left text-xs font-semibold text-zinc-300 uppercase tracking-wider
-         bg-zinc-800 border-b border-zinc-700;
-}
-
-.table-modern td {
-  @apply px-6 py-4 whitespace-nowrap text-sm text-zinc-300 border-b border-zinc-800;
-}
-
-.table-modern tr:hover {
-  @apply bg-zinc-800/50;
 }
 
 /* Custom styles for Quill editor to match Tailwind forms */

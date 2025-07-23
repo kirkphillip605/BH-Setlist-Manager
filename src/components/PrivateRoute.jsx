@@ -8,10 +8,10 @@ const PrivateRoute = ({ children }) => {
   // Show loading screen while auth is initializing
   if (!initialized || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900">
+      <div className="flex items-center justify-center min-h-screen bg-zinc-950">
         <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-          <div className="text-lg text-slate-300">Loading...</div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="text-lg text-zinc-300">Loading...</div>
         </div>
       </div>
     );
