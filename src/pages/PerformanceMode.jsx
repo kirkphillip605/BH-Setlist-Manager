@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Play, SkipBack, SkipForward, X, Music, Search, ChevronDown, Loader } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -30,7 +30,6 @@ const PerformanceMode = () => {
   const [currentSong, setCurrentSong] = useState(null);
   const [currentSongLyrics, setCurrentSongLyrics] = useState('');
   const [isLeader, setIsLeader] = useState(false);
-  const subscriptionRef = useRef(null);
   const mountedRef = useRef(true);
 
   // Search functionality
@@ -42,22 +41,28 @@ const PerformanceMode = () => {
 
   useEffect(() => {
     mountedRef.current = true;
-    setPageTitle('Performance Mode');
     
-    if (setlistId) {
-      initializePerformanceMode(setlistId);
-    } else {
-      fetchSetlists();
-    }
+    // Only initialize performance operations when needed
+    const initialize = async () => {
+      setPageTitle('Performance Mode');
+      
+      if (setlistId) {
+        await initializePerformanceMode(setlistId);
+      } else {
+        await fetchSetlists();
+      }
+    };
+    
+    initialize();
     
     return () => {
       mountedRef.current = false;
-      if (subscriptionRef.current) {
-        performanceService.unsubscribeFromSession(session?.id);
-        subscriptionRef.current = null;
+      // Clean up performance mode when component unmounts
+      if (inPerformance && session?.id) {
+        performanceService.cleanupSubscriptions();
       }
     };
-  }, [setlistId]);
+  }, [setlistId, inPerformance, session?.id]);
 
   const fetchSetlists = async () => {
     if (!mountedRef.current) return;
@@ -98,25 +103,40 @@ const PerformanceMode = () => {
     setError(null);
     
     try {
-      // Check for existing active session
-      const activeSession = await performanceService.getActiveSession(setlistId);
+      // Check for existing active session first
+      let activeSession;
+      try {
+        activeSession = await performanceService.getActiveSession(setlistId);
+      } catch (err) {
+        console.log('No existing active session found');
+        activeSession = null;
+      }
       
       let sessionData;
+      let isLeader = false;
+      
       if (activeSession) {
+        // Join as follower
         sessionData = activeSession;
-        setIsLeader(activeSession.leader_id === user.id);
+        isLeader = activeSession.leader_id === user.id;
+        
+        if (!isLeader) {
+          // Join existing session as follower
+          sessionData = await performanceService.joinSession(setlistId, user.id);
+        }
       } else {
+        // Create new session as leader
         sessionData = await performanceService.createSession(setlistId, user.id);
-        setIsLeader(true);
-        await performanceService.prefetchSetlistData(setlistId);
+        isLeader = true;
       }
 
       if (mountedRef.current) {
         setSession(sessionData);
+        setIsLeader(isLeader);
         await loadPerformanceData(setlistId, sessionData);
 
-        // Subscribe to session updates
-        subscriptionRef.current = performanceService.subscribeToSession(
+        // Subscribe to session updates (only when in performance mode)
+        performanceService.subscribeToSession(
           sessionData.id,
           handleSessionUpdate
         );
@@ -140,24 +160,24 @@ const PerformanceMode = () => {
     if (!mountedRef.current) return;
     
     try {
-      const cached = performanceService.getCachedSetlistData();
+      // Always use cached data for performance
+      const { setlistData: cachedSetlist, songsData: cachedSongs } = performanceService.getCachedSetlistData();
       
-      if (cached.setlistData && cached.songsData) {
+      if (cachedSetlist && Object.keys(cachedSongs).length > 0) {
         if (mountedRef.current) {
-          setSetlistData(cached.setlistData);
-          setSongsData(cached.songsData);
+          setSetlistData(cachedSetlist);
+          setSongsData(cachedSongs);
+          console.log('📱 Using cached performance data');
         }
       } else {
-        const fullSetlist = await setlistsService.getSetlistById(setlistId);
-        if (mountedRef.current) {
-          setSetlistData(fullSetlist);
-        }
+        console.warn('No cached data available, this should not happen in performance mode');
       }
 
       if (sessionData.current_set_id) {
-        const setData = await setsService.getSetById(sessionData.current_set_id);
+        // Find set data from cached setlist
+        const currentSetData = cachedSetlist?.sets?.find(s => s.id === sessionData.current_set_id);
         if (mountedRef.current) {
-          setCurrentSet(setData);
+          setCurrentSet(currentSetData);
         }
       }
 
@@ -180,20 +200,17 @@ const PerformanceMode = () => {
     if (!mountedRef.current) return;
     
     try {
-      if (songsData[songId]) {
-        const songData = songsData[songId];
+      // Always use cached song data for fast loading
+      const cachedSongs = performanceService.getCachedSetlistData().songsData;
+      
+      if (cachedSongs[songId]) {
         if (mountedRef.current) {
-          setCurrentSong(songData);
-          setCurrentSongLyrics(songData.lyrics);
+          setCurrentSong(cachedSongs[songId]);
+          setCurrentSongLyrics(cachedSongs[songId].lyrics);
           setIsSearchSong(false);
         }
       } else {
-        const songData = await songsService.getSongById(songId);
-        if (mountedRef.current) {
-          setCurrentSong(songData);
-          setCurrentSongLyrics(songData.lyrics);
-          setIsSearchSong(false);
-        }
+        console.warn(`Song ${songId} not found in cache`);
       }
     } catch (err) {
       console.error('Error loading current song:', err);
@@ -204,10 +221,13 @@ const PerformanceMode = () => {
     if (!mountedRef.current) return;
     
     try {
+      // Store previous set song for navigation
       if (mountedRef.current) {
         setPreviousSetSong(currentSong);
       }
       
+      // Use cached data for search songs too
+      const cachedSongs = performanceService.getCachedSetlistData().songsData;
       let songData = songsData[song.id] || song;
       if (!songData.lyrics) {
         songData = await songsService.getSongById(song.id);
@@ -236,38 +256,36 @@ const PerformanceMode = () => {
 
   // Optimized session update handler
   const handleSessionUpdate = (payload) => {
-    if (!mountedRef.current || !payload.new) return;
+    if (!mountedRef.current || !payload?.new) return;
     
     const newSession = payload.new;
     
-    // Update session state
-    setSession(newSession);
-    
-    // Handle song changes
-    if (newSession.current_song_id !== currentSong?.id) {
-      loadCurrentSong(newSession.current_song_id);
-    }
-    
-    // Handle set changes
-    if (newSession.current_set_id !== currentSet?.id) {
-      loadCurrentSet(newSession.current_set_id);
-    }
-    if (payload.new) {
-      setSession(payload.new);
-      if (payload.new.current_song_id !== currentSong?.id) {
+    // Defer updates to prevent blocking
+    setTimeout(() => {
+      if (!mountedRef.current) return;
+      
+      setSession(newSession);
+      
+      // Handle song changes
+      if (newSession.current_song_id !== currentSong?.id) {
         loadCurrentSong(payload.new.current_song_id);
       }
-      if (payload.new.current_set_id !== currentSet?.id) {
+      
+      // Handle set changes
+      if (newSession.current_set_id !== currentSet?.id) {
         loadCurrentSet(payload.new.current_set_id);
       }
-    }
+    }, 0);
   };
 
   const loadCurrentSet = async (setId) => {
     if (!mountedRef.current) return;
     
     try {
-      const setData = await setsService.getSetById(setId);
+      // Use cached set data
+      const cachedSetlist = performanceService.getCachedSetlistData().setlistData;
+      const setData = cachedSetlist?.sets?.find(s => s.id === setId);
+      
       if (mountedRef.current) {
         setCurrentSet(setData);
       }
@@ -415,17 +433,13 @@ const PerformanceMode = () => {
 
   const handleExitPerformance = async () => {
     try {
-      // Clean up subscriptions first
-      if (subscriptionRef.current) {
-        performanceService.unsubscribeFromSession(session?.id);
-        subscriptionRef.current = null;
-      }
-      
       if (isLeader && session) {
         await performanceService.endSession(session.id);
+      } else {
+        // Clean up for followers
+        performanceService.cleanupSubscriptions();
       }
       
-      performanceService.clearCache();
       navigate('/setlists');
     } catch (err) {
       console.error('Error exiting performance:', err);

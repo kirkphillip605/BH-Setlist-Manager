@@ -101,8 +101,36 @@ export const AuthProvider = ({ children }) => {
   const processAuthChange = async (event, session) => {
     if (!mountedRef.current) return;
 
+    // Handle sign out or session expiry
+    if (event === 'SIGNED_OUT' || !session) {
+      console.log('🚪 User signed out or session expired');
+      
+      // Clear all performance mode data and subscriptions
+      try {
+        const { performanceService } = await import('../services/performanceService');
+        performanceService.cleanupSubscriptions();
+        performanceService.clearCache();
+      } catch (err) {
+        console.warn('Error cleaning up performance service:', err);
+      }
+      
+      // Clear any other cached data
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (err) {
+        console.warn('Error clearing storage:', err);
+      }
+      
+      if (mountedRef.current) {
+        setUser(null);
+        setLoading(false);
+      }
+      return;
+    }
+
     try {
-      if (session?.user) {
+      if (session?.user && event !== 'SIGNED_OUT') {
         const userData = await fetchUserProfile(session.user);
         if (mountedRef.current) {
           setUser(userData);
@@ -110,7 +138,12 @@ export const AuthProvider = ({ children }) => {
       } else {
         if (mountedRef.current) {
           setUser(null);
+          // Redirect to login if no session and not already there
+          if (window.location.pathname !== '/login' && !window.location.pathname.startsWith('/auth/')) {
+            window.location.href = '/login';
+          }
         }
+      }
       }
     } catch (error) {
       console.error('Auth processing error:', error);
@@ -213,12 +246,31 @@ export const AuthProvider = ({ children }) => {
     try {
       if (!supabase) throw new Error('Supabase unavailable');
       
+      // Clean up performance mode data first
+      try {
+        const { performanceService } = await import('../services/performanceService');
+        performanceService.cleanupSubscriptions();
+        performanceService.clearCache();
+      } catch (err) {
+        console.warn('Error cleaning up performance service:', err);
+      }
+      
+      // Clean up auth subscriptions
       cleanupSubscriptions();
+      
+      // Clear all storage
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (err) {
+        console.warn('Error clearing storage:', err);
+      }
       
       const { error } = await supabase.auth.signOut();
       if (error) throw new Error(error.message);
       
       setUser(null);
+      console.log('🚪 User signed out and all data cleared');
     } catch (error) {
       console.error('Sign out error:', error);
       setUser(null);

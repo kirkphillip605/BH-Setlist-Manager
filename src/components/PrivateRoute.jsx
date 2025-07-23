@@ -1,9 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading, initialized } = useAuth();
+  
+  // Redirect to login if not authenticated and not already on auth pages
+  useEffect(() => {
+    if (initialized && !loading && !user) {
+      const currentPath = window.location.pathname;
+      if (!currentPath.startsWith('/login') && !currentPath.startsWith('/auth/')) {
+        window.location.href = '/login';
+      }
+    }
+  }, [initialized, loading, user]);
 
   // Show loading screen while auth is initializing
   if (!initialized || loading) {

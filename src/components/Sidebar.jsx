@@ -104,39 +104,27 @@ const Sidebar = ({ isOpen, onClose, collapsed }) => {
             </Link>
           ))}
 
-          {/* Admin Section */}
-          {adminItems.length > 0 && (
-            <>
+          {/* User Management for Admin Users */}
+          {user?.user_level === 3 && (
+            <Link
+              to="/admin/users"
+              onClick={onClose}
+              title={collapsed ? 'User Management' : ''}
+              className={`
+                group flex items-center ${collapsed ? 'px-3 py-3 justify-center' : 'px-3 py-3'} rounded-2xl text-sm font-medium transition-all duration-200 relative
+                ${isActive('/admin/users') 
+                  ? 'bg-emerald-600 text-white shadow-lg' 
+                  : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'
+                }
+              `}
+            >
+              <Users size={20} className={`mr-3 ${isActive('/admin/users') ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-300'}`} />
               {!collapsed && (
-              <div className="pt-8 pb-4">
-                <span className="text-zinc-500 uppercase font-bold text-xs px-3 tracking-wider">
-                  Administration
-                </span>
+              <div className="flex-1">
+                <div className={`font-medium ${isActive('/admin/users') ? 'text-white' : 'text-zinc-300'}`}>User Management</div>
               </div>
               )}
-              {adminItems.map(({ path, label, icon: Icon }) => (
-                <Link
-                  key={path}
-                  to={path}
-                  onClick={onClose}
-                  title={collapsed ? label : ''}
-                  className={`
-                    group flex items-center ${collapsed ? 'px-3 py-3 justify-bottom' : 'px-3 py-3'} rounded-2xl text-sm font-medium transition-all duration-200 relative
-                    ${isActive(path) 
-                      ? 'bg-emerald-600 text-white shadow-lg' 
-                      : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'
-                    }
-                  `}
-                >
-                  <Icon size={20} className={`${isActive(path) ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-300'} ${collapsed ? '' : 'mr-3'}`} />
-                  {!collapsed && (
-                  <div className="flex-1">
-                    <div className={`font-medium ${isActive(path) ? 'text-white' : 'text-zinc-300'}`}>{label}</div>
-                  </div>
-                  )}
-                </Link>
-              ))}
-            </>
+            </Link>
           )}
         </nav>
         
