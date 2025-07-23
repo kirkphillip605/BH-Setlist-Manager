@@ -145,7 +145,7 @@ export const AuthProvider = ({ children }) => {
     
     if (supabase) {
       const { data: authSubscription } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (!mounted) return;
 
         console.log('Auth state change:', event, session?.user?.id);
