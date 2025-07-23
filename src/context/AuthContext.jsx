@@ -155,7 +155,7 @@ export const AuthProvider = ({ children }) => {
         // Setup auth listener with minimal callback as per Supabase best practices
         authSubscriptionRef.current = supabase.auth.onAuthStateChange((event, session) => {
           // Quick, synchronous callback - defer async work
-          setImmediate(() => processAuthChange(event, session));
+          setTimeout(() => processAuthChange(event, session), 0);
         });
 
       } catch (error) {
