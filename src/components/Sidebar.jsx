@@ -121,7 +121,7 @@ const Sidebar = ({ isOpen, onClose, collapsed }) => {
                   onClick={onClose}
                   title={collapsed ? label : ''}
                   className={`
-                    group flex items-center ${collapsed ? 'px-3 py-3 justify-center' : 'px-3 py-3'} rounded-2xl text-sm font-medium transition-all duration-200 relative
+                    group flex items-center ${collapsed ? 'px-3 py-3 justify-bottom' : 'px-3 py-3'} rounded-2xl text-sm font-medium transition-all duration-200 relative
                     ${isActive(path) 
                       ? 'bg-emerald-600 text-white shadow-lg' 
                       : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800'
