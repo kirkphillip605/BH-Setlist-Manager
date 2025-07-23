@@ -182,7 +182,6 @@ export const AuthProvider = ({ children }) => {
           if (mountedRef.current) {
             setUser(null);
           }
-        }
 
         // Setup auth listener with minimal callback as per Supabase best practices
         authSubscriptionRef.current = supabase.auth.onAuthStateChange((event, session) => {
