@@ -144,7 +144,6 @@ export const AuthProvider = ({ children }) => {
           }
         }
       }
-      }
     } catch (error) {
       console.error('Auth processing error:', error);
       if (mountedRef.current) {
