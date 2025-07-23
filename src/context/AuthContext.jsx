@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
   // Cleanup function for subscriptions
   const cleanupSubscriptions = () => {
     if (authSubscriptionRef.current) {
-      authSubscriptionRef.current.subscription.unsubscribe();
+      authSubscriptionRef.current.subscription?.unsubscribe();
       authSubscriptionRef.current = null;
     }
     
@@ -97,6 +97,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Clean up all stored data and performance state
+  const clearAllStoredData = async () => {
+    try {
+      // Clean up performance mode data and subscriptions
+      const { performanceService } = await import('../services/performanceService');
+      performanceService.cleanupSubscriptions();
+      performanceService.clearCache();
+    } catch (err) {
+      console.warn('Error cleaning up performance service:', err);
+    }
+    
+    // Clear all storage
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (err) {
+      console.warn('Error clearing storage:', err);
+    }
+  };
+
   // Process auth change - deferred async logic as per Supabase best practices
   const processAuthChange = async (event, session) => {
     if (!mountedRef.current) return;
@@ -105,26 +125,16 @@ export const AuthProvider = ({ children }) => {
     if (event === 'SIGNED_OUT' || !session) {
       console.log('🚪 User signed out or session expired');
       
-      // Clear all performance mode data and subscriptions
-      try {
-        const { performanceService } = await import('../services/performanceService');
-        performanceService.cleanupSubscriptions();
-        performanceService.clearCache();
-      } catch (err) {
-        console.warn('Error cleaning up performance service:', err);
-      }
-      
-      // Clear any other cached data
-      try {
-        localStorage.clear();
-        sessionStorage.clear();
-      } catch (err) {
-        console.warn('Error clearing storage:', err);
-      }
+      await clearAllStoredData();
       
       if (mountedRef.current) {
         setUser(null);
         setLoading(false);
+      }
+      
+      // Redirect to login if not already there
+      if (window.location.pathname !== '/login' && !window.location.pathname.startsWith('/auth/')) {
+        window.location.href = '/login';
       }
       return;
     }
@@ -245,25 +255,11 @@ export const AuthProvider = ({ children }) => {
     try {
       if (!supabase) throw new Error('Supabase unavailable');
       
-      // Clean up performance mode data first
-      try {
-        const { performanceService } = await import('../services/performanceService');
-        performanceService.cleanupSubscriptions();
-        performanceService.clearCache();
-      } catch (err) {
-        console.warn('Error cleaning up performance service:', err);
-      }
+      // Clean up all data first
+      await clearAllStoredData();
       
       // Clean up auth subscriptions
       cleanupSubscriptions();
-      
-      // Clear all storage
-      try {
-        localStorage.clear();
-        sessionStorage.clear();
-      } catch (err) {
-        console.warn('Error clearing storage:', err);
-      }
       
       const { error } = await supabase.auth.signOut();
       if (error) throw new Error(error.message);
