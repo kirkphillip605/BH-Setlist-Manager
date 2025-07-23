@@ -143,7 +143,6 @@ export const AuthProvider = ({ children }) => {
             window.location.href = '/login';
           }
         }
-      }
     } catch (error) {
       console.error('Auth processing error:', error);
       if (mountedRef.current) {
