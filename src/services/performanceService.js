@@ -7,52 +7,97 @@ import { setsService } from './setsService';
 const STORAGE_KEYS = {
   SETLIST_DATA: 'performanceMode_setlistData',
   SONGS_DATA: 'performanceMode_songsData',
-  SESSION_ID: 'performanceMode_sessionId'
+  SESSION_ID: 'performanceMode_sessionId',
+  IS_LEADER: 'performanceMode_isLeader'
 };
 
 class PerformanceService {
   constructor() {
     this.activeSubscriptions = new Map();
+    this.isInPerformanceMode = false;
   }
 
-  // Prefetch and cache all setlist data
-  async prefetchSetlistData(setlistId) {
+  // Check if we're currently in performance mode
+  isActive() {
+    return this.isInPerformanceMode;
+  }
+
+  // Set performance mode status
+  setActive(status) {
+    this.isInPerformanceMode = status;
+  }
+
+  // Comprehensive pre-fetch and cache of all setlist data
+  async prefetchAndCacheSetlistData(setlistId) {
     try {
-      const setlistData = await setlistsService.getSetlistById(setlistId);
-      const allSongs = {};
+      console.log('🚀 Pre-fetching setlist data for performance mode...');
       
-      // Efficiently fetch all songs
+      // Get full setlist with all sets
+      const setlistData = await setlistsService.getSetlistById(setlistId);
+      
+      if (!setlistData.sets || setlistData.sets.length === 0) {
+        throw new Error('Setlist has no sets');
+      }
+
+      // Collect all unique song IDs from all sets
       const allSongIds = new Set();
-      for (const set of setlistData.sets || []) {
+      const setsWithSongs = [];
+
+      for (const set of setlistData.sets) {
         const setData = await setsService.getSetById(set.id);
-        for (const setSong of setData.set_songs || []) {
-          allSongIds.add(setSong.songs.id);
+        setsWithSongs.push(setData);
+        
+        if (setData.set_songs) {
+          for (const setSong of setData.set_songs) {
+            allSongIds.add(setSong.songs.id);
+          }
         }
       }
+
+      // Batch fetch all songs with full lyrics
+      console.log(`📄 Fetching ${allSongIds.size} songs with lyrics...`);
+      const allSongs = {};
       
-      // Batch fetch songs
-      const songIds = Array.from(allSongIds);
-      for (const songId of songIds) {
-        const fullSong = await songsService.getSongById(songId);
-        allSongs[songId] = fullSong;
+      for (const songId of allSongIds) {
+        try {
+          const fullSong = await songsService.getSongById(songId);
+          allSongs[songId] = fullSong;
+        } catch (err) {
+          console.warn(`Failed to fetch song ${songId}:`, err);
+        }
       }
-      
-      // Store in browser storage with error handling
+
+      // Enhanced setlist data with full set information
+      const enhancedSetlistData = {
+        ...setlistData,
+        sets: setsWithSongs
+      };
+
+      // Store in localStorage with compression for large data
       try {
-        localStorage.setItem(STORAGE_KEYS.SETLIST_DATA, JSON.stringify(setlistData));
-        localStorage.setItem(STORAGE_KEYS.SONGS_DATA, JSON.stringify(allSongs));
+        const dataToStore = {
+          timestamp: Date.now(),
+          setlistData: enhancedSetlistData,
+          songsData: allSongs
+        };
+        
+        localStorage.setItem(STORAGE_KEYS.SETLIST_DATA, JSON.stringify(dataToStore.setlistData));
+        localStorage.setItem(STORAGE_KEYS.SONGS_DATA, JSON.stringify(dataToStore.songsData));
+        
+        console.log('✅ Performance data cached successfully');
       } catch (storageError) {
         console.warn('Failed to cache data in localStorage:', storageError);
+        // Continue without caching if storage fails
       }
       
-      return { setlistData, songsData: allSongs };
+      return { setlistData: enhancedSetlistData, songsData: allSongs };
     } catch (error) {
-      console.error('Error prefetching setlist data:', error);
+      console.error('Error pre-fetching setlist data:', error);
       throw error;
     }
   }
 
-  // Get cached setlist data with error handling
+  // Get cached setlist data with validation
   getCachedSetlistData() {
     try {
       const setlistData = localStorage.getItem(STORAGE_KEYS.SETLIST_DATA);
@@ -68,71 +113,93 @@ class PerformanceService {
     }
   }
 
-  // Clear performance mode cache
+  // Clear all performance mode cache and state
   clearCache() {
     try {
       Object.values(STORAGE_KEYS).forEach(key => {
         localStorage.removeItem(key);
       });
+      console.log('🧹 Performance cache cleared');
     } catch (error) {
       console.warn('Error clearing cache:', error);
     }
   }
 
-  // Create a new performance session
+  // Create a new performance session (leader)
   async createSession(setlistId, userId) {
-    // End any existing sessions for this setlist
-    await this.endActiveSessionsForSetlist(setlistId);
-
-    // Get the first set and song
-    const { data: setlistData } = await supabase
-      .from('setlists')
-      .select(`
-        *,
-        sets (
-          id,
-          name,
-          set_order,
-          set_songs (
-            song_order,
-            songs (id, title, original_artist, key_signature)
-          )
-        )
-      `)
-      .eq('id', setlistId)
-      .order('set_order', { foreignTable: 'sets', ascending: true })
-      .order('song_order', { foreignTable: 'sets.set_songs', ascending: true })
-      .single();
-
-    if (!setlistData?.sets?.length) {
-      throw new Error('Setlist has no sets');
-    }
-
-    const firstSet = setlistData.sets[0];
-    const firstSong = firstSet.set_songs?.[0]?.songs || null;
-
-    const { data, error } = await supabase
-      .from('performance_sessions')
-      .insert({
-        setlist_id: setlistId,
-        leader_id: userId,
-        current_set_id: firstSet.id,
-        current_song_id: firstSong?.id || null,
-        is_active: true
-      })
-      .select()
-      .single();
-
-    if (error) throw new Error(error.message);
-    
-    // Store session ID for reference
     try {
-      localStorage.setItem(STORAGE_KEYS.SESSION_ID, data.id);
-    } catch (storageError) {
-      console.warn('Failed to store session ID:', storageError);
+      // End any existing sessions for this setlist
+      await this.endActiveSessionsForSetlist(setlistId);
+
+      // Pre-fetch all data before creating session
+      const { setlistData } = await this.prefetchAndCacheSetlistData(setlistId);
+
+      if (!setlistData.sets || setlistData.sets.length === 0) {
+        throw new Error('Setlist has no sets');
+      }
+
+      const firstSet = setlistData.sets[0];
+      const firstSong = firstSet.set_songs?.[0]?.songs || null;
+
+      const { data, error } = await supabase
+        .from('performance_sessions')
+        .insert({
+          setlist_id: setlistId,
+          leader_id: userId,
+          current_set_id: firstSet.id,
+          current_song_id: firstSong?.id || null,
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (error) throw new Error(error.message);
+      
+      // Store session info
+      try {
+        localStorage.setItem(STORAGE_KEYS.SESSION_ID, data.id);
+        localStorage.setItem(STORAGE_KEYS.IS_LEADER, 'true');
+      } catch (storageError) {
+        console.warn('Failed to store session info:', storageError);
+      }
+      
+      this.setActive(true);
+      console.log('🎭 Performance session created as leader');
+      return data;
+    } catch (error) {
+      console.error('Error creating performance session:', error);
+      throw error;
     }
-    
-    return data;
+  }
+
+  // Join existing session (follower)
+  async joinSession(setlistId, userId) {
+    try {
+      // Check for existing active session
+      const activeSession = await this.getActiveSession(setlistId);
+      
+      if (!activeSession) {
+        throw new Error('No active performance session found');
+      }
+
+      // Pre-fetch data for follower
+      await this.prefetchAndCacheSetlistData(setlistId);
+
+      // Store session info as follower
+      try {
+        localStorage.setItem(STORAGE_KEYS.SESSION_ID, activeSession.id);
+        localStorage.setItem(STORAGE_KEYS.IS_LEADER, 'false');
+      } catch (storageError) {
+        console.warn('Failed to store session info:', storageError);
+      }
+
+      this.setActive(true);
+      console.log('🎭 Joined performance session as follower');
+      return activeSession;
+    } catch (error) {
+      console.error('Error joining performance session:', error);
+      throw error;
+    }
   }
 
   // Get active session for a setlist
@@ -156,7 +223,7 @@ class PerformanceService {
     return data;
   }
 
-  // Update current song/set in session
+  // Update current song/set in session (leader only)
   async updateSession(sessionId, updates) {
     const { data, error } = await supabase
       .from('performance_sessions')
@@ -171,15 +238,22 @@ class PerformanceService {
 
   // End a performance session
   async endSession(sessionId) {
-    this.clearCache();
-    this.cleanupSubscriptions();
-    
-    const { error } = await supabase
-      .from('performance_sessions')
-      .update({ is_active: false })
-      .eq('id', sessionId);
+    try {
+      this.setActive(false);
+      this.clearCache();
+      this.cleanupSubscriptions();
+      
+      const { error } = await supabase
+        .from('performance_sessions')
+        .update({ is_active: false })
+        .eq('id', sessionId);
 
-    if (error) throw new Error(error.message);
+      if (error) throw new Error(error.message);
+      console.log('🎭 Performance session ended');
+    } catch (error) {
+      console.error('Error ending session:', error);
+      throw error;
+    }
   }
 
   // End all active sessions for a setlist
@@ -193,8 +267,13 @@ class PerformanceService {
     if (error) throw new Error(error.message);
   }
 
-  // Subscribe to session changes with proper cleanup
+  // Subscribe to session changes (only when in performance mode)
   subscribeToSession(sessionId, callback) {
+    if (!this.isActive()) {
+      console.warn('Attempted to subscribe while not in performance mode');
+      return null;
+    }
+
     // Clean up existing subscription if any
     this.unsubscribeFromSession(sessionId);
     
@@ -209,13 +288,14 @@ class PerformanceService {
           filter: `id=eq.${sessionId}`
         },
         (payload) => {
-          // Use setImmediate to defer callback execution
-          setImmediate(() => callback(payload));
+          // Defer callback execution as per Supabase best practices
+          setTimeout(() => callback(payload), 0);
         }
       )
       .subscribe();
 
     this.activeSubscriptions.set(sessionId, subscription);
+    console.log('🔔 Subscribed to performance session updates');
     return subscription;
   }
 
@@ -225,15 +305,30 @@ class PerformanceService {
     if (subscription) {
       supabase.removeChannel(subscription);
       this.activeSubscriptions.delete(sessionId);
+      console.log('🔕 Unsubscribed from performance session');
     }
   }
 
-  // Clean up all subscriptions
+  // Clean up all subscriptions and performance state
   cleanupSubscriptions() {
     for (const [sessionId, subscription] of this.activeSubscriptions) {
       supabase.removeChannel(subscription);
     }
     this.activeSubscriptions.clear();
+    this.setActive(false);
+    console.log('🧹 All performance subscriptions cleaned up');
+  }
+
+  // Get cached session info
+  getCachedSessionInfo() {
+    try {
+      return {
+        sessionId: localStorage.getItem(STORAGE_KEYS.SESSION_ID),
+        isLeader: localStorage.getItem(STORAGE_KEYS.IS_LEADER) === 'true'
+      };
+    } catch (error) {
+      return { sessionId: null, isLeader: false };
+    }
   }
 }
 
