@@ -143,7 +143,8 @@ export const AuthProvider = ({ children }) => {
             window.location.href = '/login';
           }
         }
-          } catch (error) {
+      }
+    } catch (error) {
       console.error('Auth processing error:', error);
       if (mountedRef.current) {
         setUser(null);
@@ -153,8 +154,7 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
       }
     }
-      };
-  }
+  };
 
   useEffect(() => {
     mountedRef.current = true;
@@ -182,6 +182,7 @@ export const AuthProvider = ({ children }) => {
           if (mountedRef.current) {
             setUser(null);
           }
+        }
 
         // Setup auth listener with minimal callback as per Supabase best practices
         authSubscriptionRef.current = supabase.auth.onAuthStateChange((event, session) => {
