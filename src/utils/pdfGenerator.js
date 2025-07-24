@@ -14,7 +14,7 @@ export const generateSetlistPDF = async (setlist) => {
 
     // Initialize PDF document
     const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
-    const margin = 60;
+    const margin = 40;
     let cursorY = margin;
 
     // Constants for styling
