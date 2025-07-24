@@ -15,103 +15,99 @@ export const generateSetlistPDF = async (setlist) => {
     // Initialize PDF document
     const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
     const margin = 40;
+    const PAGE_HEIGHT = pdf.internal.pageSize.getHeight();
     let cursorY = margin;
 
-    // Constants for styling
-    const TITLE_SIZE = 14;
+    // Styling constants
+    const TITLE_SIZE     = 18;
     const SET_TITLE_SIZE = 16;
-    const SONG_TITLE_SIZE = 14;
-    const SONG_META_SIZE = 10;
-    const SUPERSCRIPT_OFFSET = 4;
-    const SUPERSCRIPT_SIZE = 12;
-    const PAGE_HEIGHT = pdf.internal.pageSize.getHeight();
-    const PAGE_WIDTH = pdf.internal.pageSize.getWidth();
+    const SONG_TITLE_SIZE  = 16;
+    const SONG_META_SIZE   = 12;
+    const LINE_SPACING     = 6;  // extra space between lines
 
-    // Helper: add a new page and reset cursor
+    // Add a new page helper
     const newPage = () => {
       pdf.addPage();
       cursorY = margin;
     };
 
-    // Render document title
+    // Draw document title
     pdf.setFontSize(TITLE_SIZE);
     pdf.setFont(undefined, 'bold');
-    const title = fullSetlist.name;
-    const titleWidth = pdf.getTextWidth(title) + margin;
-    pdf.text(title, PAGE_WIDTH / 2, cursorY, { align: 'center' });
-    cursorY += TITLE_SIZE + 4;
+    pdf.text(fullSetlist.name, margin, cursorY);
+    cursorY += TITLE_SIZE + LINE_SPACING * 2;
 
-    // Iterate sets
+    // Iterate each set
     for (let i = 0; i < fullSetlist.sets.length; i++) {
       const { id: setId } = fullSetlist.sets[i];
       const detailedSet = await setsService.getSetById(setId);
 
-      // Start each set on its own page except the first
+      // New page per set (except first)
       if (i > 0) newPage();
 
-      // Render set name
+      // Draw set name
       pdf.setFontSize(SET_TITLE_SIZE);
       pdf.setFont(undefined, 'bold');
       pdf.setTextColor(0, 0, 0);
-      pdf.text(detailedSet.name, margin, margin);
-      cursorY += SET_TITLE_SIZE;
+      pdf.text(detailedSet.name, margin, cursorY);
+      cursorY += SET_TITLE_SIZE + LINE_SPACING;
 
-      // Sort songs by order
+      // Sort songs
       const songs = (detailedSet.set_songs || [])
         .slice()
         .sort((a, b) => (a.song_order || 0) - (b.song_order || 0))
         .map(ss => ss.songs);
 
-      // Render each song
+      // Render songs on one line each
       for (const song of songs) {
-        // Ensure space for next entry
+        // Page break if needed
         if (cursorY > PAGE_HEIGHT - margin) {
           newPage();
         }
 
-        // Draw song title
+        let x = margin;
+        const y = cursorY;
+
+        // Title: 16pt, bold, black
         pdf.setFontSize(SONG_TITLE_SIZE);
         pdf.setFont(undefined, 'bold');
         pdf.setTextColor(0, 0, 0);
-        pdf.text(song.title, margin, cursorY);
+        pdf.text(song.title, x, y);
+        x += pdf.getTextWidth(song.title) + 8;
 
-        // Performance note as superscript on same line
-        if (song.performance_note) {
-          const note = `  => ${song.performance_note}`;
-          const songTitleWidth = pdf.getTextWidth(song.title) + 4;
-          pdf.setFontSize(SONG_TITLE_SIZE);
-          pdf.setFont(undefined, 'normal');
-          pdf.text(note, margin + songTitleWidth, cursorY);
-          pdf.setFontSize(SONG_TITLE_SIZE);
-        }
-
-        // cursorY += SONG_TITLE_SIZE;
-
-        // Draw artist and key signature on next line
+        // Artist: 12pt, grey
         pdf.setFontSize(SONG_META_SIZE);
         pdf.setFont(undefined, 'normal');
         pdf.setTextColor(100, 100, 100);
+        const artistText = song.original_artist || '';
+        pdf.text(artistText, x, y);
+        x += pdf.getTextWidth(artistText) + 8;
 
-        let metaText = `${song.original_artist}` || '';
+        // Key signature: 12pt, grey
         if (song.key_signature) {
-          metaText += ` | ${song.key_signature}`;
+          pdf.text(song.key_signature, x, y);
+          x += pdf.getTextWidth(song.key_signature) + 8;
         }
-        const songTitleWidth = pdf.getTextWidth(song.title) + 4;
-        pdf.text(metaText, margin + songTitleWidth, cursorY);
-        cursorY += SONG_META_SIZE + 12;
+
+        // Performance note: 12pt, grey, prefixed "Note:"
+        if (song.performance_note) {
+          const noteText = `Note: ${song.performance_note}`;
+          pdf.text(noteText, x, y);
+        }
+
+        // Advance cursor for next song
+        cursorY += SONG_TITLE_SIZE + LINE_SPACING;
       }
     }
 
-    // Prepare filename and output
+    // Output PDF
     const safeName = fullSetlist.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
     const filename = `${safeName}_setlist.pdf`;
     const blob = pdf.output('blob');
     const url = URL.createObjectURL(blob);
-
-    // Open print dialog or download
-    const printWin = window.open(url, '_blank');
-    if (printWin) {
-      printWin.onload = () => printWin.print();
+    const printWindow = window.open(url, '_blank');
+    if (printWindow) {
+      printWindow.onload = () => printWindow.print();
     } else {
       pdf.save(filename);
     }
