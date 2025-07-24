@@ -15,12 +15,12 @@ export const generateSetlistPDF = async (setlist) => {
     // Initialize PDF document
     const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
     const margin = 40;
-    const lineHeight = 16;
+    const lineHeight = 18;
     let cursorY = margin;
 
     // Constants for styling
     const TITLE_SIZE = 18;
-    const SET_TITLE_SIZE = 14;
+    const SET_TITLE_SIZE = 16;
     const SONG_TITLE_SIZE = 12;
     const SONG_META_SIZE = 10;
     const SUPERSCRIPT_OFFSET = 4;
@@ -75,22 +75,14 @@ export const generateSetlistPDF = async (setlist) => {
         pdf.text(song.title, margin, cursorY);
         cursorY += SONG_TITLE_SIZE + 2;
 
-        const metaX = margin;
-        let metaText = song.original_artist || '-';
-        let xOffset = metaX;
-        
-        // Draw performance note in brackets
-        if (song.performance_note) {
-          const note = `***${song.performance_note}***`;
-          pdf.text(note, xOffset, cursorY);
-        }
-        
         // Song metadata: artist (lighter), key (superscript), performance note
         pdf.setFontSize(SONG_META_SIZE);
         pdf.setFont(undefined, 'normal');
         pdf.setTextColor(100, 100, 100);
 
-        
+        const metaX = margin;
+        let metaText = song.original_artist || '';
+        let xOffset = metaX;
 
         // Draw artist
         pdf.text(metaText, xOffset, cursorY);
@@ -109,7 +101,11 @@ export const generateSetlistPDF = async (setlist) => {
           pdf.setFontSize(SONG_META_SIZE);
         }
 
-        
+        // Draw performance note in brackets
+        if (song.performance_note) {
+          const note = `[${song.performance_note}]`;
+          pdf.text(note, xOffset, cursorY);
+        }
 
         // Advance cursor past metadata
         cursorY += SONG_META_SIZE + 8;
