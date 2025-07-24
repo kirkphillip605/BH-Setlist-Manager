@@ -20,9 +20,7 @@ export const generateSetlistPDF = async (setlist) => {
     const pageW = pdf.internal.pageSize.getWidth();
     const pageH = pdf.internal.pageSize.getHeight();
     
-    const wmState = pdf.addGState({ opacity: 0.12 }); // 12 % alpha
-    pdf.saveGraphicsState();
-    pdf.setGState(wmState);
+    
     pdf.addImage(img, "PNG", 0, 0, pageW, pageH);
     pdf.restoreGraphicsState();
 
