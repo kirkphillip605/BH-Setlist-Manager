@@ -77,10 +77,10 @@ export const generateSetlistPDF = async (setlist) => {
 
         // Performance note as superscript on same line
         if (song.performance_note) {
-          const note = `  ${song.performance_note}`;
-          const titleWidth = pdf.getTextWidth(song.title) + 4;
-          pdf.setFontSize(SUPERSCRIPT_SIZE);
-          pdf.text(note, margin + titleWidth, cursorY - SUPERSCRIPT_OFFSET);
+          const note = `  => ${song.performance_note}`;
+          const songTitleWidth = pdf.getTextWidth(song.title) + 4;
+          pdf.setFontSize(SONG_TITLE_SIZE);
+          pdf.text(note, margin + songTitleWidth, cursorY);
           pdf.setFontSize(SONG_TITLE_SIZE);
         }
 
@@ -91,9 +91,9 @@ export const generateSetlistPDF = async (setlist) => {
         pdf.setFont(undefined, 'normal');
         pdf.setTextColor(100, 100, 100);
 
-        let metaText = `| ${song.original_artist} |` || '';
+        let metaText = `${song.original_artist}` || '';
         if (song.key_signature) {
-          metaText += `  ${song.key_signature} |`;
+          metaText += ` | ${song.key_signature}`;
         }
         pdf.text(metaText, margin, cursorY);
         cursorY += SONG_META_SIZE + 12;
