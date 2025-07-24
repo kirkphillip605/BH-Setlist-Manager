@@ -682,6 +682,9 @@ const PerformanceMode = () => {
                   <p className="text-xl text-zinc-400">
                     {currentSong.original_artist} {currentSong.key_signature && `• ${currentSong.key_signature}`}
                   </p>
+                  <p className="text-xl text-zinc-400">
+                    `• && {currentSong.performance_notes}}
+                  </p><hr />
                   {isSearchSong && (
                     <span className="px-2 py-1 bg-amber-600 text-white text-xs font-medium rounded-full">
                       Search Song
