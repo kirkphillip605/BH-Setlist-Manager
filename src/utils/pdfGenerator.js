@@ -55,13 +55,13 @@ export const generateSetlistPDF = async (setlist) => {
         }
 
         // Format: "Title by Artist [Key]"
-        let songText = `${song.title} by ${song.original_artist}`;
+        let songText = `${song.title} - ${song.original_artist} -`;
         if (song.key_signature) {
-          songText += ` [${song.key_signature}]`;
+          songText += ` ${song.key_signature}`;
         }
 
         pdf.text(songText, margin, yPosition);
-        yPosition += 10; // Extra space between songs
+        yPosition += 5; // Extra space between songs
       }
 
       // Extra space between sets
