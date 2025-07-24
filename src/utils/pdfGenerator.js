@@ -19,7 +19,7 @@ export const generateSetlistPDF = async (setlist) => {
 
     // Constants for styling
     const TITLE_SIZE = 14;
-    const SET_TITLE_SIZE = 12;
+    const SET_TITLE_SIZE = 14;
     const SONG_TITLE_SIZE = 14;
     const SONG_META_SIZE = 10;
     const SUPERSCRIPT_OFFSET = 4;
@@ -50,7 +50,7 @@ export const generateSetlistPDF = async (setlist) => {
 
       // Render set name
       pdf.setFontSize(SET_TITLE_SIZE);
-      pdf.setFont(undefined, 'underline');
+      pdf.setFont(undefined, 'bold');
       pdf.setTextColor(0, 0, 0);
       pdf.text(detailedSet.name, 30, cursorY);
       cursorY += SET_TITLE_SIZE + 8;
