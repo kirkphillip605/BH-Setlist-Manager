@@ -37,7 +37,8 @@ export const songCollectionsService = {
             id,
             original_artist,
             title,
-            key_signature
+            key_signature,
+            performance_note
           )
         )
       `)

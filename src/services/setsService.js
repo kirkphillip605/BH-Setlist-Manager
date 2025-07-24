@@ -27,6 +27,7 @@ export const setsService = {
             original_artist,
             title,
             key_signature,
+            performance_note,
             lyrics
           )
         )

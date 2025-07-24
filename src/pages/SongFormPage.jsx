@@ -25,6 +25,7 @@ const SongFormPage = () => {
     original_artist: '',
     title: '',
     key_signature: '',
+    performance_note: '',
     lyrics: '',
   });
 
@@ -50,6 +51,7 @@ const SongFormPage = () => {
             original_artist: data.original_artist,
             title: data.title,
             key_signature: data.key_signature,
+            performance_note: data.performance_note || '',
             lyrics: data.lyrics,
           });
         } catch (err) {
@@ -63,7 +65,7 @@ const SongFormPage = () => {
     } else {
       // Reset form for adding new song
       setPageTitle('Add New Song');
-      setFormData({ original_artist: '', title: '', key_signature: '', lyrics: '' });
+      setFormData({ original_artist: '', title: '', key_signature: '', performance_note: '', lyrics: '' });
     }
   }, [songId, isEditing, setPageTitle]);
 
@@ -178,7 +180,7 @@ const SongFormPage = () => {
             />
           </div>
           
-          <div className="md:col-span-2">
+          <div>
             <label htmlFor="key_signature" className="block text-sm font-medium text-slate-300 mb-2">Key Signature (Optional)</label>
             <input
               type="text"
@@ -194,6 +196,18 @@ const SongFormPage = () => {
                 <option key={key} value={key} />
               ))}
             </datalist>
+          </div>
+          <div>
+            <label htmlFor="performance_note" className="block text-sm font-medium text-slate-300 mb-2">Performance Note (Optional)</label>
+            <input
+              type="text"
+              id="performance_note"
+              name="performance_note"
+              value={formData.performance_note}
+              onChange={handleChange}
+              className="block w-full px-4 py-3 bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              placeholder="e.g., Change guitars, Solo by John..."
+            />
           </div>
           <div className="md:col-span-2">
             <label htmlFor="lyrics" className="block text-sm font-medium text-slate-300 mb-2">Lyrics (Rich Text Editor)</label>

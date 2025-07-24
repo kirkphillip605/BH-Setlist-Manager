@@ -46,10 +46,10 @@ export const songsService = {
 
   // Create a new song
   async createSong(songData) {
-    const { original_artist, title, key_signature, lyrics } = songData;
+    const { original_artist, title, key_signature, lyrics, performance_note } = songData;
 
-    if (!original_artist || !title || !lyrics) {
-      throw new Error('Artist, Title, and Lyrics are required.');
+    if (!original_artist || !title) {
+      throw new Error('Artist and Title are required.');
     }
 
     // Check for duplicate song (title + artist)
@@ -69,7 +69,7 @@ export const songsService = {
 
     const { data, error } = await supabase
       .from('songs')
-      .insert([{ original_artist, title, key_signature, lyrics }])
+      .insert([{ original_artist, title, key_signature, lyrics, performance_note }])
       .select()
       .single();
 
@@ -79,10 +79,10 @@ export const songsService = {
 
   // Update a song
   async updateSong(id, songData) {
-    const { original_artist, title, key_signature, lyrics } = songData;
+    const { original_artist, title, key_signature, lyrics, performance_note } = songData;
 
-    if (!original_artist || !title || !lyrics) {
-      throw new Error('Artist, Title, and Lyrics are required.');
+    if (!original_artist || !title) {
+      throw new Error('Artist and Title are required.');
     }
 
     // Check for duplicate song (title + artist) excluding the current song being updated
@@ -103,7 +103,7 @@ export const songsService = {
 
     const { data, error } = await supabase
       .from('songs')
-      .update({ original_artist, title, key_signature, lyrics })
+      .update({ original_artist, title, key_signature, lyrics, performance_note })
       .eq('id', id)
       .select()
       .single();

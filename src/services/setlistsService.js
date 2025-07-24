@@ -142,5 +142,89 @@ export const setlistsService = {
       .eq('id', id);
 
     if (error) throw new Error(error.message);
+  },
+
+  // Duplicate an existing setlist
+  async duplicateSetlist(sourceSetlistId, newName, userId, isPublic = false) {
+    if (!newName || !userId) {
+      throw new Error('New setlist name and user_id are required.');
+    }
+
+    // Check for duplicate setlist name for this user
+    const { data: existingSetlist, error: existingError } = await supabase
+      .from('setlists')
+      .select('id')
+      .eq('name', newName)
+      .eq('user_id', userId)
+      .single();
+
+    if (existingSetlist) {
+      throw new Error('A setlist with this name already exists.');
+    }
+    if (existingError && existingError.code !== 'PGRST116') {
+      throw new Error(existingError.message);
+    }
+
+    // Get the source setlist with all its sets and songs
+    const sourceSetlist = await this.getSetlistById(sourceSetlistId);
+    
+    // Create new setlist
+    const { data: newSetlist, error: setlistError } = await supabase
+      .from('setlists')
+      .insert([{ name: newName, user_id: userId, is_public: isPublic }])
+      .select()
+      .single();
+
+    if (setlistError) throw new Error(setlistError.message);
+
+    // Duplicate each set
+    for (const sourceSet of sourceSetlist.sets || []) {
+      // Get full set data with songs
+      const { data: fullSet, error: setError } = await supabase
+        .from('sets')
+        .select(`
+          *,
+          set_songs (
+            song_order,
+            songs (id)
+          )
+        `)
+        .eq('id', sourceSet.id)
+        .single();
+
+      if (setError) continue; // Skip this set if error
+
+      // Create new set
+      const { data: newSet, error: newSetError } = await supabase
+        .from('sets')
+        .insert([{
+          name: fullSet.name,
+          setlist_id: newSetlist.id,
+          set_order: fullSet.set_order
+        }])
+        .select()
+        .single();
+
+      if (newSetError) continue; // Skip this set if error
+
+      // Add songs to new set
+      if (fullSet.set_songs && fullSet.set_songs.length > 0) {
+        const setSongsToInsert = fullSet.set_songs.map((ss) => ({
+          set_id: newSet.id,
+          song_id: ss.songs.id,
+          song_order: ss.song_order,
+        }));
+
+        const { error: setSongsError } = await supabase
+          .from('set_songs')
+          .insert(setSongsToInsert);
+
+        if (setSongsError) {
+          console.error('Error inserting set songs:', setSongsError);
+        }
+      }
+    }
+
+    return newSetlist;
   }
 };
