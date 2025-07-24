@@ -15,7 +15,7 @@ export const generateSetlistPDF = async (setlist) => {
     const margin = 20;
 
     const img = new Image();
-    img.src = "./watermark.png";
+    img.src = "./bh-logo-bw.png";
     await img.decode();
 
     const wmState = pdf.addGState({ opacity: 0.12 }); // 12 % alpha
