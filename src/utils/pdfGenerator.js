@@ -18,7 +18,7 @@ export const generateSetlistPDF = async (setlist) => {
     let cursorY = margin;
 
     // Constants for styling
-    const TITLE_SIZE = 18;
+    const TITLE_SIZE = 14;
     const SET_TITLE_SIZE = 16;
     const SONG_TITLE_SIZE = 14;
     const SONG_META_SIZE = 10;
@@ -36,12 +36,10 @@ export const generateSetlistPDF = async (setlist) => {
     // Render document title
     pdf.setFontSize(TITLE_SIZE);
     pdf.setFont(undefined, 'bold');
-    const title = `${fullSetlist.name} Set List`;
+    const title = `Set List: ${fullSetlist.name}`;
     const titleWidth = pdf.getTextWidth(title) + margin;
     pdf.text(title, PAGE_WIDTH - titleWidth, cursorY);
     cursorY += TITLE_SIZE + 4;
-
-    
 
     // Iterate sets
     for (let i = 0; i < fullSetlist.sets.length; i++) {
