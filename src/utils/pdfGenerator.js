@@ -95,7 +95,7 @@ export const generateSetlistPDF = async (setlist) => {
           metaText += `  |  ${song.key_signature}`;
         }
         pdf.text(metaText, margin+15, cursorY);
-        cursorY += SONG_META_SIZE + 8;
+        cursorY += SONG_META_SIZE + 12;
       }
     }
 
