@@ -22,7 +22,7 @@ export const generateSetlistPDF = async (setlist) => {
     
     
     pdf.addImage(img, "PNG", 0, 0, pageW, pageH);
-    pdf.restoreGraphicsState();
+  
 
     
     // Title
