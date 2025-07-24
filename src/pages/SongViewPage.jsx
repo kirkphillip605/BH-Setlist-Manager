@@ -119,7 +119,7 @@ const SongViewPage = () => {
       <div className="card-modern p-4 lg:p-6">
         <div className="flex items-center mb-6">
           <Music className="h-5 w-5 mr-2 text-zinc-400" />
-          <h2 className="text-xl font-semibold text-zinc-100">Song Lyrics</h2>
+          <h2 className="text-xl font-semibold text-zinc-100">Lyrics</h2>
         </div>
         <div className="prose prose-invert max-w-none">
           <div
