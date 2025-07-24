@@ -81,7 +81,7 @@ export const generateSetlistPDF = async (setlist) => {
         pdf.setTextColor(100, 100, 100);
 
         const metaX = margin;
-        let metaText = song.original_artist || '';
+        let metaText = song.original_artist || '-';
         let xOffset = metaX;
 
         // Draw artist
