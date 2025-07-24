@@ -18,12 +18,12 @@ export const generateSetlistPDF = async (setlist) => {
     let cursorY = margin;
 
     // Constants for styling
-    const TITLE_SIZE = 18;
-    const SET_TITLE_SIZE = 16;
+    const TITLE_SIZE = 14;
+    const SET_TITLE_SIZE = 12;
     const SONG_TITLE_SIZE = 14;
     const SONG_META_SIZE = 10;
     const SUPERSCRIPT_OFFSET = 4;
-    const SUPERSCRIPT_SIZE = 14;
+    const SUPERSCRIPT_SIZE = 12;
     const PAGE_HEIGHT = pdf.internal.pageSize.getHeight();
 
     // Helper: add a new page and reset cursor
@@ -74,7 +74,7 @@ export const generateSetlistPDF = async (setlist) => {
 
         // Performance note as superscript on same line
         if (song.performance_note) {
-          const note = `  |${song.performance_note}|`;
+          const note = `  ${song.performance_note}`;
           const titleWidth = pdf.getTextWidth(song.title) + 4;
           pdf.setFontSize(SUPERSCRIPT_SIZE);
           pdf.text(note, margin + titleWidth, cursorY - SUPERSCRIPT_OFFSET);
