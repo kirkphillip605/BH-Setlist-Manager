@@ -74,7 +74,7 @@ export const generateSetlistPDF = async (setlist) => {
 
         // Performance note as superscript on same line
         if (song.performance_note) {
-          const note = `[${song.performance_note}]`;
+          const note = `****NOTE: [${song.performance_note}]****`;
           const titleWidth = pdf.getTextWidth(song.title) + 4;
           pdf.setFontSize(SUPERSCRIPT_SIZE);
           pdf.text(note, margin + titleWidth, cursorY - SUPERSCRIPT_OFFSET);
