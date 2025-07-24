@@ -38,7 +38,7 @@ export const generateSetlistPDF = async (setlist) => {
     pdf.setFont(undefined, 'bold');
     const title = `${fullSetlist.name} Set List`;
     pdf.text(title, PAGE_WIDTH / 2, cursorY, { align: 'center' });
-    cursorY += TITLE_SIZE + 5;
+    cursorY += TITLE_SIZE + 10;
 
     // Iterate sets
     for (let i = 0; i < fullSetlist.sets.length; i++) {
@@ -52,7 +52,7 @@ export const generateSetlistPDF = async (setlist) => {
       pdf.setFontSize(SET_TITLE_SIZE);
       pdf.setFont(undefined, 'bold');
       pdf.setTextColor(0, 0, 0);
-      pdf.text(detailedSet.name, 30, cursorY);
+      pdf.text(detailedSet.name, PAGE_WIDTH / 4, cursorY, { align: 'center' });
       cursorY += SET_TITLE_SIZE + 8;
 
       // Sort songs by order
