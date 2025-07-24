@@ -36,8 +36,7 @@ export const generateSetlistPDF = async (setlist) => {
     // Render document title
     pdf.setFontSize(TITLE_SIZE);
     pdf.setFont(undefined, 'bold');
-    const titlewidth = pdf.getTextWidth(fullSetlist.name);
-    const titleX = PAGE_WIDTH - titlewidth / 2;
+    const title = `${fullSetlist.name} Set List`;
     pdf.text(fullSetlist.name, PAGE_WIDTH / 2, cursorY, { align: 'center' });
     cursorY += TITLE_SIZE + 10;
 
