@@ -35,7 +35,7 @@ export const generateSetlistPDF = async (setlist) => {
     // Render document title
     pdf.setFontSize(TITLE_SIZE);
     pdf.setFont(undefined, 'bold');
-    pdf.text(fullSetlist.name, margin, cursorY, { align: "right" });
+    pdf.text(fullSetlist.name, margin, cursorY);
     cursorY += TITLE_SIZE + 10;
 
     // Iterate sets
