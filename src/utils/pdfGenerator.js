@@ -23,7 +23,7 @@ export const generateSetlistPDF = async (setlist) => {
     const SET_TITLE_SIZE = 16;
     const SONG_TITLE_SIZE  = 16;
     const SONG_META_SIZE   = 12;
-    const LINE_SPACING     = 6;  // extra space between lines
+    const LINE_SPACING     = 10;  // extra space between lines
 
     // Add a new page helper
     const newPage = () => {
@@ -79,8 +79,8 @@ export const generateSetlistPDF = async (setlist) => {
         pdf.setFontSize(SONG_META_SIZE);
         pdf.setFont(undefined, 'normal');
         pdf.setTextColor(100, 100, 100);
-        const artistText = song.original_artist || '';
-        pdf.text(` by ${artistText}`, x, y);
+        const artistText = `| ${song.original_artist}` || '';
+        pdf.text(artistText, x, y);
         x += pdf.getTextWidth(artistText) + 8;
 
         // Key signature: 12pt, grey
