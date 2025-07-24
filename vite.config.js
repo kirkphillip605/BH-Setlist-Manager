@@ -16,8 +16,8 @@ export default defineConfig({
     host: true,
     allowedHosts: [
       'setlist.kirknetllc.com', // Allow a specific domain
-      '.kirknetllc.com' // Allow a domain and all its subdomains
-      '.badhabits.live'
+      '.kirknetllc.com', // Allow a domain and all its subdomains
+      '.badhabits.live',
     ],
   },
 });
