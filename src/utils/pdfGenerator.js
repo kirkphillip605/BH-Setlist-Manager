@@ -61,7 +61,7 @@ export const generateSetlistPDF = async (setlist) => {
         }
 
         pdf.text(songText, margin, yPosition);
-        yPosition += 5; // Extra space between songs
+        yPosition += 10; // Extra space between songs
       }
 
       // Extra space between sets
