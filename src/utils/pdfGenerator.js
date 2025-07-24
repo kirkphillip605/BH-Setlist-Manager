@@ -94,6 +94,7 @@ export const generateSetlistPDF = async (setlist) => {
         // Performance note: 12pt, grey, prefixed "Note:"
         if (song.performance_note) {
           pdf.setFont(undefined, 'bold');
+          pdf.setTextColor(0, 0, 0);
           const noteText = ` Note: *${song.performance_note}*`;
           pdf.text(noteText, x, y);
         }
