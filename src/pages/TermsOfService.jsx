@@ -27,7 +27,7 @@ const TermsOfService = () => {
                 <Scale className="h-6 w-6 text-blue-400" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-zinc-100">Terms of Use</h1>
+                <h1 className="text-2xl font-bold text-zinc-100">Terms of Service</h1>
                 <p className="text-zinc-400">Bad Habits Setlist Management System</p>
               </div>
             </div>
