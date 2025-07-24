@@ -7,7 +7,6 @@ import { songsService } from '../services/songsService';
 import { setlistsService } from '../services/setlistsService';
 import { songCollectionsService } from '../services/songCollectionsService';
 import { performanceService } from '../services/performanceService';
-import { performanceService } from '../services/performanceService';
 import { generateSetlistPDF } from '../utils/pdfGenerator';
 
 const Dashboard = () => {
