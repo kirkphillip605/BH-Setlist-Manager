@@ -49,7 +49,7 @@ export const generateSetlistPDF = async (setlist) => {
 
     // Pre-load logo once. Using decode() guarantees it is ready for jsPDF.
     const logo = new Image();
-    logo.src   = './bh-logo-bw.png';
+    logo.src   = 'bh-logo-bw.png';
     await logo.decode();
 
     /* ------------------------------------------------------------------ */
