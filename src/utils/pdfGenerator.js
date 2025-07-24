@@ -90,12 +90,11 @@ export const generateSetlistPDF = async (setlist) => {
         pdf.setFont(undefined, 'normal');
         pdf.setTextColor(100, 100, 100);
 
-        let metaText = '---';
-        metaText += song.original_artist || '';
+        let metaText = song.original_artist || '';
         if (song.key_signature) {
           metaText += `  |  ${song.key_signature}`;
         }
-        pdf.text(metaText, margin, cursorY);
+        pdf.text(metaText, margin+5, cursorY);
         cursorY += SONG_META_SIZE + 8;
       }
     }
