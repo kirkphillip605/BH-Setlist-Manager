@@ -79,7 +79,7 @@ export const generateSetlistPDF = async (setlist) => {
         pdf.setFontSize(SONG_META_SIZE);
         pdf.setFont(undefined, 'normal');
         pdf.setTextColor(100, 100, 100);
-        const artistText = ` | ${song.original_artist}` || '';
+        const artistText = `by ${song.original_artist}` || '';
         pdf.text(artistText, x, y);
         x += pdf.getTextWidth(artistText) + 8;
 
