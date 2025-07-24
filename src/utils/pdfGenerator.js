@@ -72,7 +72,7 @@ export const generateSetlistPDF = async (setlist) => {
         pdf.setFontSize(SONG_TITLE_SIZE);
         pdf.setFont(undefined, 'bold');
         pdf.setTextColor(0, 0, 0);
-        pdf.text(song.title, x, y);
+        pdf.text(`${song.title} | `, x, y);
         x += pdf.getTextWidth(song.title) + 8;
 
         // Artist: 12pt, grey
@@ -85,13 +85,13 @@ export const generateSetlistPDF = async (setlist) => {
 
         // Key signature: 12pt, grey
         if (song.key_signature) {
-          pdf.text(song.key_signature, x, y);
+          pdf.text(`${song.key_signature}`, x, y);
           x += pdf.getTextWidth(song.key_signature) + 8;
         }
 
         // Performance note: 12pt, grey, prefixed "Note:"
         if (song.performance_note) {
-          const noteText = `Note: ${song.performance_note}`;
+          const noteText = ` | Note: ${song.performance_note}`;
           pdf.text(noteText, x, y);
         }
 
