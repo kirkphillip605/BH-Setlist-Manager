@@ -19,10 +19,10 @@ export const generateSetlistPDF = async (setlist) => {
     let cursorY = margin;
 
     // Constants for styling
-    const TITLE_SIZE = 20;
-    const SET_TITLE_SIZE = 16;
+    const TITLE_SIZE = 18;
+    const SET_TITLE_SIZE = 14;
     const SONG_TITLE_SIZE = 14;
-    const SONG_META_SIZE = 12;
+    const SONG_META_SIZE = 10;
     const SUPERSCRIPT_OFFSET = 4;
     const SUPERSCRIPT_SIZE = 8;
     const PAGE_WIDTH = pdf.internal.pageSize.getWidth();
@@ -103,7 +103,7 @@ export const generateSetlistPDF = async (setlist) => {
 
         // Draw performance note in brackets
         if (song.performance_note) {
-          const note = `[${song.performance_note}]`;
+          const note = `***${song.performance_note}***`;
           pdf.text(note, xOffset, cursorY);
         }
 
