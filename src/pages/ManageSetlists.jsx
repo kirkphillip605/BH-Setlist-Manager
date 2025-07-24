@@ -19,6 +19,12 @@ const ManageSetlists = () => {
   const [sortDirection, setSortDirection] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [showDuplicateForm, setShowDuplicateForm] = useState(false);
+  const [duplicateFormData, setDuplicateFormData] = useState({
+    sourceSetlistId: '',
+    newName: '',
+    isPublic: false
+  });
 
   useEffect(() => {
     setPageTitle('Setlists');
@@ -62,6 +68,33 @@ const ManageSetlists = () => {
     } catch (err) {
       console.error('Error generating PDF:', err);
       setError('Failed to generate PDF. Please try again.');
+    }
+  };
+
+  const handleDuplicateSetlist = async (e) => {
+    e.preventDefault();
+    if (!duplicateFormData.sourceSetlistId || !duplicateFormData.newName.trim()) {
+      setError('Please select a source setlist and enter a new name');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      await setlistsService.duplicateSetlist(
+        duplicateFormData.sourceSetlistId,
+        duplicateFormData.newName,
+        user.id,
+        duplicateFormData.isPublic
+      );
+      await fetchSetlists();
+      setShowDuplicateForm(false);
+      setDuplicateFormData({ sourceSetlistId: '', newName: '', isPublic: false });
+    } catch (err) {
+      console.error('Error duplicating setlist:', err);
+      setError(err.message || 'Failed to duplicate setlist. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -135,14 +168,100 @@ const ManageSetlists = () => {
               className="input-modern"
             />
           </div>
-          <button
-            onClick={() => navigate('/setlists/add')}
-            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all btn-animate shadow-lg font-medium"
-          >
-            <PlusCircle size={20} className="mr-2" />
-            New Setlist
-          </button>
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+            <button
+              onClick={() => setShowDuplicateForm(!showDuplicateForm)}
+              className="inline-flex items-center px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all btn-animate shadow-lg font-medium"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+              </svg>
+              {showDuplicateForm ? 'Cancel' : 'New (From Existing)'}
+            </button>
+            <button
+              onClick={() => navigate('/setlists/add')}
+              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all btn-animate shadow-lg font-medium"
+            >
+              <PlusCircle size={20} className="mr-2" />
+              New Setlist
+            </button>
+          </div>
         </div>
+
+        {/* Duplicate Setlist Form */}
+        {showDuplicateForm && (
+          <div className="bg-zinc-800 rounded-xl p-4 lg:p-6 border border-zinc-700 mb-6">
+            <h3 className="text-lg font-medium text-zinc-100 mb-4">Duplicate Existing Setlist</h3>
+            <form onSubmit={handleDuplicateSetlist} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="sourceSetlist" className="block text-sm font-medium text-zinc-300 mb-2">
+                    Source Setlist
+                  </label>
+                  <select
+                    id="sourceSetlist"
+                    value={duplicateFormData.sourceSetlistId}
+                    onChange={(e) => setDuplicateFormData(prev => ({ ...prev, sourceSetlistId: e.target.value }))}
+                    className="input-modern"
+                    required
+                  >
+                    <option value="">Choose a setlist to duplicate...</option>
+                    {setlists.map((setlist) => (
+                      <option key={setlist.id} value={setlist.id}>
+                        {setlist.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="newName" className="block text-sm font-medium text-zinc-300 mb-2">
+                    New Setlist Name
+                  </label>
+                  <input
+                    type="text"
+                    id="newName"
+                    value={duplicateFormData.newName}
+                    onChange={(e) => setDuplicateFormData(prev => ({ ...prev, newName: e.target.value }))}
+                    className="input-modern"
+                    placeholder="Enter new setlist name..."
+                    required
+                  />
+                </div>
+              </div>
+              <div className="flex items-center">
+                <input
+                  id="duplicateIsPublic"
+                  type="checkbox"
+                  checked={duplicateFormData.isPublic}
+                  onChange={(e) => setDuplicateFormData(prev => ({ ...prev, isPublic: e.target.checked }))}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-zinc-600 rounded bg-zinc-700"
+                />
+                <label htmlFor="duplicateIsPublic" className="ml-2 block text-sm text-zinc-300">
+                  Make this setlist public (visible to all users)
+                </label>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowDuplicateForm(false)}
+                  className="inline-flex items-center px-4 py-2 border border-zinc-600 rounded-xl text-zinc-300 bg-zinc-700 hover:bg-zinc-600 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                  </svg>
+                  {loading ? 'Duplicating...' : 'Duplicate Setlist'}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {loading && <p className="text-center text-zinc-300 py-8">Loading setlists...</p>}
 
