@@ -25,6 +25,7 @@ export const generateSetlistPDF = async (setlist) => {
     const SUPERSCRIPT_OFFSET = 4;
     const SUPERSCRIPT_SIZE = 12;
     const PAGE_HEIGHT = pdf.internal.pageSize.getHeight();
+    const PAGE_WIDTH = pdf.internal.pageSize.getWidth();
 
     // Helper: add a new page and reset cursor
     const newPage = () => {
@@ -35,7 +36,9 @@ export const generateSetlistPDF = async (setlist) => {
     // Render document title
     pdf.setFontSize(TITLE_SIZE);
     pdf.setFont(undefined, 'bold');
-    pdf.text(fullSetlist.name, margin, cursorY);
+    const titlewidth = pdf.getTextWidth(fullSetlist.name);
+    cost titleX = PAGE_WIDTH - titlewidth / 2;
+    pdf.text(fullSetlist.name, titleX, cursorY);
     cursorY += TITLE_SIZE + 10;
 
     // Iterate sets
