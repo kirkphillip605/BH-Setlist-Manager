@@ -107,9 +107,10 @@ export const AuthProvider = ({ children }) => {
       
       // Clear all performance mode data and subscriptions
       try {
-        const { performanceService } = await import('../services/performanceService');
-        performanceService.cleanupSubscriptions();
-        performanceService.clearCache();
+        import('../services/performanceService').then(({ performanceService }) => {
+          performanceService.cleanupSubscriptions();
+          performanceService.clearCache();
+        });
       } catch (err) {
         console.warn('Error cleaning up performance service:', err);
       }
@@ -263,9 +264,10 @@ export const AuthProvider = ({ children }) => {
       
       // Clean up performance mode data first
       try {
-        const { performanceService } = await import('../services/performanceService');
-        performanceService.cleanupSubscriptions();
-        performanceService.clearCache();
+        import('../services/performanceService').then(({ performanceService }) => {
+          performanceService.cleanupSubscriptions();
+          performanceService.clearCache();
+        });
       } catch (err) {
         console.warn('Error cleaning up performance service:', err);
       }

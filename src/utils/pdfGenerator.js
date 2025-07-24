@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import { setlistsService } from '../services/setlistsService';
 import { setsService } from '../services/setsService';
+import { setsService } from '../services/setsService';
 
 export const generateSetlistPDF = async (setlist) => {
   try {
@@ -24,7 +25,6 @@ export const generateSetlistPDF = async (setlist) => {
     for (let setIndex = 0; setIndex < fullSetlist.sets.length; setIndex++) {
       const set = fullSetlist.sets[setIndex];
       
-      // Fetch detailed set information with songs
       const detailedSet = await setsService.getSetById(set.id);
       
       // Check if we need a new page for this set

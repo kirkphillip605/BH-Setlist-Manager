@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Plus, Minus, ChevronUp, ChevronDown } from 'lucide-react';
 import { songsService } from '../services/songsService';
 import { setlistsService } from '../services/setlistsService';
+import { setsService } from '../services/setsService';
 
 const SongSelector = ({ onSongsSelected, selectedSongs = [], showAddButton = true, setlistId = null }) => {
   const [songs, setSongs] = useState([]);
@@ -33,7 +34,6 @@ const SongSelector = ({ onSongsSelected, selectedSongs = [], showAddButton = tru
       
       // Get all songs from all sets in the setlist
       for (const set of setlistData.sets || []) {
-        const { setsService } = await import('../services/setsService');
         const setData = await setsService.getSetById(set.id);
         setData.set_songs?.forEach(ss => {
           allSongIds.add(ss.songs.id);

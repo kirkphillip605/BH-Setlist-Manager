@@ -7,6 +7,7 @@ import { songsService } from '../services/songsService';
 import { setlistsService } from '../services/setlistsService';
 import { songCollectionsService } from '../services/songCollectionsService';
 import { performanceService } from '../services/performanceService';
+import { performanceService } from '../services/performanceService';
 import { generateSetlistPDF } from '../utils/pdfGenerator';
 
 const Dashboard = () => {
@@ -34,7 +35,8 @@ const Dashboard = () => {
       const setlists = await setlistsService.getAllSetlists();
       for (const setlist of setlists) {
         try {
-          const session = await performanceService.getActiveSession(setlist.id);
+          const session = await import('../services/performanceService')
+            .then(({ performanceService }) => performanceService.getActiveSession(setlist.id));
           if (session && session.leader_id !== user.id) {
             setActiveSession({ ...session, setlist });
             break;
