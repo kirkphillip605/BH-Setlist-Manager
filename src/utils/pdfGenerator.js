@@ -18,8 +18,8 @@ export const generateSetlistPDF = async (setlist) => {
     let cursorY = margin;
 
     // Constants for styling
-    const TITLE_SIZE = 14;
-    const SET_TITLE_SIZE = 14;
+    const TITLE_SIZE = 18;
+    const SET_TITLE_SIZE = 16;
     const SONG_TITLE_SIZE = 14;
     const SONG_META_SIZE = 10;
     const SUPERSCRIPT_OFFSET = 4;
@@ -94,7 +94,7 @@ export const generateSetlistPDF = async (setlist) => {
         if (song.key_signature) {
           metaText += `  |  ${song.key_signature}`;
         }
-        pdf.text(metaText, margin+5, cursorY);
+        pdf.text(metaText, margin+15, cursorY);
         cursorY += SONG_META_SIZE + 8;
       }
     }
