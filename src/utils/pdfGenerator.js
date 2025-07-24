@@ -83,7 +83,7 @@ export const generateSetlistPDF = async (setlist) => {
           pdf.setFontSize(SONG_TITLE_SIZE);
         }
 
-        cursorY += SONG_TITLE_SIZE + 2;
+        cursorY += SONG_TITLE_SIZE;
 
         // Draw artist and key signature on next line
         pdf.setFontSize(SONG_META_SIZE);
