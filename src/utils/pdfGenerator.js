@@ -23,7 +23,7 @@ export const generateSetlistPDF = async (setlist) => {
     const SET_TITLE_SIZE = 16;
     const SONG_TITLE_SIZE  = 16;
     const SONG_META_SIZE   = 12;
-    const LINE_SPACING     = 16;  // extra space between lines
+    const LINE_SPACING     = 14;  // extra space between lines
 
     // Add a new page helper
     const newPage = () => {
