@@ -1,53 +1,17 @@
-import React, { useEffect, useState } from 'react';
+// TermsOfService.jsx
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, FileText, Scale } from 'lucide-react';
 
+/**
+ * TermsOfService
+ * Hard-coded Terms of Service page for Bad Habits Setlist Management System.
+ * Used for Google SSO verification; minimal content for band members.
+ */
 const TermsOfService = () => {
-  const [content, setContent] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Load the terms of service content
-    fetch('/tos.MD')
-      .then(response => response.text())
-      .then(text => {
-        // Simple markdown to HTML conversion
-        const htmlContent = text
-          .replace(/^# (.+)$/gm, '<h1 class="text-3xl font-bold text-zinc-100 mb-6">$1</h1>')
-          .replace(/^## (.+)$/gm, '<h2 class="text-2xl font-semibold text-zinc-100 mt-8 mb-4">$1</h2>')
-          .replace(/^### (.+)$/gm, '<h3 class="text-xl font-semibold text-zinc-200 mt-6 mb-3">$1</h3>')
-          .replace(/^\*\*(.+)\*\*$/gm, '<p class="font-bold text-zinc-100 mb-4">$1</p>')
-          .replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-zinc-100">$1</strong>')
-          .replace(/^- (.+)$/gm, '<li class="text-zinc-300 mb-2">$1</li>')
-          .replace(/^(.+)$/gm, (match, line) => {
-            if (line.trim() === '' || line.startsWith('<') || line.startsWith('-')) return line;
-            return `<p class="text-zinc-300 mb-4 leading-relaxed">${line}</p>`;
-          })
-          .replace(/(<li.*<\/li>\s*)+/g, '<ul class="list-disc list-inside mb-4 space-y-2 ml-4">$&</ul>')
-          .replace(/<a name="([^"]+)"><\/a>/g, '')
-          .replace(/\[([^\]]+)\]\(#([^)]+)\)/g, '<a href="#$2" class="text-blue-400 hover:text-blue-300 transition-colors">$1</a>');
-
-        setContent(htmlContent);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Error loading terms of service:', error);
-        setLoading(false);
-      });
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-zinc-950">
-      <div className="absolute inset-0 bg-gradient-to-br from-zinc-900/20 via-transparent to-zinc-900/20 pointer-events-none"></div>
-
+      <div className="absolute inset-0 bg-gradient-to-br from-zinc-900/20 via-transparent to-zinc-900/20 pointer-events-none" />
       <div className="relative z-10 max-w-4xl mx-auto py-12 px-4">
         {/* Header */}
         <div className="card-modern p-6 mb-8">
@@ -71,26 +35,72 @@ const TermsOfService = () => {
         </div>
 
         {/* Content */}
-        <div className="card-modern p-8">
-          <div className="prose prose-invert max-w-none">
-            <div
-              className="terms-content"
-              dangerouslySetInnerHTML={{ __html: content }}
-            />
-          </div>
+        <div className="card-modern p-8 space-y-6 prose prose-invert max-w-none">
+          <section>
+            <h2 className="text-2xl font-semibold text-zinc-100">1. Acceptance of Terms</h2>
+            <p className="text-zinc-300 leading-relaxed">
+              By accessing or using the Bad Habits Setlist Management System ("Service"), you agree to be bound by these Terms of Use. If you do not agree, do not use the Service.
+            </p>
+          </section>
 
-          <div className="mt-12 pt-8 border-t border-zinc-700">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-zinc-400">
-                Last updated: July 23, 2025
-              </p>
-              <Link
-                to="/privacy-policy"
-                className="text-blue-400 hover:text-blue-300 transition-colors text-sm font-medium"
-              >
-                View Privacy Policy
-              </Link>
-            </div>
+          <section>
+            <h2 className="text-2xl font-semibold text-zinc-100">2. Eligibility</h2>
+            <p className="text-zinc-300 leading-relaxed">
+              The Service is intended solely for members of Bad Habits. You must authenticate via Google SSO using a band member account.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold text-zinc-100">3. Use of Service</h2>
+            <ul className="list-disc list-inside text-zinc-300 space-y-2">
+              <li>You may use the Service to manage songs, setlists, and performance details.</li>
+              <li>You agree not to modify, distribute, or reproduce any part of the Service outside band activities.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold text-zinc-100">4. Intellectual Property</h2>
+            <p className="text-zinc-300 leading-relaxed">
+              All content and software are the property of Bad Habits or its licensors. Unauthorized use is prohibited.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold text-zinc-100">5. Disclaimer of Warranties</h2>
+            <p className="text-zinc-300 leading-relaxed">
+              The Service is provided "as is" without warranties of any kind, either express or implied.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold text-zinc-100">6. Limitation of Liability</h2>
+            <p className="text-zinc-300 leading-relaxed">
+              In no event shall Bad Habits be liable for any indirect, incidental, or consequential damages arising out of use of the Service.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold text-zinc-100">7. Changes to Terms</h2>
+            <p className="text-zinc-300 leading-relaxed">
+              Bad Habits may modify these terms at any time. Updated terms take effect when posted.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold text-zinc-100">8. Governing Law</h2>
+            <p className="text-zinc-300 leading-relaxed">
+              These Terms are governed by the laws of the state where the band is based.
+            </p>
+          </section>
+
+          <div className="mt-12 pt-8 border-t border-zinc-700 flex items-center justify-between">
+            <p className="text-sm text-zinc-400">Last updated: July 23, 2025</p>
+            <Link
+              to="/privacy-policy"
+              className="text-blue-400 hover:text-blue-300 transition-colors text-sm font-medium"
+            >
+              View Privacy Policy
+            </Link>
           </div>
         </div>
       </div>
