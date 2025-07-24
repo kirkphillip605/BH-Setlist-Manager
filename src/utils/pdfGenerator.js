@@ -85,8 +85,9 @@ export const generateSetlistPDF = async (setlist) => {
 
         // Key signature: 12pt, grey
         if (song.key_signature) {
-          pdf.text(` | ${song.key_signature}`, x, y);
-          x += pdf.getTextWidth(song.key_signature) + 8;
+          const ketText = ` | ${song.key_signature}`;
+          pdf.text(ketText, x, y);
+          x += pdf.getTextWidth(keyText) + 8;
         }
 
         // Performance note: 12pt, grey, prefixed "Note:"
