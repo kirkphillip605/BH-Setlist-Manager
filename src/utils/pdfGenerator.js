@@ -75,6 +75,10 @@ export const generateSetlistPDF = async (setlist) => {
         pdf.text(song.title, margin, cursorY);
         cursorY += SONG_TITLE_SIZE + 2;
 
+        const metaX = margin;
+        let metaText = song.original_artist || '-';
+        let xOffset = metaX;
+        
         // Draw performance note in brackets
         if (song.performance_note) {
           const note = `***${song.performance_note}***`;
@@ -86,9 +90,7 @@ export const generateSetlistPDF = async (setlist) => {
         pdf.setFont(undefined, 'normal');
         pdf.setTextColor(100, 100, 100);
 
-        const metaX = margin;
-        let metaText = song.original_artist || '-';
-        let xOffset = metaX;
+        
 
         // Draw artist
         pdf.text(metaText, xOffset, cursorY);
