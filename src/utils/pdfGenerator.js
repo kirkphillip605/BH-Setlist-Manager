@@ -2,7 +2,7 @@
 import jsPDF from 'jspdf';
 import { setlistsService } from '../services/setlistsService';
 import { setsService } from '../services/setsService';
-import { logo } from '../bh-logo-bw.png';
+
 /**
  * Add the common header (logo + setlist title) to the current PDF page.
  * @param {jsPDF} pdf Active jsPDF instance.
@@ -49,7 +49,7 @@ export const generateSetlistPDF = async (setlist) => {
 
     // Pre-load logo once. Using decode() guarantees it is ready for jsPDF.
     const logo = new Image();
-    // logo.src   = './bh-logo-bw.png';
+    logo.src   = './bh-logo-bw.png';
     await logo.decode();
 
     /* ------------------------------------------------------------------ */
