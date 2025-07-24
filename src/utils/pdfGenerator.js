@@ -75,6 +75,12 @@ export const generateSetlistPDF = async (setlist) => {
         pdf.text(song.title, margin, cursorY);
         cursorY += SONG_TITLE_SIZE + 2;
 
+        // Draw performance note in brackets
+        if (song.performance_note) {
+          const note = `***${song.performance_note}***`;
+          pdf.text(note, xOffset, cursorY);
+        }
+        
         // Song metadata: artist (lighter), key (superscript), performance note
         pdf.setFontSize(SONG_META_SIZE);
         pdf.setFont(undefined, 'normal');
@@ -101,11 +107,7 @@ export const generateSetlistPDF = async (setlist) => {
           pdf.setFontSize(SONG_META_SIZE);
         }
 
-        // Draw performance note in brackets
-        if (song.performance_note) {
-          const note = `***${song.performance_note}***`;
-          pdf.text(note, xOffset, cursorY);
-        }
+        
 
         // Advance cursor past metadata
         cursorY += SONG_META_SIZE + 8;
