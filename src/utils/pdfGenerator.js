@@ -2,7 +2,7 @@
 import jsPDF from 'jspdf';
 import { setlistsService } from '../services/setlistsService';
 import { setsService } from '../services/setsService';
-import { logo } from 'bh-logo-bw.png';
+import { logo } from '../bh-logo-bw.png';
 /**
  * Add the common header (logo + setlist title) to the current PDF page.
  * @param {jsPDF} pdf Active jsPDF instance.
