@@ -85,7 +85,7 @@ export const generateSetlistPDF = async (setlist) => {
           pdf.setFontSize(SONG_TITLE_SIZE);
         }
 
-        cursorY += SONG_TITLE_SIZE;
+        // cursorY += SONG_TITLE_SIZE;
 
         // Draw artist and key signature on next line
         pdf.setFontSize(SONG_META_SIZE);
@@ -96,7 +96,8 @@ export const generateSetlistPDF = async (setlist) => {
         if (song.key_signature) {
           metaText += ` | ${song.key_signature}`;
         }
-        pdf.text(metaText, margin, cursorY);
+        const songTitleWidth = pdf.getTextWidth(song.title) + 4;
+        pdf.text(metaText, margin + songTitleWidth, cursorY);
         cursorY += SONG_META_SIZE + 12;
       }
     }
