@@ -90,7 +90,7 @@ export const generateSetlistPDF = async (setlist) => {
 
         // Draw key signature as superscript
         if (song.key_signature) {
-          pdf.setFontSize(SUPERSCRIPT_SIZE);
+          pdf.setFontSize(SONG_META_SIZE);
           pdf.text(
             song.key_signature,
             xOffset,
