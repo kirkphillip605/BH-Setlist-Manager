@@ -134,6 +134,22 @@ export const AuthProvider = ({ children }) => {
         const userData = await fetchUserProfile(session.user);
         if (mountedRef.current) {
           setUser(userData);
+          
+          // Handle post-login redirect
+          const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+          if (redirectPath && redirectPath !== '/login') {
+            sessionStorage.removeItem('redirectAfterLogin');
+            // Validate the redirect path exists in our routes
+            const validPaths = ['/', '/songs', '/setlists', '/song-collections', '/performance', 
+                              '/profile', '/edit-profile', '/change-password', '/admin/users'];
+            const pathBase = redirectPath.split('?')[0].split('/').slice(0, 3).join('/');
+            
+            if (validPaths.includes(pathBase) || validPaths.some(p => redirectPath.startsWith(p))) {
+              window.location.href = redirectPath;
+            } else {
+              window.location.href = '/';
+            }
+          }
         }
       } else {
         if (mountedRef.current) {

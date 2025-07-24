@@ -32,6 +32,9 @@ import AuthCallback from './pages/auth/AuthCallback';
 import InviteComplete from './pages/auth/InviteComplete';
 import EmailConfirmation from './pages/auth/EmailConfirmation';
 import ResetPassword from './pages/auth/ResetPassword';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import NotFound from './pages/NotFound';
 
 const router = createBrowserRouter([
   {
@@ -57,6 +60,14 @@ const router = createBrowserRouter([
   {
     path: "/auth/reset-password",
     element: <ResetPassword />
+  },
+  {
+    path: "/tos",
+    element: <TermsOfService />
+  },
+  {
+    path: "/privacy-policy", 
+    element: <PrivacyPolicy />
   },
   {
     path: "/",
@@ -141,6 +152,10 @@ const router = createBrowserRouter([
   {
     path: "/performance",
     element: <PrivateRoute><Layout><PerformanceMode /></Layout></PrivateRoute>
+  },
+  {
+    path: "*",
+    element: <NotFound />
   }
 ], {
   future: {
