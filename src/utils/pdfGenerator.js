@@ -23,7 +23,7 @@ export const generateSetlistPDF = async (setlist) => {
     const SONG_TITLE_SIZE = 14;
     const SONG_META_SIZE = 10;
     const SUPERSCRIPT_OFFSET = 4;
-    const SUPERSCRIPT_SIZE = 10;
+    const SUPERSCRIPT_SIZE = 14;
     const PAGE_HEIGHT = pdf.internal.pageSize.getHeight();
 
     // Helper: add a new page and reset cursor
