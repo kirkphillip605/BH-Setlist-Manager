@@ -1,134 +1,93 @@
-// File: pdfUtils.js
 import jsPDF from 'jspdf';
 import { setlistsService } from '../services/setlistsService';
 import { setsService } from '../services/setsService';
 
-/**
- * Add the common header (logo + setlist title) to the current PDF page.
- * @param {jsPDF} pdf Active jsPDF instance.
- * @param {string} title The setlist name.
- * @param {HTMLImageElement} logo Pre-decoded logo image.
- * @param {number} margin Horizontal margin in points.
- * @returns {number} The initial y position after drawing the header.
- */
-function addHeader(pdf, title, logo, margin = 20) {
-  const pageWidth   = pdf.internal.pageSize.getWidth();
-  const logoWidth   = 30;            // pts (~0.42")
-  const logoHeight  = (logo.height / logo.width) * logoWidth;
-
-  // Logo (top-right)
-  pdf.addImage(
-    logo,
-    'PNG',
-    pageWidth - margin - logoWidth,
-    10,               // y-pos: fixed 10 pt from top
-    logoWidth,
-    logoHeight
-  );
-
-  // Title (top-left)
-  pdf.setFontSize(20);
-  pdf.setFont(undefined, 'bold');
-  pdf.text(title, margin, 20);
-
-  // Return the y-cursor just below the header
-  return 40;
-}
-
-/**
- * Generate a printable PDF of a setlist.
- * Each set starts on a new page and every page shows the logo in the header.
- * @param {{ id: string }} setlist Lightweight setlist record (id + name).
- */
 export const generateSetlistPDF = async (setlist) => {
   try {
-    /* ------------------------------------------------------------------ */
-    /* 1. Load all required data                                          */
-    /* ------------------------------------------------------------------ */
-    const fullSetlist   = await setlistsService.getSetlistById(setlist.id);
+    // Fetch the full setlist with sets
+    const fullSetlist = await setlistsService.getSetlistById(setlist.id);
+    
+    // Create new PDF document
+    const pdf = new jsPDF();
+    
+    let yPosition = 20;
+    const pageHeight = pdf.internal.pageSize.height;
+    const margin = 20;
+    
+    // Title
+    pdf.setFontSize(20);
+    pdf.setFont(undefined, 'bold');
+    pdf.text(fullSetlist.name, margin, yPosition);
+    yPosition += 20;
+    
+    // Process each set
+    for (let setIndex = 0; setIndex < fullSetlist.sets.length; setIndex++) {
+      const set = fullSetlist.sets[setIndex];
 
-    // Pre-load logo once. Using decode() guarantees it is ready for jsPDF.
-    const logo = new Image();
-    logo.src   = './bh-logo-bw.png';
-    await logo.decode();
+      const detailedSet = await setsService.getSetById(set.id);
 
-    /* ------------------------------------------------------------------ */
-    /* 2. Initialise PDF                                                  */
-    /* ------------------------------------------------------------------ */
-    const pdf           = new jsPDF();
-    const margin        = 20;
-    let y               = addHeader(pdf, fullSetlist.name, logo, margin);
-
-    const pageHeight    = pdf.internal.pageSize.getHeight();
-    const songSpacing   = 10;
-
-    /* ------------------------------------------------------------------ */
-    /* 3. Iterate sets – one page per set                                 */
-    /* ------------------------------------------------------------------ */
-    for (let index = 0; index < fullSetlist.sets.length; index++) {
-      const setSummary  = fullSetlist.sets[index];
-      const set         = await setsService.getSetById(setSummary.id);
-
-      // On first iteration we are already on page 1; subsequent sets get a new page.
-      if (index > 0) {
+      // Check if we need a new page for this set
+      if (yPosition > pageHeight - 100) {
         pdf.addPage();
-        y = addHeader(pdf, fullSetlist.name, logo, margin);
+        yPosition = 20;
       }
 
-      /* -------------------- 3a. Set heading --------------------------- */
+      // Set name
       pdf.setFontSize(16);
       pdf.setFont(undefined, 'bold');
-      pdf.text(set.name, margin, y);
-      y += 15;
+      pdf.text(detailedSet.name, margin, yPosition);
+      yPosition += 15;
 
-      /* -------------------- 3b. Songs (ordered) ----------------------- */
+      // Songs in the set
+      const songs = detailedSet.set_songs
+        ?.map(ss => ss.songs)
+        .sort((a, b) => (detailedSet.set_songs.find(ss => ss.songs.id === a.id)?.song_order || 0) - 
+                        (detailedSet.set_songs.find(ss => ss.songs.id === b.id)?.song_order || 0)) || [];
+
       pdf.setFontSize(12);
       pdf.setFont(undefined, 'normal');
 
-      const songs = (set.set_songs ?? [])
-        .sort((a, b) => a.song_order - b.song_order)       // already have order
-        .map((ss) => ss.songs);
-
       for (const song of songs) {
-        const line = `${song.title} by ${song.original_artist}${
-          song.key_signature ? ` [${song.key_signature}]` : ''
-        }`;
-
-        // Simple overflow check – if song won't fit, start a new page (w/ header)
-        if (y + songSpacing > pageHeight - margin) {
+        // Check if we need a new page
+        if (yPosition > pageHeight - 30) {
           pdf.addPage();
-          y = addHeader(pdf, fullSetlist.name, logo, margin);
-
-          // Draw the set heading again for context
-          pdf.setFontSize(16);
-          pdf.setFont(undefined, 'bold');
-          pdf.text(set.name, margin, y);
-          y += 15;
-
-          pdf.setFontSize(12);
-          pdf.setFont(undefined, 'normal');
+          yPosition = 20;
         }
 
-        pdf.text(line, margin, y);
-        y += songSpacing;
+        // Format: "Title by Artist [Key]"
+        let songText = `${song.title} by ${song.original_artist}`;
+        if (song.key_signature) {
+          songText += ` [${song.key_signature}]`;
+        }
+
+        pdf.text(songText, margin, yPosition);
+        yPosition += 10; // Extra space between songs
       }
+
+      // Extra space between sets
+      yPosition += 10;
     }
-
-    /* ------------------------------------------------------------------ */
-    /* 4. Present PDF (print dialog preferred, fallback to download)      */
-    /* ------------------------------------------------------------------ */
-    const fileName  = `${fullSetlist.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_setlist.pdf`;
-    const blob      = pdf.output('blob');
-    const url       = URL.createObjectURL(blob);
-
-    const win = window.open(url, '_blank');
-    if (win) {
-      win.onload = () => win.print();
+    
+    // Generate filename
+    const filename = `${fullSetlist.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_setlist.pdf`;
+    
+    // Show print dialog
+    const pdfBlob = pdf.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    
+    // Open print dialog
+    const printWindow = window.open(pdfUrl, '_blank');
+    if (printWindow) {
+      printWindow.onload = () => {
+        printWindow.print();
+      };
     } else {
-      pdf.save(fileName);
+      // Fallback: download the PDF
+      pdf.save(filename);
     }
-  } catch (err) {
-    console.error('Error generating PDF:', err);
-    throw err;
+    
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    throw error;
   }
 };
