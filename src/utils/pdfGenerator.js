@@ -50,7 +50,7 @@ export const generateSetlistPDF = async (setlist) => {
 
       // Render set name
       pdf.setFontSize(SET_TITLE_SIZE);
-      pdf.setFont(undefined, 'bold');
+      pdf.setFont(undefined, 'underline');
       pdf.setTextColor(0, 0, 0);
       pdf.text(detailedSet.name, margin, cursorY);
       cursorY += SET_TITLE_SIZE + 8;
