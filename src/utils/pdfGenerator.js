@@ -14,8 +14,9 @@ export const generateSetlistPDF = async (setlist) => {
 
     // Initialize PDF document
     const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
-    const margin = 40;
+    const margin = 30;
     const PAGE_HEIGHT = pdf.internal.pageSize.getHeight();
+    const PAGE_WIDTH = pdf.internal.pageSize.getWidth();
     let cursorY = margin;
 
     // Styling constants
@@ -34,7 +35,7 @@ export const generateSetlistPDF = async (setlist) => {
     // Draw document title
     pdf.setFontSize(TITLE_SIZE);
     pdf.setFont(undefined, 'bold');
-    pdf.text(fullSetlist.name, margin, cursorY);
+    pdf.text(fullSetlist.name, PAGE_WIDTH / 2, cursorY, {align: "center"});
     cursorY += TITLE_SIZE + LINE_SPACING * 2;
 
     // Iterate each set
