@@ -1,16 +1,15 @@
 # TERMS OF USE
 
-**Last updated** __________
+**Last updated** 07/23/2025
 
 ---
 
 ## AGREEMENT TO OUR LEGAL TERMS
 
-We are __________ (“**Company**,” “**we**,” “**us**,” “**our**”).
+We are Bad Habits (“**Company**,” “**we**,” “**us**,” “**our**”).
 
-We operate __________, as well as any other related products and services that refer or link to these legal terms (the “**Legal Terms**”) (collectively, the “**Services**”).
+We operate Bad Habits Setlist Management System, as well as any other related products and services that refer or link to these legal terms (the “**Legal Terms**”) (collectively, the “**Services**”).
 
-You can contact us by email at **__________** or by mail to **__________**, **__________**, **__________**, **__________**.
 
 These Legal Terms constitute a legally binding agreement made between you, whether personally or on behalf of an entity (“**you**”), and **__________**, concerning your access to and use of the Services. You agree that by accessing the Services, you have read, understood, and agreed to be bound by all of these Legal Terms. **IF YOU DO NOT AGREE WITH ALL OF THESE LEGAL TERMS, THEN YOU ARE EXPRESSLY PROHIBITED FROM USING THE SERVICES AND YOU MUST DISCONTINUE USE IMMEDIATELY.**
 
