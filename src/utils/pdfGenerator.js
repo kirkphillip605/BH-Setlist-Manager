@@ -80,6 +80,7 @@ export const generateSetlistPDF = async (setlist) => {
           const note = `  => ${song.performance_note}`;
           const songTitleWidth = pdf.getTextWidth(song.title) + 4;
           pdf.setFontSize(SONG_TITLE_SIZE);
+          pdf.setFont(undefined, 'normal');
           pdf.text(note, margin + songTitleWidth, cursorY);
           pdf.setFontSize(SONG_TITLE_SIZE);
         }
