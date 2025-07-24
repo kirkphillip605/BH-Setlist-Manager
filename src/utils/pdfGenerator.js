@@ -90,7 +90,7 @@ export const generateSetlistPDF = async (setlist) => {
 
         let metaText = song.original_artist || '';
         if (song.key_signature) {
-          metaText += ` | Key: ${song.key_signature}`;
+          metaText += `  |  ${song.key_signature}`;
         }
         pdf.text(metaText, margin, cursorY);
         cursorY += SONG_META_SIZE + 8;
