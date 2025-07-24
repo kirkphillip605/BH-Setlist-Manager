@@ -19,6 +19,10 @@ export const generateSetlistPDF = async (setlist) => {
       try {
         // Add logo to top right (using a placeholder for now since we can't access the actual file)
         // In a real implementation, you would load the image file and add it
+
+        const img = new Image();
+        img.src = "./bh-logo-bw.png";
+        await img.decode();
         pdf.setFontSize(8);
         pdf.setFont(undefined, 'normal');
         pdf.text('Bad Habits', pageWidth - margin - 30, margin);
@@ -34,7 +38,7 @@ export const generateSetlistPDF = async (setlist) => {
     yPosition += 10;
     
     // Setlist title - centered and bold
-    pdf.setFontSize(24);
+    pdf.setFontSize(16);
     pdf.setFont(undefined, 'bold');
     const titleWidth = pdf.getTextWidth(fullSetlist.name);
     const titleX = (pageWidth - titleWidth) / 2;
@@ -55,7 +59,7 @@ export const generateSetlistPDF = async (setlist) => {
       const detailedSet = await setsService.getSetById(set.id);
       
       // Set name - bold and larger
-      pdf.setFontSize(18);
+      pdf.setFontSize(16);
       pdf.setFont(undefined, 'bold');
       pdf.text(detailedSet.name, margin, yPosition);
       yPosition += 20;
@@ -84,7 +88,7 @@ export const generateSetlistPDF = async (setlist) => {
         pdf.text(songTitleText, margin, yPosition);
         
         // Artist and key - normal size, positioned after title
-        pdf.setFontSize(12);
+        pdf.setFontSize(10);
         pdf.setFont(undefined, 'normal');
         let artistKeyText = ` -- ${song.original_artist}`;
         
