@@ -15,7 +15,6 @@ export const generateSetlistPDF = async (setlist) => {
     // Initialize PDF document
     const pdf = new jsPDF({ unit: 'pt', format: 'letter' });
     const margin = 40;
-    const lineHeight = 18;
     let cursorY = margin;
 
     // Constants for styling
@@ -25,7 +24,6 @@ export const generateSetlistPDF = async (setlist) => {
     const SONG_META_SIZE = 10;
     const SUPERSCRIPT_OFFSET = 4;
     const SUPERSCRIPT_SIZE = 8;
-    const PAGE_WIDTH = pdf.internal.pageSize.getWidth();
     const PAGE_HEIGHT = pdf.internal.pageSize.getHeight();
 
     // Helper: add a new page and reset cursor
@@ -68,46 +66,33 @@ export const generateSetlistPDF = async (setlist) => {
           newPage();
         }
 
-        // Song title (bold, larger)
+        // Draw song title
         pdf.setFontSize(SONG_TITLE_SIZE);
         pdf.setFont(undefined, 'bold');
         pdf.setTextColor(0, 0, 0);
         pdf.text(song.title, margin, cursorY);
+
+        // Performance note as superscript on same line
+        if (song.performance_note) {
+          const note = `[${song.performance_note}]`;
+          const titleWidth = pdf.getTextWidth(song.title) + 2;
+          pdf.setFontSize(SUPERSCRIPT_SIZE);
+          pdf.text(note, margin + titleWidth, cursorY - SUPERSCRIPT_OFFSET);
+          pdf.setFontSize(SONG_TITLE_SIZE);
+        }
+
         cursorY += SONG_TITLE_SIZE + 2;
 
-        // Song metadata: artist (lighter), key (superscript), performance note
+        // Draw artist and key signature on next line
         pdf.setFontSize(SONG_META_SIZE);
         pdf.setFont(undefined, 'normal');
         pdf.setTextColor(100, 100, 100);
 
-        const metaX = margin;
         let metaText = song.original_artist || '';
-        let xOffset = metaX;
-
-        // Draw artist
-        pdf.text(metaText, xOffset, cursorY);
-        xOffset += pdf.getTextWidth(metaText) + 4;
-
-        // Draw key signature as superscript
         if (song.key_signature) {
-          pdf.setFontSize(SONG_META_SIZE);
-          pdf.text(
-            song.key_signature,
-            xOffset,
-            cursorY - SUPERSCRIPT_OFFSET
-          );
-          xOffset += pdf.getTextWidth(song.key_signature) + 4;
-          // Restore meta size
-          pdf.setFontSize(SONG_META_SIZE);
+          metaText += ` - ${song.key_signature}`;
         }
-
-        // Draw performance note in brackets
-        if (song.performance_note) {
-          const note = `[${song.performance_note}]`;
-          pdf.text(note, xOffset, cursorY);
-        }
-
-        // Advance cursor past metadata
+        pdf.text(metaText, margin, cursorY);
         cursorY += SONG_META_SIZE + 8;
       }
     }
