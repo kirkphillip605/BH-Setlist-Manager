@@ -21,7 +21,7 @@ export const generateSetlistPDF = async (setlist) => {
     // Constants for styling
     const TITLE_SIZE = 18;
     const SET_TITLE_SIZE = 14;
-    const SONG_TITLE_SIZE = 14;
+    const SONG_TITLE_SIZE = 12;
     const SONG_META_SIZE = 10;
     const SUPERSCRIPT_OFFSET = 4;
     const SUPERSCRIPT_SIZE = 8;
