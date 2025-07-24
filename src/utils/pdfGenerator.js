@@ -88,7 +88,8 @@ export const generateSetlistPDF = async (setlist) => {
         pdf.setFont(undefined, 'normal');
         pdf.setTextColor(100, 100, 100);
 
-        let metaText = song.original_artist || '';
+        let metaText = '-';
+        metaText += song.original_artist || '';
         if (song.key_signature) {
           metaText += `  |  ${song.key_signature}`;
         }
