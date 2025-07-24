@@ -17,8 +17,8 @@ export const generateSetlistPDF = async (setlist) => {
     const img = new Image();
     img.src = "./bh-logo-bw.png";
     await img.decode();
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
     
     const wmState = pdf.addGState({ opacity: 0.12 }); // 12 % alpha
     pdf.saveGraphicsState();
