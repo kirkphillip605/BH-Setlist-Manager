@@ -10,123 +10,62 @@ export const generateSetlistPDF = async (setlist) => {
     // Create new PDF document
     const pdf = new jsPDF();
     
-    const pageWidth = pdf.internal.pageSize.width;
+    let yPosition = 20;
     const pageHeight = pdf.internal.pageSize.height;
     const margin = 20;
     
-    // Function to add logo to each page
-    const addLogoToPage = () => {
-      try {
-        // Add logo to top right (using a placeholder for now since we can't access the actual file)
-        // In a real implementation, you would load the image file and add it
-
-        const img = new Image();
-        img.src = "./bh-logo-bw.png";
-        await img.decode();
-        pdf.setFontSize(8);
-        pdf.setFont(undefined, 'normal');
-        pdf.text('Bad Habits', pageWidth - margin - 30, margin);
-      } catch (error) {
-        console.warn('Could not add logo to PDF:', error);
-      }
-    };
-    
-    let yPosition = 20;
-    
-    // Add logo to first page
-    addLogoToPage();
-    yPosition += 10;
-    
-    // Setlist title - centered and bold
-    pdf.setFontSize(16);
+    // Title
+    pdf.setFontSize(20);
     pdf.setFont(undefined, 'bold');
-    const titleWidth = pdf.getTextWidth(fullSetlist.name);
-    const titleX = (pageWidth - titleWidth) / 2;
-    pdf.text(fullSetlist.name, titleX, yPosition);
-    yPosition += 30;
+    pdf.text(fullSetlist.name, margin, yPosition);
+    yPosition += 20;
     
     // Process each set
     for (let setIndex = 0; setIndex < fullSetlist.sets.length; setIndex++) {
       const set = fullSetlist.sets[setIndex];
-      
-      // Start each set on a new page (except the first one)
-      if (setIndex > 0) {
-        pdf.addPage();
-        addLogoToPage();
-        yPosition = 30;
-      }
-      
+
       const detailedSet = await setsService.getSetById(set.id);
-      
-      // Set name - bold and larger
+
+      // Check if we need a new page for this set
+      if (yPosition > pageHeight - 100) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+
+      // Set name
       pdf.setFontSize(16);
       pdf.setFont(undefined, 'bold');
       pdf.text(detailedSet.name, margin, yPosition);
-      yPosition += 20;
-      
+      yPosition += 15;
+
       // Songs in the set
       const songs = detailedSet.set_songs
         ?.map(ss => ss.songs)
         .sort((a, b) => (detailedSet.set_songs.find(ss => ss.songs.id === a.id)?.song_order || 0) - 
                         (detailedSet.set_songs.find(ss => ss.songs.id === b.id)?.song_order || 0)) || [];
-      
+
+      pdf.setFontSize(12);
+      pdf.setFont(undefined, 'normal');
+
       for (const song of songs) {
-        // Check if we need a new page for this song
-        if (yPosition > pageHeight - 50) {
+        // Check if we need a new page
+        if (yPosition > pageHeight - 30) {
           pdf.addPage();
-          addLogoToPage();
-          yPosition = 30;
+          yPosition = 20;
         }
-        
-        // Song title - bold and larger
-        pdf.setFontSize(14);
-        pdf.setFont(undefined, 'bold');
-        let songTitleText = song.title;
-        
-        // Measure title width for positioning
-        const titleTextWidth = pdf.getTextWidth(songTitleText);
-        pdf.text(songTitleText, margin, yPosition);
-        
-        // Artist and key - normal size, positioned after title
-        pdf.setFontSize(10);
-        pdf.setFont(undefined, 'normal');
-        let artistKeyText = ` -- ${song.original_artist}`;
-        
+
+        // Format: "Title by Artist [Key]"
+        let songText = `${song.title} by ${song.original_artist}`;
         if (song.key_signature) {
-          artistKeyText += ` - `;
-          pdf.text(artistKeyText, margin + titleTextWidth, yPosition);
-          
-          // Key signature as superscript
-          const artistKeyWidth = pdf.getTextWidth(artistKeyText);
-          pdf.setFontSize(8);
-          pdf.text(song.key_signature, margin + titleTextWidth + artistKeyWidth, yPosition - 2);
-        } else {
-          pdf.text(artistKeyText, margin + titleTextWidth, yPosition);
+          songText += ` [${song.key_signature}]`;
         }
-        
-        yPosition += 15;
-        
-        // Performance note if exists
-        if (song.performance_note) {
-          // Check if we need a new page for the performance note
-          if (yPosition > pageHeight - 30) {
-            pdf.addPage();
-            addLogoToPage();
-            yPosition = 30;
-          }
-          
-          pdf.setFontSize(10);
-          pdf.setFont(undefined, 'normal');
-          pdf.text(`• ${song.performance_note}`, margin + 5, yPosition);
-          yPosition += 12;
-        }
-        
-        // Extra space between songs
-        yPosition += 5;
+
+        pdf.text(songText, margin, yPosition);
+        yPosition += 10; // Extra space between songs
       }
-      
-      // Extra space between sets (if not starting a new page)
-      yPosition += 15;
+
+      // Extra space between sets
+      yPosition += 10;
     }
     
     // Generate filename
