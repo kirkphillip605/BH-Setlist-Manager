@@ -2,7 +2,7 @@
 import jsPDF from 'jspdf';
 import { setlistsService } from '../services/setlistsService';
 import { setsService } from '../services/setsService';
-import logoSrc from '../bh-logo-bw.png?url';   // <-- lets Vite resolve the real URL
+import logoSrc from '../assets/bh-logo-bw.png?url';   // <-- lets Vite resolve the real URL
 
 // ———————————————————————————————————————————
 // 1. Utility to load an image as an <img> element, waiting for decode()
