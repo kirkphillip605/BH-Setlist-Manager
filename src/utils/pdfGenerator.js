@@ -13,6 +13,17 @@ export const generateSetlistPDF = async (setlist) => {
     let yPosition = 20;
     const pageHeight = pdf.internal.pageSize.height;
     const margin = 20;
+
+    const img = new Image();
+    img.src = "./watermark.png";
+    await img.decode();
+
+    const wmState = pdf.addGState({ opacity: 0.12 }); // 12 % alpha
+    pdf.saveGraphicsState();
+    pdf.setGState(wmState);
+    pdf.addImage(img, "PNG", 0, 0, yPosition, pageHeight);
+    pdf.restoreGraphicsState();
+
     
     // Title
     pdf.setFontSize(20);
