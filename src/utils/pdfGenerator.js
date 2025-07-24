@@ -85,14 +85,14 @@ export const generateSetlistPDF = async (setlist) => {
 
         // Key signature: 12pt, grey
         if (song.key_signature) {
-          const keyText = ` | ${song.key_signature}`;
+          const keyText = ` | ${song.key_signature} |`;
           pdf.text(keyText, x, y);
           x += pdf.getTextWidth(keyText) + 8;
         }
 
         // Performance note: 12pt, grey, prefixed "Note:"
         if (song.performance_note) {
-          const noteText = ` | ===> *${song.performance_note}*`;
+          const noteText = `Note: *${song.performance_note}*`;
           pdf.text(noteText, x, y);
         }
 
