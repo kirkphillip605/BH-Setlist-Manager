@@ -52,7 +52,7 @@ export const generateSetlistPDF = async (setlist) => {
       pdf.setFontSize(SET_TITLE_SIZE);
       pdf.setFont(undefined, 'bold');
       pdf.setTextColor(0, 0, 0);
-      pdf.text(`-`detailedSet.name`-`, margin, cursorY, { align: 'center' });
+      pdf.text(detailedSet.name, margin, cursorY, { align: 'center' });
       cursorY += SET_TITLE_SIZE + 8;
 
       // Sort songs by order
