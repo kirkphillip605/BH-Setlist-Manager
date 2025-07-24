@@ -1,7 +1,6 @@
 import jsPDF from 'jspdf';
 import { setlistsService } from '../services/setlistsService';
 import { setsService } from '../services/setsService';
-import { setsService } from '../services/setsService';
 
 export const generateSetlistPDF = async (setlist) => {
   try {
