@@ -210,7 +210,8 @@ export const setsService = {
 
   // Check for duplicates when adding songs from collection
   async checkCollectionDuplicates(setlistId, songIds, targetSetId = null) {
-    const duplicates = await this.checkForDuplicatesInSetlist(setlistId, songIds, targetSetId, true);
+    // Check ALL sets in the setlist (including current set)
+    const duplicates = await this.checkForDuplicatesInSetlist(setlistId, songIds, null, true);
     
     // Group duplicates by set for better UX
     const duplicatesBySet = duplicates.reduce((acc, dup) => {
@@ -218,6 +219,7 @@ export const setsService = {
       if (!acc[setId]) {
         acc[setId] = {
           setName: dup.sets.name,
+          isCurrentSet: setId === targetSetId,
           songs: []
         };
       }

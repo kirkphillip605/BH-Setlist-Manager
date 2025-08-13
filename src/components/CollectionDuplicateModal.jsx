@@ -13,6 +13,7 @@ const CollectionDuplicateModal = ({
 
   const duplicateSetIds = Object.keys(duplicates);
   const totalDuplicates = duplicateSetIds.reduce((sum, setId) => sum + duplicates[setId].songs.length, 0);
+  const hasMovableDuplicates = duplicateSetIds.some(setId => !duplicates[setId].isCurrentSet);
 
   const handleMoveSongs = (fromSetId, songIds) => {
     onMoveSongs(fromSetId, songIds);
@@ -66,15 +67,21 @@ const CollectionDuplicateModal = ({
                 <div key={setId} className="mb-6 last:mb-0">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="text-md font-medium text-zinc-100">
-                      From "{setInfo.setName}" ({setInfo.songs.length} song{setInfo.songs.length !== 1 ? 's' : ''})
+                      {setInfo.isCurrentSet ? 'Already in Current Set' : `From "${setInfo.setName}"`} ({setInfo.songs.length} song{setInfo.songs.length !== 1 ? 's' : ''})
                     </h4>
-                    <button
-                      onClick={() => handleMoveAllFromSet(setId)}
-                      className="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      <ArrowRight size={14} className="mr-1" />
-                      Move All to {targetSetName}
-                    </button>
+                    {setInfo.isCurrentSet ? (
+                      <span className="inline-flex items-center px-3 py-1 bg-gray-600 text-gray-300 text-sm rounded-lg">
+                        Already in Set
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handleMoveAllFromSet(setId)}
+                        className="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        <ArrowRight size={14} className="mr-1" />
+                        Move All to {targetSetName}
+                      </button>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
@@ -84,13 +91,19 @@ const CollectionDuplicateModal = ({
                           <p className="text-sm font-medium text-zinc-100">{song.title}</p>
                           <p className="text-xs text-zinc-400">{song.original_artist}</p>
                         </div>
-                        <button
-                          onClick={() => handleMoveSingleSong(setId, song.id)}
-                          className="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          <ArrowRight size={14} className="mr-1" />
-                          Move to {targetSetName}
-                        </button>
+                        {setInfo.isCurrentSet ? (
+                          <span className="inline-flex items-center px-3 py-1 bg-gray-600 text-gray-300 text-sm rounded-lg">
+                            Already in Set
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleMoveSingleSong(setId, song.id)}
+                            className="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            <ArrowRight size={14} className="mr-1" />
+                            Move to {targetSetName}
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -105,7 +118,7 @@ const CollectionDuplicateModal = ({
               onClick={onSkipDuplicates}
               className="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:w-auto sm:text-sm"
             >
-              Skip Existing Songs
+              {hasMovableDuplicates ? 'Skip All Duplicates' : 'Continue Without Adding Duplicates'}
             </button>
             <button
               type="button"
