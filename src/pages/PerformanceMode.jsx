@@ -898,8 +898,8 @@ const PerformanceMode = () => {
                     const newUrl = new URL(window.location);
                     newUrl.searchParams.set('setlist', selectedSetlistId);
                     window.history.replaceState({}, '', newUrl);
-                    
-                    // Check for existing session and show role choice
+                    setSelectedSetlistId(selectedSetlistId);
+                    // Trigger the flow to check for existing session and show role choice
                     checkExistingSession(selectedSetlistId);
                   }
                 }}
