@@ -343,13 +343,14 @@ const SetFormPage = () => {
           </div>
         </div>
 
-        {setSongs.length === 0 ? (
+        <div className="space-y-4">
+          {setSongs.length === 0 ? (
           <div className="text-center py-8">
             <Music className="mx-auto h-12 w-12 text-slate-400 mb-4" />
             <p className="text-slate-300 text-lg mb-2">No songs in set</p>
             <p className="text-slate-400">Add songs to build your set</p>
           </div>
-        ) : (
+          ) : (
           <div className="space-y-2">
             {setSongs.map((song, index) => (
               <div
@@ -376,7 +377,8 @@ const SetFormPage = () => {
               </div>
             ))}
           </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Song Selector Modal */}
@@ -394,16 +396,7 @@ const SetFormPage = () => {
         onClose={() => setShowCollectionModal(false)}
         onCollectionSelected={handleCollectionSelected}
       />
-      
-      {/* Keep the old SongSelector for backward compatibility if needed elsewhere */}
-      {false && (
-        <SongSelector
-          onSongsSelected={handleSongsSelected}
-          selectedSongs={setSongs}
-          setlistId={setlistId}
-        />
-      )}
-      
+
       {/* Collection Duplicate Modal */}
       <CollectionDuplicateModal
         isOpen={showCollectionDuplicateModal}

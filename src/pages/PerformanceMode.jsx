@@ -135,16 +135,14 @@ const PerformanceMode = () => {
       return;
     }
     
-    if (mountedRef.current) {
-      setSelectedSetlistId(targetSetlistId);
-      // Update URL and trigger session check
-      const newUrl = new URL(window.location);
-      newUrl.searchParams.set('setlist', targetSetlistId);
-      window.history.replaceState({}, '', newUrl);
-      
-      // Check for existing session
-      await checkExistingSession(targetSetlistId);
-    }
+    setSelectedSetlistId(targetSetlistId);
+    // Update URL
+    const newUrl = new URL(window.location);
+    newUrl.searchParams.set('setlist', targetSetlistId);
+    window.history.replaceState({}, '', newUrl);
+    
+    // Check for existing session
+    await checkExistingSession(targetSetlistId);
   };
 
   const handleRoleChoice = async (role) => {

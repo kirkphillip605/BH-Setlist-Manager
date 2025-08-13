@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Plus, X, Music } from 'lucide-react';
-import Fuse from 'fuse.js';
 import { songsService } from '../services/songsService';
 
 const SongSelectorModal = ({ 
@@ -18,21 +17,31 @@ const SongSelectorModal = ({
   const [localSelectedSongs, setLocalSelectedSongs] = useState(new Set());
 
   // Configure Fuse.js for fuzzy search
-  const fuseOptions = {
-    keys: [
-      { name: 'title', weight: 0.6 },
-      { name: 'original_artist', weight: 0.4 }
-    ],
-    threshold: 0.5, // Lower = more strict, higher = more fuzzy
-    ignoreLocation: true,
-    includeScore: true,
-    minMatchCharLength: 1,
-    shouldSort: true,
-    tokenize: true,
-    matchAllTokens: false
-  };
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return songs;
+    }
 
-  const fuse = useMemo(() => new Fuse(songs, fuseOptions), [songs]);
+    const query = searchQuery.toLowerCase()
+      .replace(/[^\w\s]/g, '') // Remove special characters
+      .trim();
+
+    return songs.filter(song => {
+      const title = song.title.toLowerCase().replace(/[^\w\s]/g, '');
+      const artist = song.original_artist.toLowerCase().replace(/[^\w\s]/g, '');
+      const combined = `${title} ${artist}`;
+      
+      // Split query into words for multi-word search
+      const queryWords = query.split(/\s+/);
+      
+      // Check if all query words match somewhere in title or artist
+      return queryWords.every(word => 
+        title.includes(word) || 
+        artist.includes(word) || 
+        combined.includes(word)
+      );
+    });
+  }, [songs, searchQuery]);
 
   useEffect(() => {
     if (isOpen) {
@@ -78,17 +87,6 @@ const SongSelectorModal = ({
     onSongsSelected(selectedSongObjects);
     onClose();
   };
-
-  // Smart search that handles fuzzy matching and special characters
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return songs;
-    }
-
-    // Use Fuse.js for fuzzy search
-    const fuseResults = fuse.search(searchQuery);
-    return fuseResults.map(result => result.item);
-  }, [songs, searchQuery, fuse]);
 
   const totalPages = Math.ceil(searchResults.length / itemsPerPage);
   const currentSongs = searchResults.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
