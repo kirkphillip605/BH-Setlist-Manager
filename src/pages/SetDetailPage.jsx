@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Edit, ArrowLeft } from 'lucide-react';
+import { Edit, ArrowLeft, Music } from 'lucide-react';
 import { usePageTitle } from '../context/PageTitleContext';
 import { setsService } from '../services/setsService';
 import { setlistsService } from '../services/setlistsService';
@@ -43,12 +43,30 @@ const SetDetailPage = () => {
     }
   };
 
-  const handleRemoveSong = async (songId) => {
+  const handleRemoveSong = async (songIndex) => {
+    if (!window.confirm('Are you sure you want to remove this song from the set?')) {
+      return;
+    }
+    
+    const songs = set.set_songs
+      ?.map(ss => ({
+        ...ss.songs,
+        song_order: ss.song_order
+      }))
+      .sort((a, b) => a.song_order - b.song_order) || [];
+      
     const updatedSongs = songs.filter((_, index) => index !== songIndex);
     await updateSetSongs(updatedSongs);
   };
 
   const handleReorderSongs = async (sourceIndex, destinationIndex) => {
+    const songs = set.set_songs
+      ?.map(ss => ({
+        ...ss.songs,
+        song_order: ss.song_order
+      }))
+      .sort((a, b) => a.song_order - b.song_order) || [];
+      
     const reorderedSongs = [...songs];
     const [removed] = reorderedSongs.splice(sourceIndex, 1);
     reorderedSongs.splice(destinationIndex, 0, removed);
@@ -85,13 +103,7 @@ const SetDetailPage = () => {
       });
 
       // Update local state
-      setSet(prev => ({
-        ...prev,
-        set_songs: updatedSongs.map((song, index) => ({
-          songs: song,
-          song_order: index + 1
-        }))
-      }));
+      await fetchSetAndAvailableSets(); // Refresh data from server
     } catch (err) {
       console.error('Error updating songs:', err);
       setError('Failed to update songs');
@@ -160,7 +172,16 @@ const SetDetailPage = () => {
       <div className="bg-slate-800 rounded-xl p-4 lg:p-6 border border-slate-700">
         {songs.length === 0 ? (
           <div className="text-center py-8">
+            <Music className="mx-auto h-12 w-12 text-slate-400 mb-4" />
             <p className="text-slate-300 text-lg">No songs in this set</p>
+            <p className="text-slate-400 mb-6">Add songs to build your set</p>
+            <button
+              onClick={() => navigate(`/setlists/${setlistId}/sets/${setId}/edit`)}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Edit size={18} className="mr-2" />
+              Add Songs
+            </button>
           </div>
         ) : (
           <MobileDragDrop
