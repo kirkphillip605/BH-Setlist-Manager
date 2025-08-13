@@ -76,55 +76,28 @@ export const userService = {
         throw new Error('Not authenticated');
       }
 
-      // Create auth user
-      let authUser;
-      if (password) {
-        // Create with password
-        const { data, error } = await supabase.auth.admin.createUser({
+      // Always call the Edge Function for user creation
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-invite-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
           email,
-          password,
-          email_confirm: true,
-          user_metadata: {
-            name,
-            role: role || '',
-            user_level: user_level || 1
-          }
-        });
-
-        if (error) throw error;
-        authUser = data.user;
-      } else {
-        // Send invitation email
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-invite-user`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            email,
-            name,
-            role: role || '',
-            user_level: user_level || 1
-          })
-        });
-
-        const result = await response.json();
-        if (!response.ok) {
-          throw new Error(result.error || 'Failed to invite user');
-        }
-
-        authUser = result.data.user;
-      }
-
-      // Sync with public.users table
-      await this.syncUserProfile(authUser.id, {
-        name,
-        email,
-        role: role || '',
-        user_level: user_level || 1
+          name,
+          role: role || '',
+          user_level: user_level || 1,
+          password: password || null // Pass password if provided, otherwise null
+        })
       });
 
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create user via Edge Function');
+      }
+
+      const authUser = result.data.user;
       return authUser;
     } catch (error) {
       console.error('Error creating user:', error);
