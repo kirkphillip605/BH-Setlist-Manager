@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Play, SkipBack, SkipForward, X, Music, Search, ChevronDown, Loader, Crown, Users } from 'lucide-react';
+import { ArrowLeft, Play, SkipBack, SkipForward, X, Music, Search, ChevronDown, Loader, Crown, Users, CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 import { setlistsService } from '../services/setlistsService';
-import { setsService } from '../services/setsService';
 import { songsService } from '../services/songsService';
 import { performanceService } from '../services/performanceService';
 import MobilePerformanceLayout from '../components/MobilePerformanceLayout';
@@ -23,7 +22,7 @@ const PerformanceMode = () => {
   const [selectedSetlistId, setSelectedSetlistId] = useState(setlistId || '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [leadershipChoice, setLeadershipChoice] = useState(null); // 'leader', 'follower', 'standalone'
+  const [leadershipChoice, setLeadershipChoice] = useState(null);
 
   // Performance state
   const [inPerformance, setInPerformance] = useState(!!setlistId);
@@ -50,22 +49,19 @@ const PerformanceMode = () => {
   const [showFollowers, setShowFollowers] = useState(false);
   const [followers, setFollowers] = useState([]);
 
+  // Notifications
+  const [notification, setNotification] = useState(null);
+
   useEffect(() => {
     mountedRef.current = true;
+    
+    // Register notification callback
+    performanceService.registerNotificationCallback('main', showNotification);
     
     const initialize = async () => {
       setPageTitle('Performance Mode');
       
       if (setlistId) {
-        // Check if cache is valid and setlist data exists
-        if (performanceService.isCacheValid(setlistId)) {
-          const cached = performanceService.getCachedSetlistData();
-          if (cached.setlistData) {
-            await initializePerformanceMode(setlistId);
-            return;
-          }
-        }
-        // Fresh fetch needed
         await initializePerformanceMode(setlistId);
       } else {
         await fetchSetlists();
@@ -76,11 +72,17 @@ const PerformanceMode = () => {
     
     return () => {
       mountedRef.current = false;
-      if (inPerformance && session?.id) {
+      performanceService.unregisterNotificationCallback('main');
+      if (inPerformance && session?.id && session.id !== 'standalone') {
         performanceService.cleanupSubscriptions();
       }
     };
-  }, [setlistId, leadershipChoice]);
+  }, [setlistId]);
+
+  const showNotification = (type, message) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 4000);
+  };
 
   const fetchSetlists = async () => {
     if (!mountedRef.current) return;
@@ -104,6 +106,8 @@ const PerformanceMode = () => {
   };
 
   const loadFollowers = async (sessionId) => {
+    if (!sessionId || sessionId === 'standalone') return;
+    
     try {
       const followersData = await performanceService.getSessionFollowers(sessionId);
       if (mountedRef.current) {
@@ -132,97 +136,100 @@ const PerformanceMode = () => {
     setError(null);
     
     try {
-      // Check for existing active session first
-      let activeSession;
-      try {
-        activeSession = await performanceService.getActiveSession(setlistId);
-      } catch (err) {
-        activeSession = null;
-      }
-      
-     // Always set session state to reflect active session status
-     if (mountedRef.current) {
-       setSession(activeSession);
-     }
-     
-      if (activeSession && !leadershipChoice) {
-        // Show leadership choice modal
-        setLoading(false);
-        return;
-      }
-      
-      if (!leadershipChoice) {
-        // No active session and no leadership choice - show modal
-        setLoading(false);
-        return;
-      }
-
-      let sessionData;
+      // Try to get or create session based on leadership choice
+      let sessionResult;
       let isLeaderRole = false;
       let isStandalone = false;
       
       if (leadershipChoice === 'leader') {
-        if (activeSession && activeSession.leader_id !== user.id) {
-          // Request leadership transfer
+        sessionResult = await performanceService.getOrCreateSession(setlistId, user.id, true);
+        
+        if (!sessionResult.session) {
+          throw new Error('Failed to create or join session');
+        }
+
+        if (sessionResult.session.leader_id === user.id) {
+          // User is the leader
+          sessionResult.session = await performanceService.createSession(setlistId, user.id);
+          isLeaderRole = true;
+        } else {
+          // Someone else is leader, request transfer
           await performanceService.requestLeadershipTransfer(
-            activeSession.id, 
+            sessionResult.session.id, 
             user.id, 
             user.name
           );
-          setError('Leadership transfer requested. Waiting for current leader response...');
-          setLoading(false);
+          
+          if (mountedRef.current) {
+            setError('Leadership transfer requested. Waiting for current leader response...');
+            setLoading(false);
+          }
           return;
-        } else {
-          // Create new session or take over
-          sessionData = await performanceService.createSession(setlistId, user.id);
-          isLeaderRole = true;
         }
       } else if (leadershipChoice === 'follower') {
-        if (!activeSession) {
-          setError('No active session to join as follower');
-          setLoading(false);
+        sessionResult = await performanceService.getOrCreateSession(setlistId, user.id, false);
+        
+        if (!sessionResult.session) {
+          if (mountedRef.current) {
+            setError('No active session to join as follower');
+            setLoading(false);
+          }
           return;
         }
-        sessionData = await performanceService.joinSession(setlistId, user.id);
+        
+        await performanceService.joinSession(setlistId, user.id);
         isLeaderRole = false;
       } else if (leadershipChoice === 'standalone') {
         // Standalone mode - no session interaction
         await performanceService.prefetchAndCacheSetlistData(setlistId);
         isStandalone = true;
-        sessionData = { id: 'standalone', setlist_id: setlistId };
+        sessionResult = { session: { id: 'standalone', setlist_id: setlistId } };
+      } else {
+        // No leadership choice made yet
+        setLoading(false);
+        return;
       }
 
       if (mountedRef.current) {
-        setSession(sessionData);
+        setSession(sessionResult.session);
         setIsLeader(isLeaderRole);
         setStandaloneMode(isStandalone);
-        await loadPerformanceData(setlistId, sessionData);
+        
+        await loadPerformanceData(setlistId, sessionResult.session);
 
-        if (!isStandalone && sessionData.id !== 'standalone') {
+        if (!isStandalone && sessionResult.session.id !== 'standalone') {
           // Subscribe to session updates
           performanceService.subscribeToSession(
-            sessionData.id,
+            sessionResult.session.id,
             handleSessionUpdate
+          );
+
+          // Subscribe to participant changes
+          performanceService.subscribeToParticipants(
+            sessionResult.session.id,
+            handleParticipantChange
           );
 
           if (isLeaderRole) {
             // Subscribe to leadership requests
             performanceService.subscribeToLeadershipRequests(
-              sessionData.id,
+              sessionResult.session.id,
               handleLeadershipRequest
             );
           }
         }
 
         // Load followers if we're the leader
-        if (isLeaderRole && sessionData.id !== 'standalone') {
-          await loadFollowers(sessionData.id);
+        if (isLeaderRole && sessionResult.session.id !== 'standalone') {
+          await loadFollowers(sessionResult.session.id);
         }
 
         await fetchAllSongs();
+        setInPerformance(true);
       }
 
     } catch (err) {
+      console.error('Error in initializePerformanceMode:', err);
       if (mountedRef.current) {
         setError(err.message);
       }
@@ -266,9 +273,6 @@ const PerformanceMode = () => {
         await loadCurrentSong(cachedSetlist.sets[0].set_songs[0].songs.id);
       }
 
-      if (mountedRef.current) {
-        setInPerformance(true);
-      }
     } catch (err) {
       console.error('Error loading performance data:', err);
       if (mountedRef.current) {
@@ -339,24 +343,61 @@ const PerformanceMode = () => {
     setTimeout(() => {
       if (!mountedRef.current) return;
       
-      setSession(newSession);
+      setSession(prev => ({ ...prev, ...newSession }));
+      
+      // Check if leadership changed
+      if (newSession.leader_id !== session?.leader_id) {
+        const wasLeader = session?.leader_id === user.id;
+        const isNowLeader = newSession.leader_id === user.id;
+        
+        if (wasLeader && !isNowLeader) {
+          // We lost leadership
+          setIsLeader(false);
+          localStorage.setItem('performanceMode_isLeader', 'false');
+          showNotification('info', 'Leadership transferred to another user');
+        } else if (!wasLeader && isNowLeader) {
+          // We gained leadership
+          setIsLeader(true);
+          localStorage.setItem('performanceMode_isLeader', 'true');
+          showNotification('success', 'You are now the session leader');
+        }
+      }
       
       if (newSession.current_song_id !== currentSong?.id) {
-        loadCurrentSong(payload.new.current_song_id);
+        loadCurrentSong(newSession.current_song_id);
       }
       
       if (newSession.current_set_id !== currentSet?.id) {
-        loadCurrentSet(payload.new.current_set_id);
+        loadCurrentSet(newSession.current_set_id);
       }
     }, 0);
+  };
+
+  const handleParticipantChange = async (payload) => {
+    if (!mountedRef.current || !session || session.id === 'standalone') return;
+    
+    // Reload followers list
+    await loadFollowers(session.id);
+    
+    // Show notification for new participants
+    if (payload.eventType === 'INSERT' && payload.new?.users?.name) {
+      showNotification('info', `${payload.new.users.name} joined the session`);
+    }
   };
 
   const handleLeadershipRequest = (payload) => {
     if (!mountedRef.current || !isLeader) return;
     
     const request = payload.new;
-    setLeadershipRequestData(request);
-    setShowLeadershipRequest(true);
+    
+    if (payload.eventType === 'INSERT' && request.status === 'pending') {
+      setLeadershipRequestData(request);
+      setShowLeadershipRequest(true);
+    } else if (payload.eventType === 'UPDATE' && request.status !== 'pending') {
+      // Request was resolved
+      setShowLeadershipRequest(false);
+      setLeadershipRequestData(null);
+    }
   };
 
   const loadCurrentSet = async (setId) => {
@@ -388,7 +429,7 @@ const PerformanceMode = () => {
     if ((!isLeader && !standaloneMode) || !session) return;
 
     try {
-      const setData = set; // Already have full data from cache
+      const setData = set;
       const firstSong = setData.set_songs?.[0]?.songs;
 
       if (session.id !== 'standalone') {
@@ -521,6 +562,9 @@ const PerformanceMode = () => {
     try {
       if (isLeader && session && session.id !== 'standalone') {
         await performanceService.endSession(session.id);
+      } else if (session && session.id !== 'standalone') {
+        await performanceService.leaveSession(session.id, user.id);
+        performanceService.cleanupSubscriptions();
       } else {
         performanceService.cleanupSubscriptions();
       }
@@ -532,7 +576,6 @@ const PerformanceMode = () => {
     }
   };
 
-  // Refresh followers when showing the modal
   const handleShowFollowers = async () => {
     if (session && session.id !== 'standalone') {
       await loadFollowers(session.id);
@@ -541,6 +584,8 @@ const PerformanceMode = () => {
   };
 
   const handleLeadershipResponse = async (approved) => {
+    if (!leadershipRequestData) return;
+    
     try {
       await performanceService.respondToLeadershipRequest(
         leadershipRequestData.id,
@@ -548,14 +593,12 @@ const PerformanceMode = () => {
         user.id
       );
 
-      if (approved) {
-        // Transfer leadership
-        setIsLeader(false);
-        localStorage.setItem(STORAGE_KEYS.IS_LEADER, 'false');
-      }
-
       setShowLeadershipRequest(false);
       setLeadershipRequestData(null);
+      
+      if (approved) {
+        showNotification('info', `Leadership transferred to ${leadershipRequestData.requesting_user_name}`);
+      }
       
       // Refresh followers list
       if (session && session.id !== 'standalone') {
@@ -587,58 +630,40 @@ const PerformanceMode = () => {
             </p>
           </div>
 
-          {session && session.leader_id === user.id ? (
-            <div className="space-y-4">
-              <button
-                onClick={() => handleStartPerformance('leader')}
-                className="w-full inline-flex items-center justify-center px-6 py-4 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors font-medium"
-              >
-                <Crown size={20} className="mr-2" />
-                Continue as Leader
-              </button>
-            </div>
-          ) : session ? (
-            <div className="space-y-4">
-              <button
-                onClick={() => handleStartPerformance('leader')}
-                className="w-full inline-flex items-center justify-center px-6 py-4 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors font-medium"
-              >
-                <Crown size={20} className="mr-2" />
-                Request Leadership
-              </button>
-              <button
-                onClick={() => handleStartPerformance('follower')}
-                className="w-full inline-flex items-center justify-center px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
-              >
-                <Users size={20} className="mr-2" />
-                Join as Follower
-              </button>
-              <button
-                onClick={() => handleStartPerformance('standalone')}
-                className="w-full inline-flex items-center justify-center px-6 py-4 bg-zinc-600 text-white rounded-xl hover:bg-zinc-500 transition-colors font-medium"
-              >
-                <Music size={20} className="mr-2" />
-                Standalone Mode
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <button
-                onClick={() => handleStartPerformance('leader')}
-                className="w-full inline-flex items-center justify-center px-6 py-4 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors font-medium"
-              >
-                <Crown size={20} className="mr-2" />
-                Start as Leader
-              </button>
-              <button
-                onClick={() => handleStartPerformance('standalone')}
-                className="w-full inline-flex items-center justify-center px-6 py-4 bg-zinc-600 text-white rounded-xl hover:bg-zinc-500 transition-colors font-medium"
-              >
-                <Music size={20} className="mr-2" />
-                Standalone Mode
-              </button>
-            </div>
-          )}
+          <div className="space-y-4">
+            <button
+              onClick={() => setLeadershipChoice('leader')}
+              className="w-full inline-flex items-center justify-center px-6 py-4 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors font-medium"
+            >
+              <Crown size={20} className="mr-2" />
+              Start as Leader
+            </button>
+            
+            <button
+              onClick={() => setLeadershipChoice('follower')}
+              className="w-full inline-flex items-center justify-center px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
+            >
+              <Users size={20} className="mr-2" />
+              Join as Follower
+            </button>
+            
+            <button
+              onClick={() => setLeadershipChoice('standalone')}
+              className="w-full inline-flex items-center justify-center px-6 py-4 bg-zinc-600 text-white rounded-xl hover:bg-zinc-500 transition-colors font-medium"
+            >
+              <Music size={20} className="mr-2" />
+              Standalone Mode
+            </button>
+          </div>
+
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => navigate('/setlists')}
+              className="text-zinc-400 hover:text-zinc-300 transition-colors text-sm"
+            >
+              ← Back to Setlists
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -801,6 +826,14 @@ const PerformanceMode = () => {
                 <p className="text-xs opacity-75 truncate">
                   {song.original_artist} {song.key_signature && `• ${song.key_signature}`}
                 </p>
+                {song.performance_note && (
+                  <div className="flex items-center space-x-1 mt-1">
+                    <svg className="w-3 h-3 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                    </svg>
+                    <span className="text-amber-300 text-xs">{song.performance_note}</span>
+                  </div>
+                )}
               </div>
             </div>
           </button>
@@ -918,6 +951,22 @@ const PerformanceMode = () => {
 
   return (
     <>
+      {/* Notification Banner */}
+      {notification && (
+        <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-xl shadow-lg fade-in ${
+          notification.type === 'success' ? 'bg-green-600 text-white' :
+          notification.type === 'error' ? 'bg-red-600 text-white' :
+          'bg-blue-600 text-white'
+        }`}>
+          <div className="flex items-center space-x-2">
+            {notification.type === 'success' && <CheckCircle size={20} />}
+            {notification.type === 'error' && <XCircle size={20} />}
+            {notification.type === 'info' && <Users size={20} />}
+            <span className="font-medium">{notification.message}</span>
+          </div>
+        </div>
+      )}
+
       <MobilePerformanceLayout
         sidebar={sidebarContent}
         currentSong={currentSong}
