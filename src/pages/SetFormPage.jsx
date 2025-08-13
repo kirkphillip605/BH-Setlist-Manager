@@ -6,6 +6,8 @@ import { usePageTitle } from '../context/PageTitleContext';
 import { setsService } from '../services/setsService';
 import { songCollectionsService } from '../services/songCollectionsService';
 import SongSelector from '../components/SongSelector';
+import SongSelectorModal from '../components/SongSelectorModal';
+import CollectionSelectorModal from '../components/CollectionSelectorModal';
 import DuplicateModal from '../components/DuplicateModal';
 import CollectionDuplicateModal from '../components/CollectionDuplicateModal';
 
@@ -20,7 +22,7 @@ const SetFormPage = () => {
   const [setName, setSetName] = useState('');
   const [setSongs, setSetSongs] = useState([]);
   const [showSongSelector, setShowSongSelector] = useState(false);
-  const [showCollectionSelector, setShowCollectionSelector] = useState(false);
+  const [showCollectionModal, setShowCollectionModal] = useState(false);
   const [collections, setCollections] = useState([]);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicates, setDuplicates] = useState([]);
@@ -41,36 +43,6 @@ const SetFormPage = () => {
     }
     fetchCollections();
   }, [setId, isEditing, setPageTitle]);
-
-  const handleRemoveDuplicates = () => {
-    const duplicateSongIds = new Set(duplicates.map(d => d.song_id));
-    const filteredSongs = setSongs.filter(song => !duplicateSongIds.has(song.id));
-    setSetSongs(filteredSongs);
-    setDuplicates([]);
-    setShowDuplicateModal(false);
-  };
-
-  const handleKeepInCurrentSet = async () => {
-    // Remove from other sets and keep in current
-    try {
-      for (const duplicate of duplicates) {
-        await setsService.removeSongFromSet(duplicate.sets.id, duplicate.song_id);
-      }
-      setDuplicates([]);
-      setShowDuplicateModal(false);
-    } catch (err) {
-      setError('Failed to move songs');
-    }
-  };
-
-  const handleKeepInOriginalSet = () => {
-    // Remove from current set
-    const duplicateSongIds = new Set(duplicates.map(d => d.song_id));
-    const filteredSongs = setSongs.filter(song => !duplicateSongIds.has(song.id));
-    setSetSongs(filteredSongs);
-    setDuplicates([]);
-    setShowDuplicateModal(false);
-  };
 
   const fetchSet = async () => {
     setLoading(true);
@@ -104,12 +76,18 @@ const SetFormPage = () => {
   };
 
   const handleSongsSelected = (selectedSongs) => {
-    const newSongs = selectedSongs.map((song, index) => ({
-      ...song,
-      song_order: setSongs.length + index + 1
-    }));
-    setSetSongs(prev => [...prev, ...newSongs]);
-    setShowSongSelector(false);
+    // Only add songs that aren't already in the set
+    const existingSongIds = new Set(setSongs.map(s => s.id));
+    const newSongs = selectedSongs
+      .filter(song => !existingSongIds.has(song.id))
+      .map((song, index) => ({
+        ...song,
+        song_order: setSongs.length + index + 1
+      }));
+    
+    if (newSongs.length > 0) {
+      setSetSongs(prev => [...prev, ...newSongs]);
+    }
   };
 
   const handleCollectionSelected = async (collection) => {
@@ -137,9 +115,13 @@ const SetFormPage = () => {
         setPendingCollectionSongs(collectionSongs);
         setShowCollectionDuplicateModal(true);
       } else {
-        // No duplicates, add all songs
-        setSetSongs(prev => [...prev, ...collectionSongs]);
-        setShowCollectionSelector(false);
+        // No duplicates, add only new songs
+        const existingSongIds = new Set(setSongs.map(s => s.id));
+        const newSongs = collectionSongs.filter(song => !existingSongIds.has(song.id));
+        
+        if (newSongs.length > 0) {
+          setSetSongs(prev => [...prev, ...newSongs]);
+        }
       }
     } catch (err) {
       console.error('Error loading collection songs:', err);
@@ -154,7 +136,11 @@ const SetFormPage = () => {
       setInfo.songs.forEach(song => duplicateSongIds.add(song.id));
     });
     
-    const songsToAdd = pendingCollectionSongs.filter(song => !duplicateSongIds.has(song.id));
+    // Also filter out songs already in current set
+    const existingSongIds = new Set(setSongs.map(s => s.id));
+    const songsToAdd = pendingCollectionSongs.filter(song => 
+      !duplicateSongIds.has(song.id) && !existingSongIds.has(song.id)
+    );
     
     if (songsToAdd.length > 0) {
       setSetSongs(prev => [...prev, ...songsToAdd]);
@@ -162,7 +148,6 @@ const SetFormPage = () => {
     
     // Clean up state
     setShowCollectionDuplicateModal(false);
-    setShowCollectionSelector(false);
     setCollectionDuplicates({});
     setPendingCollectionSongs([]);
   };
@@ -189,7 +174,14 @@ const SetFormPage = () => {
       
       // Add moved songs to current set
       const movedSongs = pendingCollectionSongs.filter(song => songIds.includes(song.id));
-      setSetSongs(prev => [...prev, ...movedSongs]);
+      
+      // Only add songs that aren't already in the set
+      const existingSongIds = new Set(setSongs.map(s => s.id));
+      const newSongs = movedSongs.filter(song => !existingSongIds.has(song.id));
+      
+      if (newSongs.length > 0) {
+        setSetSongs(prev => [...prev, ...newSongs]);
+      }
       
       // If no more duplicates, close modal and add remaining songs
       if (Object.keys(updatedDuplicates).length === 0) {
@@ -330,19 +322,19 @@ const SetFormPage = () => {
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
             {collections.length > 0 && (
               <button
-                onClick={() => setShowCollectionSelector(!showCollectionSelector)}
+                onClick={() => setShowCollectionModal(true)}
                 className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
               >
                 <Collection size={18} className="mr-2" />
-                {showCollectionSelector ? 'Cancel' : 'Add from Collection'}
+                Add from Collection
               </button>
             )}
             <button
-              onClick={() => setShowSongSelector(!showSongSelector)}
+              onClick={() => setShowSongSelector(true)}
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
             >
               <Music size={18} className="mr-2" />
-              {showSongSelector ? 'Cancel' : 'Add Songs'}
+              Add Songs
             </button>
           </div>
         </div>
@@ -383,29 +375,24 @@ const SetFormPage = () => {
         )}
       </div>
 
-      {/* Collection Selector */}
-      {showCollectionSelector && (
-        <div className="bg-slate-800 rounded-xl p-4 lg:p-6 border border-slate-700">
-          <h3 className="text-lg font-medium text-slate-100 mb-4">Select Collection</h3>
-          <div className="space-y-2">
-            {collections.map((collection) => (
-              <button
-                key={collection.id}
-                onClick={() => handleCollectionSelected(collection)}
-                className="w-full text-left p-4 bg-slate-700 rounded-lg border border-slate-600 hover:bg-slate-600 transition-colors"
-              >
-                <p className="text-sm font-medium text-slate-100">{collection.name}</p>
-                <p className="text-sm text-slate-400">
-                  Created {new Date(collection.created_at).toLocaleDateString()}
-                </p>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Song Selector */}
-      {showSongSelector && (
+      {/* Song Selector Modal */}
+      <SongSelectorModal
+        isOpen={showSongSelector}
+        onClose={() => setShowSongSelector(false)}
+        onSongsSelected={handleSongsSelected}
+        selectedSongs={setSongs}
+        setlistId={setlistId}
+      />
+      
+      {/* Collection Selector Modal */}
+      <CollectionSelectorModal
+        isOpen={showCollectionModal}
+        onClose={() => setShowCollectionModal(false)}
+        onCollectionSelected={handleCollectionSelected}
+      />
+      
+      {/* Keep the old SongSelector for backward compatibility if needed elsewhere */}
+      {false && (
         <SongSelector
           onSongsSelected={handleSongsSelected}
           selectedSongs={setSongs}
@@ -417,7 +404,6 @@ const SetFormPage = () => {
       <CollectionDuplicateModal
         isOpen={showCollectionDuplicateModal}
         onClose={() => {
-          setShowCollectionDuplicateModal(false);
           setCollectionDuplicates({});
           setPendingCollectionSongs([]);
         }}
@@ -425,17 +411,6 @@ const SetFormPage = () => {
         onSkipDuplicates={handleSkipDuplicates}
         onMoveSongs={handleMoveSongs}
         targetSetName={setName || 'this set'}
-      />
-      
-      {/* Duplicate Modal */}
-      <DuplicateModal
-        isOpen={showDuplicateModal}
-        onClose={() => setShowDuplicateModal(false)}
-        duplicates={duplicates}
-        onRemoveDuplicates={handleRemoveDuplicates}
-        onKeepInCurrentSet={handleKeepInCurrentSet}
-        onKeepInOriginalSet={handleKeepInOriginalSet}
-        type="set"
       />
     </div>
   );

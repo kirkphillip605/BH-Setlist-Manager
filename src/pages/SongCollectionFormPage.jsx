@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 import { songCollectionsService } from '../services/songCollectionsService';
 import SongSelector from '../components/SongSelector';
+import SongSelectorModal from '../components/SongSelectorModal';
 
 const SongCollectionFormPage = () => {
   const { collectionId } = useParams();
@@ -56,12 +57,18 @@ const SongCollectionFormPage = () => {
   };
 
   const handleSongsSelected = (selectedSongs) => {
-    const newSongs = selectedSongs.map((song, index) => ({
-      ...song,
-      song_order: collectionSongs.length + index + 1
-    }));
-    setCollectionSongs(prev => [...prev, ...newSongs]);
-    setShowSongSelector(false);
+    // Only add songs that aren't already in the collection
+    const existingSongIds = new Set(collectionSongs.map(s => s.id));
+    const newSongs = selectedSongs
+      .filter(song => !existingSongIds.has(song.id))
+      .map((song, index) => ({
+        ...song,
+        song_order: collectionSongs.length + index + 1
+      }));
+    
+    if (newSongs.length > 0) {
+      setCollectionSongs(prev => [...prev, ...newSongs]);
+    }
   };
 
   const handleRemoveSong = (songIndex) => {
@@ -194,11 +201,11 @@ const SongCollectionFormPage = () => {
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-lg font-medium text-slate-100">Songs in Collection</h3>
           <button
-            onClick={() => setShowSongSelector(!showSongSelector)}
+            onClick={() => setShowSongSelector(true)}
             className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Music size={18} className="mr-2" />
-            {showSongSelector ? 'Cancel' : 'Add Songs'}
+            Add Songs
           </button>
         </div>
 
@@ -238,13 +245,13 @@ const SongCollectionFormPage = () => {
         )}
       </div>
 
-      {/* Song Selector */}
-      {showSongSelector && (
-        <SongSelector
-          onSongsSelected={handleSongsSelected}
-          selectedSongs={collectionSongs}
-        />
-      )}
+      {/* Song Selector Modal */}
+      <SongSelectorModal
+        isOpen={showSongSelector}
+        onClose={() => setShowSongSelector(false)}
+        onSongsSelected={handleSongsSelected}
+        selectedSongs={collectionSongs}
+      />
     </div>
   );
 };

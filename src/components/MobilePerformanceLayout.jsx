@@ -78,16 +78,8 @@ const MobilePerformanceLayout = ({
           </div>
           <div className="flex-1 relative">
             {/* Zoomable lyrics container */}
-            <div className="h-full overflow-auto p-6 performance-zoom-container">
-              <div 
-                className="mobile-zoom-container" 
-                style={{ 
-                transform: `scale(${lyricsZoom})`, 
-                transformOrigin: 'top left',
-                width: `${100 / lyricsZoom}%`,
-                minHeight: `${100 / lyricsZoom}%`
-                }}
-              >
+            <div className="h-full overflow-auto p-6 performance-zoom-container bg-zinc-950">
+              <div className="lyrics-zoom-wrapper" style={{ transform: `scale(${lyricsZoom})`, transformOrigin: 'top left' }}>
                 {children}
               </div>
             </div>
@@ -124,16 +116,8 @@ const MobilePerformanceLayout = ({
             {sidebar}
           </div>
           <div className="flex-1 relative">
-            <div className="h-full overflow-auto p-4 performance-zoom-container">
-              <div 
-                className="mobile-zoom-container" 
-                style={{ 
-                transform: `scale(${lyricsZoom})`, 
-                transformOrigin: 'top left',
-                width: `${100 / lyricsZoom}%`,
-                minHeight: `${100 / lyricsZoom}%`
-                }}
-              >
+            <div className="h-full overflow-auto p-4 performance-zoom-container bg-zinc-950">
+              <div className="lyrics-zoom-wrapper" style={{ transform: `scale(${lyricsZoom})`, transformOrigin: 'top left' }}>
                 {children}
               </div>
             </div>
@@ -222,16 +206,8 @@ const MobilePerformanceLayout = ({
                   </button>
                 </div>
               </div>
-              <div className="flex-1 overflow-auto p-4">
-                <div 
-                  className="mobile-zoom-container" 
-                  style={{ 
-                  transform: `scale(${lyricsZoom})`, 
-                  transformOrigin: 'top left',
-                  width: `${100 / lyricsZoom}%`,
-                  minHeight: `${100 / lyricsZoom}%`
-                  }}
-                >
+              <div className="h-full overflow-auto p-4 performance-zoom-container bg-zinc-950">
+                <div className="lyrics-zoom-wrapper" style={{ transform: `scale(${lyricsZoom})`, transformOrigin: 'top left' }}>
                   {children}
                 </div>
               </div>
