@@ -80,7 +80,7 @@ const PerformanceMode = () => {
         performanceService.cleanupSubscriptions();
       }
     };
-  }, [setlistId]);
+  }, [setlistId, leadershipChoice]);
 
   const fetchSetlists = async () => {
     if (!mountedRef.current) return;
@@ -132,6 +132,12 @@ const PerformanceMode = () => {
       if (activeSession && !leadershipChoice) {
         // Show leadership choice modal
         setSession(activeSession);
+        setLoading(false);
+        return;
+      }
+      
+      if (!leadershipChoice) {
+        // No active session and no leadership choice - show modal
         setLoading(false);
         return;
       }
@@ -223,7 +229,7 @@ const PerformanceMode = () => {
         console.warn('No cached data available, this should not happen in performance mode');
       }
 
-      if (sessionData.current_set_id) {
+      if (sessionData?.current_set_id) {
         const currentSetData = cachedSetlist?.sets?.find(s => s.id === sessionData.current_set_id);
         if (mountedRef.current) {
           setCurrentSet(currentSetData);
@@ -234,7 +240,7 @@ const PerformanceMode = () => {
         }
       }
 
-      if (sessionData.current_song_id) {
+      if (sessionData?.current_song_id) {
         await loadCurrentSong(sessionData.current_song_id);
       } else if (cachedSetlist?.sets?.[0]?.set_songs?.[0]) {
         await loadCurrentSong(cachedSetlist.sets[0].set_songs[0].songs.id);
@@ -534,7 +540,7 @@ const PerformanceMode = () => {
   );
 
   // Leadership choice modal
-  if (session && !leadershipChoice && !standaloneMode && !loading) {
+  if (setlistId && !leadershipChoice && !standaloneMode && !loading) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
         <div className="card-modern p-6 w-full max-w-md">
