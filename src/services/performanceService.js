@@ -399,7 +399,7 @@ class PerformanceService {
   // Create new session as leader
   async createSession(setlistId, userId) {
     try {
-      console.log(`🎭 Creating new session for setlist ${setlistId}`);
+      console.log(`🎭 Creating new session for setlist ${setlistId} with leader ${userId}`);
       
       // Clean up any stale sessions first
       await this.cleanupStaleSessionsForSetlist(setlistId);
@@ -442,6 +442,60 @@ class PerformanceService {
     }
   }
 
+  // Take over leadership of existing session (admin override)
+  async takeOverLeadership(sessionId, newLeaderId) {
+    try {
+      console.log(`👑 Taking over leadership of session ${sessionId} for user ${newLeaderId}`);
+      
+      // Get current session info
+      const { data: currentSession, error: sessionError } = await supabase
+        .from('performance_sessions')
+        .select('leader_id')
+        .eq('id', sessionId)
+        .single();
+        
+      if (sessionError) throw sessionError;
+      
+      // Transfer leadership
+      const { data: updatedSession, error } = await supabase
+        .from('performance_sessions')
+        .update({ 
+          leader_id: newLeaderId,
+          created_at: new Date() // Reset activity timestamp
+        })
+        .eq('id', sessionId)
+        .select(`
+          *,
+          setlists (name),
+          users (id, name, email, role),
+          sets (name),
+          songs (title, original_artist)
+        `)
+        .single();
+
+      if (error) throw error;
+
+      // Add old leader as participant
+      if (currentSession.leader_id !== newLeaderId) {
+        await supabase
+          .from('session_participants')
+          .upsert({
+            session_id: sessionId,
+            user_id: currentSession.leader_id,
+            is_active: true
+          }, {
+            onConflict: 'session_id,user_id'
+          });
+      }
+
+      console.log('👑 Leadership transferred successfully');
+      return updatedSession;
+    } catch (error) {
+      console.error('Error taking over leadership:', error);
+      throw error;
+    }
+  }
+
   // Join existing session as follower
   async joinAsFollower(sessionId, userId) {
     try {
@@ -458,6 +512,7 @@ class PerformanceService {
           onConflict: 'session_id,user_id'
         });
         
+      this.updateLastActivity();
       return true;
     } catch (error) {
       console.error('Error joining as follower:', error);

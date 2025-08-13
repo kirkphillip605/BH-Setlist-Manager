@@ -14,6 +14,10 @@ export const songCollectionsService = {
 
   // Get a single song collection by ID with its songs
   async getSongCollectionById(id) {
+    if (!id) {
+      throw new Error('Song collection ID is required.');
+    }
+
     const { data, error } = await supabase
       .from('song_collections')
       .select(`
@@ -31,14 +35,16 @@ export const songCollectionsService = {
       `)
       .eq('id', id)
       .order('song_order', { foreignTable: 'song_collection_songs', ascending: true })
-      .single();
+      .maybeSingle();
 
     if (error) {
-      if (error.code === 'PGRST116') {
-        throw new Error('Song collection not found');
-      }
       throw new Error(error.message);
     }
+
+    if (!data) {
+      throw new Error('Song collection not found');
+    }
+
     return data;
   },
 
@@ -101,31 +107,39 @@ export const songCollectionsService = {
       throw new Error('Collection name is required.');
     }
 
+    if (!id) {
+      throw new Error('Collection ID is required.');
+    }
+
     // Get the collection to check ownership
     const { data: collection, error: collectionFetchError } = await supabase
       .from('song_collections')
       .select('user_id')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (collectionFetchError) {
+      throw new Error(collectionFetchError.message);
+    }
+
+    if (!collection) {
       throw new Error('Song collection not found');
     }
 
     // Check for duplicate collection name for this user, excluding the current collection
-    const { data: existingCollection, error: existingError } = await supabase
+    const { data: existingCollections, error: existingError } = await supabase
       .from('song_collections')
       .select('id')
       .eq('name', name)
       .eq('user_id', collection.user_id)
-      .neq('id', id)
-      .single();
+      .neq('id', id);
 
-    if (existingCollection) {
-      throw new Error('Another song collection with this name already exists.');
-    }
-    if (existingError && existingError.code !== 'PGRST116') {
+    if (existingError) {
       throw new Error(existingError.message);
+    }
+    
+    if (existingCollections && existingCollections.length > 0) {
+      throw new Error('Another song collection with this name already exists.');
     }
 
     const { data: updatedCollection, error: collectionError } = await supabase

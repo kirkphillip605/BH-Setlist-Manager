@@ -78,12 +78,13 @@ const MobilePerformanceLayout = ({
           </div>
           <div className="flex-1 relative">
             {/* Zoomable lyrics container */}
-            <div className="h-full overflow-auto p-6">
-              <div style={{ 
+            <div className="h-full overflow-auto p-6 performance-zoom-container">
+              <div className="mobile-zoom-container" style={{ 
                 transform: `scale(${lyricsZoom})`, 
                 transformOrigin: 'top left',
-                width: `${100 / lyricsZoom}%`,
-                minHeight: `${100 / lyricsZoom}%`
+                width: lyricsZoom > 1 ? `${100 / lyricsZoom}%` : '100%',
+                lineHeight: 1.6,
+                wordWrap: 'break-word'
               }}>
               {children}
               </div>
@@ -92,31 +93,21 @@ const MobilePerformanceLayout = ({
             <div className="absolute top-4 right-4 flex flex-col space-y-1">
               <button
                 onClick={onZoomIn}
-                className="p-2 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-lg hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
+                className="p-3 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
                 title="Zoom In"
               >
-                <div className="relative">
-                  <Search size={16} />
-                  <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
-                    <span className="text-[8px] font-bold text-white">+</span>
-                  </div>
-                </div>
+                <ZoomIn size={18} />
               </button>
               <button
                 onClick={onZoomOut}
-                className="p-2 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-lg hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
+                className="p-3 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
                 title="Zoom Out"
               >
-                <div className="relative">
-                  <Search size={16} />
-                  <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-                    <span className="text-[8px] font-bold text-white">−</span>
-                  </div>
-                </div>
+                <ZoomOut size={18} />
               </button>
               <button
                 onClick={onResetZoom}
-                className="px-2 py-1 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-lg hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600 text-xs font-medium"
+                className="px-3 py-2 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600 text-xs font-medium"
                 title="Reset Zoom"
               >
                 {Math.round(lyricsZoom * 100)}%
@@ -131,12 +122,13 @@ const MobilePerformanceLayout = ({
             {sidebar}
           </div>
           <div className="flex-1 relative">
-            <div className="h-full overflow-auto p-4">
-              <div style={{ 
+            <div className="h-full overflow-auto p-4 performance-zoom-container">
+              <div className="mobile-zoom-container" style={{ 
                 transform: `scale(${lyricsZoom})`, 
                 transformOrigin: 'top left',
-                width: `${100 / lyricsZoom}%`,
-                minHeight: `${100 / lyricsZoom}%`
+                width: lyricsZoom > 1 ? `${100 / lyricsZoom}%` : '100%',
+                lineHeight: 1.6,
+                wordWrap: 'break-word'
               }}>
               {children}
               </div>
@@ -144,31 +136,21 @@ const MobilePerformanceLayout = ({
             <div className="absolute top-4 right-4 flex space-x-1">
               <button
                 onClick={onZoomIn}
-                className="p-2 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-lg hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
+                className="p-2 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-lg hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
                 title="Zoom In"
               >
-                <div className="relative">
-                  <Search size={16} />
-                  <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
-                    <span className="text-[8px] font-bold text-white">+</span>
-                  </div>
-                </div>
+                <ZoomIn size={16} />
               </button>
               <button
                 onClick={onZoomOut}
-                className="p-2 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-lg hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
+                className="p-2 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-lg hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
                 title="Zoom Out"
               >
-                <div className="relative">
-                  <Search size={16} />
-                  <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-                    <span className="text-[8px] font-bold text-white">−</span>
-                  </div>
-                </div>
+                <ZoomOut size={16} />
               </button>
               <button
                 onClick={onResetZoom}
-                className="px-2 py-1 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-lg hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600 text-xs font-medium"
+                className="px-2 py-1 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-lg hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600 text-xs font-medium"
                 title="Reset Zoom"
               >
                 {Math.round(lyricsZoom * 100)}%
@@ -237,29 +219,20 @@ const MobilePerformanceLayout = ({
                 </div>
               </div>
               <div className="flex-1 overflow-auto p-4">
-                <div style={{ 
+                <div className="mobile-zoom-container" style={{ 
                   transform: `scale(${lyricsZoom})`, 
-                  transformOrigin: 'top left',
-                  width: `${100 / lyricsZoom}%`,
-                  minHeight: `${100 / lyricsZoom}%`
-                }}>
-                {children}
+                  <ZoomIn size={16} />
                 </div>
               </div>
             </div>
-          )}
+                  className="p-2 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors shadow-lg border border-zinc-600"
         </div>
-      </div>
-
-      {/* Mobile: Current song bar (when not showing lyrics) */}
-      {!showLyrics && currentSong && (
-        <div className="md:hidden bg-zinc-900 border-t border-zinc-800 px-4 py-3 safe-area-inset-bottom">
-          <button
-            onClick={() => setShowLyrics(true)}
+                  className="p-2 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors shadow-lg border border-zinc-600"
+                  <ZoomOut size={16} />
             className="w-full text-left p-3 bg-zinc-800 rounded-xl border border-zinc-700 hover:bg-zinc-700 transition-colors"
           >
             <div className="flex items-center justify-between">
-              <div className="flex-1 min-w-0">
+                  className="px-2 py-1 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors text-xs font-medium shadow-lg border border-zinc-600"
                 <p className="text-base font-medium text-zinc-100 truncate">{currentSong.title}</p>
                 <p className="text-sm text-zinc-400 truncate">
                   {currentSong.original_artist} {currentSong.key_signature && `• ${currentSong.key_signature}`}

@@ -14,6 +14,14 @@ export const setlistsService = {
 
   // Get a single setlist by ID with its sets
   async getSetlistById(id) {
+    if (!id) {
+      throw new Error('Setlist ID is required.');
+    }
+
+    if (!id) {
+      throw new Error('Setlist ID is required');
+    }
+    
     const { data, error } = await supabase
       .from('setlists')
       .select(`
@@ -27,14 +35,18 @@ export const setlistsService = {
       `)
       .eq('id', id)
       .order('set_order', { foreignTable: 'sets', ascending: true })
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        throw new Error('Setlist not found');
-      }
       throw new Error(error.message);
     }
+
+    if (!data) {
+      throw new Error('Setlist not found');
+    }
+
+    
+    if (!data) {
+      throw new Error('Setlist not found');
+    }
+    
     return data;
   },
 
@@ -81,14 +93,22 @@ export const setlistsService = {
       throw new Error('Setlist name is required.');
     }
 
+    if (!id) {
+      throw new Error('Setlist ID is required.');
+    }
+
     // Get the setlist to check ownership
     const { data: setlist, error: setlistFetchError } = await supabase
       .from('setlists')
       .select('user_id')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (setlistFetchError) {
+      throw new Error(setlistFetchError.message);
+    }
+
+    if (!setlist) {
       throw new Error('Setlist not found');
     }
 

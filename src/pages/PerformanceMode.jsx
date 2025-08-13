@@ -112,15 +112,18 @@ const PerformanceMode = () => {
       const activeSession = await performanceService.getActiveSession(setlistId);
       
       if (activeSession) {
-        console.log('📡 Found existing session:', activeSession);
-        
-        // Always show role choice when session exists, but provide context
-        console.log('📡 Found existing session, showing role choice');
-        setExistingSession(activeSession);
-        setShowRoleChoice(true);
+        // Check if current user is the leader
+        if (activeSession.leader_id === user.id) {
+          console.log('👑 User is current leader, entering directly');
+          setExistingSession(activeSession);
+          await startPerformanceMode(setlistId, 'rejoin_leader', activeSession);
+        } else {
+          console.log('📡 Found existing session with different leader, showing choice');
+          setExistingSession(activeSession);
+          setShowRoleChoice(true);
+        }
       } else {
-        // No existing session, always show role choice
-        console.log('🆕 No existing session, showing role choice for new session');
+        console.log('🆕 No existing session, showing role choice');
         setExistingSession(null);
         setShowRoleChoice(true);
       }
@@ -173,31 +176,16 @@ const PerformanceMode = () => {
         await performanceService.prefetchAndCacheSetlistData(setlistId);
         sessionData = { id: 'standalone', setlist_id: setlistId };
         isStandalone = true;
+      } else if (role === 'rejoin_leader') {
+        console.log('👑 Rejoining as existing leader');
+        sessionData = existingSessionData;
+        isLeaderRole = true;
       } else if (role === 'force_leader') {
         // Admin force takeover
         console.log('👑 Admin forcing leadership takeover');
         if (existingSessionData) {
-          // Take over existing session
-          const { data: updatedSession, error } = await supabase
-            .from('performance_sessions')
-            .update({ 
-              leader_id: user.id,
-              created_at: new Date()
-            })
-            .eq('id', existingSessionData.id)
-            .select(`
-              *,
-              setlists (name),
-              users (id, name, email, role),
-              sets (name),
-              songs (title, original_artist)
-            `)
-            .single();
-            
-          if (error) throw error;
-          sessionData = updatedSession;
+          sessionData = await performanceService.takeOverLeadership(existingSessionData.id, user.id);
         } else {
-          // Create new session
           sessionData = await performanceService.createSession(setlistId, user.id);
         }
         isLeaderRole = true;
@@ -697,8 +685,9 @@ const PerformanceMode = () => {
   // Show role choice modal
   if (setlistId && showRoleChoice && !loading) {
     const hasActiveLeader = existingSession && existingSession.leader_id;
-    const isActiveLeader = hasActiveLeader && existingSession.leader_id === user.id;
+    const isCurrentLeader = hasActiveLeader && existingSession.leader_id === user.id;
     const canForceLeadership = user.user_level >= 3;
+    const leaderName = existingSession.users?.name || 'Unknown';
 
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
@@ -714,9 +703,7 @@ const PerformanceMode = () => {
             {existingSession && (
               <div className="mt-4 p-3 bg-zinc-800 rounded-xl">
                 <p className="text-sm text-zinc-400">
-                  Current leader: <span className="text-zinc-300 font-medium">
-                    {existingSession.users?.name || 'Unknown'}
-                  </span>
+                  Current leader: <span className="text-zinc-300 font-medium">{leaderName}</span>
                 </p>
                 <p className="text-xs text-zinc-500 mt-1">
                   Session started: {new Date(existingSession.created_at).toLocaleTimeString()}
@@ -726,21 +713,29 @@ const PerformanceMode = () => {
           </div>
 
           <div className="space-y-3">
-            {/* If user is already the leader of existing session */}
-            {isActiveLeader && (
-              <button
-                onClick={() => handleRoleChoice('leader')}
-                className="w-full inline-flex items-center justify-center px-6 py-4 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors font-medium"
-              >
-                <Crown size={20} className="mr-2" />
-                Rejoin as Leader
-              </button>
-            )}
-
-            {/* If there's an active leader and user wants to take over */}
-            {hasActiveLeader && !isActiveLeader && (
-              <>
-                {canForceLeadership && (
+            {/* Leadership options */}
+            {hasActiveLeader ? (
+              <div className="space-y-3">
+                {/* Show current leader options */}
+                {isCurrentLeader && (
+                  <div className="text-center p-3 bg-amber-600/20 rounded-xl border border-amber-500/30 mb-3">
+                    <p className="text-amber-300 font-medium">You are the current leader</p>
+                  </div>
+                )}
+                
+                {/* Follower option - always available when session exists */}
+                {!isCurrentLeader && (
+                  <button
+                    onClick={() => handleRoleChoice('follower')}
+                    className="w-full inline-flex items-center justify-center px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium"
+                  >
+                    <Users size={20} className="mr-2" />
+                    Join as Follower
+                  </button>
+                )}
+                
+                {/* Admin force takeover - only for non-leaders with admin rights */}
+                {!isCurrentLeader && canForceLeadership && (
                   <button
                     onClick={() => handleRoleChoice('force_leader')}
                     className="w-full inline-flex items-center justify-center px-6 py-4 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium"
@@ -749,56 +744,50 @@ const PerformanceMode = () => {
                     Force Take Leadership (Admin)
                   </button>
                 )}
-                
+              </div>
+            ) : (
+              /* No existing session - show all options */
+              <div className="space-y-3">
                 <button
-                  onClick={() => handleRoleChoice('request_leader')}
-                  className="w-full inline-flex items-center justify-center px-6 py-4 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-colors font-medium"
+                  onClick={() => handleRoleChoice('leader')}
+                  className="w-full inline-flex items-center justify-center px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
                 >
                   <Crown size={20} className="mr-2" />
-                  Request Leadership
+                  Create as Leader
                 </button>
-              </>
-            )}
-
-            {/* If no existing session or user can become leader */}
-            {!hasActiveLeader && (
-              <button
-                onClick={() => handleRoleChoice('leader')}
-                className="w-full inline-flex items-center justify-center px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
-              >
-                <Crown size={20} className="mr-2" />
-                Start as Leader
-              </button>
-            )}
-
-            {/* Follower option (always available if there's a session) */}
-            {hasActiveLeader && !isActiveLeader && (
-              <button
-                onClick={() => handleRoleChoice('follower')}
-                className="w-full inline-flex items-center justify-center px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium"
-              >
-                <Users size={20} className="mr-2" />
-                Join as Follower
-              </button>
+              </div>
             )}
             
-            {/* Standalone option (always available) */}
-            <button
-              onClick={() => handleRoleChoice('standalone')}
-              className="w-full inline-flex items-center justify-center px-6 py-4 bg-zinc-600 text-white rounded-xl hover:bg-zinc-500 transition-colors font-medium"
-            >
-              <Music size={20} className="mr-2" />
-              Standalone Mode
-            </button>
-          </div>
+            {/* Standalone mode always available */}
+            <div className="mt-4 pt-4 border-t border-zinc-700">
+              <button
+                onClick={() => handleRoleChoice('standalone')}
+                className="w-full inline-flex items-center justify-center px-6 py-4 bg-zinc-600 text-white rounded-xl hover:bg-zinc-500 transition-colors font-medium"
+              >
+                <Music size={20} className="mr-2" />
+                Standalone Mode
+              </button>
+            </div>
 
-          <div className="mt-6 text-center">
-            <button
-              onClick={() => navigate('/setlists')}
-              className="text-zinc-400 hover:text-zinc-300 transition-colors text-sm"
-            >
-              ← Back to Setlists
-            </button>
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => {
+                  if (setlistId) {
+                    // Go back to selection screen
+                    setShowRoleChoice(false);
+                    setSelectedSetlistId('');
+                    const newUrl = new URL(window.location);
+                    newUrl.searchParams.delete('setlist');
+                    window.history.replaceState({}, '', newUrl);
+                  } else {
+                    navigate('/setlists');
+                  }
+                }}
+                className="text-zinc-400 hover:text-zinc-300 transition-colors text-sm"
+              >
+                ← {setlistId ? 'Choose Different Setlist' : 'Back to Setlists'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -903,12 +892,22 @@ const PerformanceMode = () => {
 
             <div className="flex justify-end">
               <button
-                onClick={() => handleStartPerformance(selectedSetlistId)}
+                onClick={() => {
+                  if (selectedSetlistId) {
+                    // Update URL with setlist parameter
+                    const newUrl = new URL(window.location);
+                    newUrl.searchParams.set('setlist', selectedSetlistId);
+                    window.history.replaceState({}, '', newUrl);
+                    
+                    // Check for existing session and show role choice
+                    checkExistingSession(selectedSetlistId);
+                  }
+                }}
                 disabled={!selectedSetlistId || loading}
                 className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-animate shadow-lg font-medium"
               >
                 <Play size={20} className="mr-2" />
-                Enter Performance Mode
+                Continue
               </button>
             </div>
           </div>
@@ -1017,7 +1016,34 @@ const PerformanceMode = () => {
             </button>
           </div>
         </div>
-      )}
+        
+        {/* Fixed position zoom controls for mobile lyrics view */}
+        {showLyrics && (
+          <div className="md:hidden absolute bottom-20 right-4 flex flex-col space-y-2 safe-area-inset-bottom">
+            <button
+              onClick={onZoomIn}
+              className="p-3 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
+              title="Zoom In"
+            >
+              <ZoomIn size={18} />
+            </button>
+            <button
+              onClick={onZoomOut}
+              className="p-3 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
+              title="Zoom Out"
+            >
+              <ZoomOut size={18} />
+            </button>
+            <button
+              onClick={onResetZoom}
+              className="px-3 py-2 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600 text-xs font-medium"
+              title="Reset Zoom"
+            >
+              {Math.round(lyricsZoom * 100)}%
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 

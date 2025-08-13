@@ -15,17 +15,26 @@ export const songsService = {
 
   // Get a single song by ID
   async getSongById(id) {
+    if (!id) {
+      throw new Error('Song ID is required.');
+    }
+
     return apiService.executeQuery(() => {
       return supabase
         .from('songs')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
     }).catch(error => {
-      if (error.message?.includes('PGRST116')) {
+      if (error.message?.includes('PGRST116') || error.message?.includes('0 rows')) {
         throw new Error('Song not found');
       }
       throw error;
+    }).then(data => {
+      if (!data) {
+        throw new Error('Song not found');
+      }
+      return data;
     });
   },
 
@@ -70,20 +79,39 @@ export const songsService = {
       throw new Error('Artist and Title are required.');
     }
 
+    if (!id) {
+      throw new Error('Song ID is required.');
+    }
+
+    // Check if song exists first
+    const { data: existingSong, error: checkError } = await supabase
+      .from('songs')
+      .select('id')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (checkError) {
+      throw new Error(checkError.message);
+    }
+
+    if (!existingSong) {
+      throw new Error('Song not found.');
+    }
+
     // Check for duplicate song (title + artist) excluding the current song being updated
-    const { data: existingSong, error: existingError } = await supabase
+    const { data: existingSongs, error: existingError } = await supabase
       .from('songs')
       .select('id')
       .eq('original_artist', original_artist)
       .eq('title', title)
-      .neq('id', id)
-      .single();
+      .neq('id', id);
 
-    if (existingSong) {
-      throw new Error('Another song with this title and artist already exists.');
-    }
-    if (existingError && existingError.code !== 'PGRST116') {
+    if (existingError) {
       throw new Error(existingError.message);
+    }
+    
+    if (existingSongs && existingSongs.length > 0) {
+      throw new Error('Another song with this title and artist already exists.');
     }
 
     const { data, error } = await supabase
@@ -91,19 +119,26 @@ export const songsService = {
       .update({ original_artist, title, key_signature, lyrics, performance_note })
       .eq('id', id)
       .select()
-      .single();
-
+      .maybeSingle();
+    if (existingSong && existingError?.code !== 'PGRST116') {
     if (error) throw new Error(error.message);
     return data;
-  },
+    if (existingError && existingError.code !== 'PGRST116') {
 
   // Delete a song
   async deleteSong(id) {
     const { error } = await supabase
       .from('songs')
       .delete()
-      .eq('id', id);
+      .maybeSingle();
 
-    if (error) throw new Error(error.message);
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (!data) {
+      throw new Error('Failed to update song - song may have been deleted.');
+    }
+
   }
 };

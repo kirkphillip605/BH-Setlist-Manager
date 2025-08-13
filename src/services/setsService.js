@@ -15,6 +15,10 @@ export const setsService = {
 
   // Get a single set by ID with its songs
   async getSetById(id) {
+    if (!id) {
+      throw new Error('Set ID is required.');
+    }
+
     const { data, error } = await supabase
       .from('sets')
       .select(`
@@ -34,14 +38,16 @@ export const setsService = {
       `)
       .eq('id', id)
       .order('song_order', { foreignTable: 'set_songs', ascending: true })
-      .single();
+      .maybeSingle();
 
     if (error) {
-      if (error.code === 'PGRST116') {
-        throw new Error('Set not found');
-      }
       throw new Error(error.message);
     }
+
+    if (!data) {
+      throw new Error('Set not found');
+    }
+
     return data;
   },
 
@@ -51,6 +57,21 @@ export const setsService = {
 
     if (!name || !setlist_id) {
       throw new Error('Set name and setlist_id are required.');
+    }
+
+    // Verify setlist exists
+    const { data: setlistExists, error: setlistError } = await supabase
+      .from('setlists')
+      .select('id')
+      .eq('id', setlist_id)
+      .maybeSingle();
+
+    if (setlistError) {
+      throw new Error(setlistError.message);
+    }
+
+    if (!setlistExists) {
+      throw new Error('Setlist not found.');
     }
 
     // Check for duplicates within the setlist (across all sets)
@@ -112,37 +133,55 @@ export const setsService = {
       throw new Error('Set name is required.');
     }
 
+    if (!id) {
+      throw new Error('Set ID is required.');
+    }
+
+    // Check if set exists first
+    const { data: existingSet, error: checkError } = await supabase
+      .from('sets')
+      .select('id, setlist_id')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (checkError) {
+      throw new Error(checkError.message);
+    }
+
+    if (!existingSet) {
+      throw new Error('Set not found.');
+    }
+
     // Check for duplicates within the setlist (across all sets) excluding current set
     if (songs !== undefined && songs.length > 0) {
-      const { data: currentSet } = await supabase
-        .from('sets')
-        .select('setlist_id')
-        .eq('id', id)
-        .single();
-
-      if (currentSet) {
-        const duplicates = await this.checkForDuplicatesInSetlist(
-          currentSet.setlist_id, 
-          songs.map(s => s.song_id),
-          id // Exclude current set from duplicate check
-        );
-        if (duplicates.length > 0) {
-          throw new Error(JSON.stringify({
-            type: 'DUPLICATES_FOUND',
-            duplicates: duplicates,
-            message: 'Some songs already exist in other sets within this setlist'
-          }));
-        }
+      const duplicates = await this.checkForDuplicatesInSetlist(
+        existingSet.setlist_id, 
+        songs.map(s => s.song_id),
+        id // Exclude current set from duplicate check
+      );
+      if (duplicates.length > 0) {
+        throw new Error(JSON.stringify({
+          type: 'DUPLICATES_FOUND',
+          duplicates: duplicates,
+          message: 'Some songs already exist in other sets within this setlist'
+        }));
       }
     }
+    
     const { data: updatedSet, error: setError } = await supabase
       .from('sets')
       .update({ name })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
-    if (setError) throw new Error(setError.message);
+    if (setError) {
+      throw new Error(setError.message);
+    }
+
+    if (!updatedSet) {
+      throw new Error('Failed to update set - set may have been deleted.');
+    }
 
     // Update associated songs
     if (songs !== undefined) {
@@ -174,6 +213,25 @@ export const setsService = {
 
   // Delete a set
   async deleteSet(id) {
+    if (!id) {
+      throw new Error('Set ID is required.');
+    }
+
+    // Check if set exists first
+    const { data: existingSet, error: checkError } = await supabase
+      .from('sets')
+      .select('id')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (checkError) {
+      throw new Error(checkError.message);
+    }
+
+    if (!existingSet) {
+      throw new Error('Set not found.');
+    }
+
     const { error } = await supabase
       .from('sets')
       .delete()
