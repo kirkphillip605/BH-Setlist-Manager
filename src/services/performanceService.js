@@ -146,14 +146,11 @@ class PerformanceService {
   // Get or create unique session for setlist
   async getOrCreateSession(setlistId, userId, forceAsLeader = false) {
     try {
-      // First, end any expired sessions or cleanup stale sessions
-      await this.cleanupExpiredSessions();
-
       // Check for existing active session
       let activeSession = await this.getActiveSession(setlistId);
 
       if (activeSession) {
-        if (activeSession.leader_id === userId || forceAsLeader) {
+        if (activeSession.leader_id === userId) {
           // User is the current leader or forcing leadership, return session
           console.log(`🎭 User ${userId} is leader of existing session`);
           return { session: activeSession, isNewSession: false, isLeader: true };
@@ -162,6 +159,11 @@ class PerformanceService {
           console.log(`🎭 Different leader exists for session`);
           return { session: activeSession, isNewSession: false, isLeader: false };
         }
+      }
+
+      // Only create new session if forceAsLeader is true or no session exists
+      if (!forceAsLeader && !activeSession) {
+        return { session: null, isNewSession: false, isLeader: false };
       }
 
       // No active session exists, create new one
@@ -229,10 +231,10 @@ class PerformanceService {
   // Join existing session (follower)
   async joinSession(setlistId, userId) {
     try {
-      // Get the existing session
-      const sessionResult = await this.getOrCreateSession(setlistId, userId, false);
+      // Get the existing session without creating a new one
+      const activeSession = await this.getActiveSession(setlistId);
       
-      if (!sessionResult.session) {
+      if (!activeSession) {
         throw new Error('No active performance session found');
       }
 
@@ -240,7 +242,7 @@ class PerformanceService {
       const { error: participantError } = await supabase
         .from('session_participants')
         .upsert({
-          session_id: sessionResult.session.id,
+          session_id: activeSession.id,
           user_id: userId,
           is_active: true
         }, {
@@ -248,8 +250,7 @@ class PerformanceService {
         });
 
       if (participantError) {
-        console.error('Failed to add participant:', participantError);
-        // Don't throw error as this might be due to existing participant
+        console.warn('Failed to add participant (may already exist):', participantError);
       }
 
       // Check if cache is valid, otherwise refresh
@@ -267,7 +268,7 @@ class PerformanceService {
 
       this.setActive(true);
       console.log('🎭 Joined performance session as follower');
-      return sessionResult.session;
+      return activeSession;
     } catch (error) {
       console.error('Error joining performance session:', error);
       throw error;

@@ -23,9 +23,10 @@ const PerformanceMode = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [leadershipChoice, setLeadershipChoice] = useState(null);
+  const [needsLeadershipChoice, setNeedsLeadershipChoice] = useState(false);
 
   // Performance state
-  const [inPerformance, setInPerformance] = useState(!!setlistId);
+  const [inPerformance, setInPerformance] = useState(false);
   const [session, setSession] = useState(null);
   const [setlistData, setSetlistData] = useState(null);
   const [songsData, setSongsData] = useState({});
@@ -54,21 +55,18 @@ const PerformanceMode = () => {
 
   useEffect(() => {
     mountedRef.current = true;
+    setPageTitle('Performance Mode');
     
     // Register notification callback
     performanceService.registerNotificationCallback('main', showNotification);
     
-    const initialize = async () => {
-      setPageTitle('Performance Mode');
-      
-      if (setlistId) {
-        await initializePerformanceMode(setlistId);
-      } else {
-        await fetchSetlists();
-      }
-    };
-    
-    initialize();
+    if (setlistId) {
+      // If we have a setlist ID, check if we need to choose leadership role
+      checkLeadershipRequirements(setlistId);
+    } else {
+      // No setlist selected, show setlist selection
+      fetchSetlists();
+    }
     
     return () => {
       mountedRef.current = false;
@@ -79,9 +77,39 @@ const PerformanceMode = () => {
     };
   }, [setlistId]);
 
+  // Initialize performance mode when we have both setlist and leadership choice
+  useEffect(() => {
+    if (setlistId && leadershipChoice && !inPerformance) {
+      initializePerformanceMode(setlistId, leadershipChoice);
+    }
+  }, [setlistId, leadershipChoice, inPerformance]);
+
   const showNotification = (type, message) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 4000);
+  };
+
+  const checkLeadershipRequirements = async (setlistId) => {
+    try {
+      setLoading(true);
+      
+      // Check if there's an existing active session
+      const existingSession = await performanceService.getActiveSession(setlistId);
+      
+      if (existingSession) {
+        // There's an active session, user needs to choose role
+        setNeedsLeadershipChoice(true);
+        setSession(existingSession);
+      } else {
+        // No active session, user can start as leader immediately
+        setLeadershipChoice('leader');
+      }
+    } catch (err) {
+      console.error('Error checking leadership requirements:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchSetlists = async () => {
@@ -105,57 +133,25 @@ const PerformanceMode = () => {
     }
   };
 
-  const loadFollowers = async (sessionId) => {
-    if (!sessionId || sessionId === 'standalone') return;
-    
-    try {
-      const followersData = await performanceService.getSessionFollowers(sessionId);
-      if (mountedRef.current) {
-        setFollowers(followersData);
-      }
-    } catch (err) {
-      console.error('Error loading followers:', err);
-    }
-  };
-
-  const fetchAllSongs = async () => {
-    try {
-      const songs = await songsService.getAllSongs();
-      if (mountedRef.current) {
-        setAllSongs(songs);
-      }
-    } catch (err) {
-      console.error('Error fetching all songs:', err);
-    }
-  };
-
-  const initializePerformanceMode = async (setlistId) => {
+  const initializePerformanceMode = async (setlistId, choice) => {
     if (!mountedRef.current) return;
     
     setLoading(true);
     setError(null);
     
     try {
-      // Try to get or create session based on leadership choice
       let sessionResult;
       let isLeaderRole = false;
       let isStandalone = false;
       
-      if (leadershipChoice === 'leader') {
-        sessionResult = await performanceService.getOrCreateSession(setlistId, user.id, true);
+      if (choice === 'leader') {
+        // Check if there's already an active session
+        const existingSession = await performanceService.getActiveSession(setlistId);
         
-        if (!sessionResult.session) {
-          throw new Error('Failed to create or join session');
-        }
-
-        if (sessionResult.session.leader_id === user.id) {
-          // User is the leader
-          sessionResult.session = await performanceService.createSession(setlistId, user.id);
-          isLeaderRole = true;
-        } else {
+        if (existingSession && existingSession.leader_id !== user.id) {
           // Someone else is leader, request transfer
           await performanceService.requestLeadershipTransfer(
-            sessionResult.session.id, 
+            existingSession.id, 
             user.id, 
             user.name
           );
@@ -165,11 +161,20 @@ const PerformanceMode = () => {
             setLoading(false);
           }
           return;
+        } else if (existingSession && existingSession.leader_id === user.id) {
+          // User is already the leader, rejoin
+          sessionResult = { session: existingSession, isNewSession: false };
+          isLeaderRole = true;
+        } else {
+          // No existing session, create new one
+          const newSession = await performanceService.createSession(setlistId, user.id);
+          sessionResult = { session: newSession, isNewSession: true };
+          isLeaderRole = true;
         }
-      } else if (leadershipChoice === 'follower') {
-        sessionResult = await performanceService.getOrCreateSession(setlistId, user.id, false);
+      } else if (choice === 'follower') {
+        const existingSession = await performanceService.getActiveSession(setlistId);
         
-        if (!sessionResult.session) {
+        if (!existingSession) {
           if (mountedRef.current) {
             setError('No active session to join as follower');
             setLoading(false);
@@ -178,19 +183,16 @@ const PerformanceMode = () => {
         }
         
         await performanceService.joinSession(setlistId, user.id);
+        sessionResult = { session: existingSession, isNewSession: false };
         isLeaderRole = false;
-      } else if (leadershipChoice === 'standalone') {
+      } else if (choice === 'standalone') {
         // Standalone mode - no session interaction
         await performanceService.prefetchAndCacheSetlistData(setlistId);
         isStandalone = true;
         sessionResult = { session: { id: 'standalone', setlist_id: setlistId } };
-      } else {
-        // No leadership choice made yet
-        setLoading(false);
-        return;
       }
 
-      if (mountedRef.current) {
+      if (mountedRef.current && sessionResult) {
         setSession(sessionResult.session);
         setIsLeader(isLeaderRole);
         setStandaloneMode(isStandalone);
@@ -253,24 +255,40 @@ const PerformanceMode = () => {
           console.log('📱 Using cached performance data');
         }
       } else {
-        console.warn('No cached data available, this should not happen in performance mode');
-      }
-
-      if (sessionData?.current_set_id) {
-        const currentSetData = cachedSetlist?.sets?.find(s => s.id === sessionData.current_set_id);
+        console.warn('No cached data available, fetching...');
+        await performanceService.prefetchAndCacheSetlistData(setlistId);
+        const { setlistData: newSetlist, songsData: newSongs } = performanceService.getCachedSetlistData();
         if (mountedRef.current) {
-          setCurrentSet(currentSetData);
-        }
-      } else if (cachedSetlist?.sets?.[0]) {
-        if (mountedRef.current) {
-          setCurrentSet(cachedSetlist.sets[0]);
+          setSetlistData(newSetlist);
+          setSongsData(newSongs);
         }
       }
 
-      if (sessionData?.current_song_id) {
-        await loadCurrentSong(sessionData.current_song_id);
-      } else if (cachedSetlist?.sets?.[0]?.set_songs?.[0]) {
-        await loadCurrentSong(cachedSetlist.sets[0].set_songs[0].songs.id);
+      // Set current set and song based on session data
+      const { setlistData: currentSetlistData } = performanceService.getCachedSetlistData();
+      
+      if (sessionData && sessionData.id !== 'standalone') {
+        if (sessionData.current_set_id) {
+          const currentSetData = currentSetlistData?.sets?.find(s => s.id === sessionData.current_set_id);
+          if (mountedRef.current) {
+            setCurrentSet(currentSetData);
+          }
+        }
+
+        if (sessionData.current_song_id) {
+          await loadCurrentSong(sessionData.current_song_id);
+        }
+      } else {
+        // Default to first set and first song for new sessions or standalone
+        if (currentSetlistData?.sets?.[0]) {
+          if (mountedRef.current) {
+            setCurrentSet(currentSetlistData.sets[0]);
+          }
+          
+          if (currentSetlistData.sets[0].set_songs?.[0]) {
+            await loadCurrentSong(currentSetlistData.sets[0].set_songs[0].songs.id);
+          }
+        }
       }
 
     } catch (err) {
@@ -278,6 +296,30 @@ const PerformanceMode = () => {
       if (mountedRef.current) {
         setError(err.message);
       }
+    }
+  };
+
+  const loadFollowers = async (sessionId) => {
+    if (!sessionId || sessionId === 'standalone') return;
+    
+    try {
+      const followersData = await performanceService.getSessionFollowers(sessionId);
+      if (mountedRef.current) {
+        setFollowers(followersData);
+      }
+    } catch (err) {
+      console.error('Error loading followers:', err);
+    }
+  };
+
+  const fetchAllSongs = async () => {
+    try {
+      const songs = await songsService.getAllSongs();
+      if (mountedRef.current) {
+        setAllSongs(songs);
+      }
+    } catch (err) {
+      console.error('Error fetching all songs:', err);
     }
   };
 
@@ -294,7 +336,13 @@ const PerformanceMode = () => {
           setIsSearchSong(false);
         }
       } else {
-        console.warn(`Song ${songId} not found in cache`);
+        console.warn(`Song ${songId} not found in cache, fetching...`);
+        const songData = await songsService.getSongById(songId);
+        if (mountedRef.current) {
+          setCurrentSong(songData);
+          setCurrentSongLyrics(songData.lyrics);
+          setIsSearchSong(false);
+        }
       }
     } catch (err) {
       console.error('Error loading current song:', err);
@@ -380,8 +428,21 @@ const PerformanceMode = () => {
     await loadFollowers(session.id);
     
     // Show notification for new participants
-    if (payload.eventType === 'INSERT' && payload.new?.users?.name) {
-      showNotification('info', `${payload.new.users.name} joined the session`);
+    if (payload.eventType === 'INSERT' && payload.new) {
+      // Fetch user name for notification
+      try {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('name')
+          .eq('id', payload.new.user_id)
+          .single();
+        
+        if (userData?.name) {
+          showNotification('info', `${userData.name} joined the session`);
+        }
+      } catch (err) {
+        console.warn('Could not fetch user name for notification:', err);
+      }
     }
   };
 
@@ -415,14 +476,18 @@ const PerformanceMode = () => {
     }
   };
 
-  const handleStartPerformance = async (choice) => {
+  const handleStartPerformance = async (selectedSetlistId) => {
     if (!selectedSetlistId) {
       setError('Please select a setlist');
       return;
     }
     
-    setLeadershipChoice(choice);
     navigate(`/performance?setlist=${selectedSetlistId}`);
+  };
+
+  const handleLeadershipChoiceMade = (choice) => {
+    setLeadershipChoice(choice);
+    setNeedsLeadershipChoice(false);
   };
 
   const handleSetChange = async (set) => {
@@ -616,7 +681,7 @@ const PerformanceMode = () => {
   );
 
   // Leadership choice modal
-  if (setlistId && !leadershipChoice && !standaloneMode && !loading) {
+  if (setlistId && needsLeadershipChoice && !loading) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
         <div className="card-modern p-6 w-full max-w-md">
@@ -628,19 +693,24 @@ const PerformanceMode = () => {
             <p className="text-zinc-300 mt-2">
               How would you like to join this session?
             </p>
+            {session && (
+              <p className="text-sm text-zinc-400 mt-2">
+                Current leader: {session.users?.name || 'Unknown'}
+              </p>
+            )}
           </div>
 
           <div className="space-y-4">
             <button
-              onClick={() => setLeadershipChoice('leader')}
+              onClick={() => handleLeadershipChoiceMade('leader')}
               className="w-full inline-flex items-center justify-center px-6 py-4 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors font-medium"
             >
               <Crown size={20} className="mr-2" />
-              Start as Leader
+              {session ? 'Request Leadership' : 'Start as Leader'}
             </button>
             
             <button
-              onClick={() => setLeadershipChoice('follower')}
+              onClick={() => handleLeadershipChoiceMade('follower')}
               className="w-full inline-flex items-center justify-center px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
             >
               <Users size={20} className="mr-2" />
@@ -648,7 +718,7 @@ const PerformanceMode = () => {
             </button>
             
             <button
-              onClick={() => setLeadershipChoice('standalone')}
+              onClick={() => handleLeadershipChoiceMade('standalone')}
               className="w-full inline-flex items-center justify-center px-6 py-4 bg-zinc-600 text-white rounded-xl hover:bg-zinc-500 transition-colors font-medium"
             >
               <Music size={20} className="mr-2" />
@@ -670,14 +740,70 @@ const PerformanceMode = () => {
   }
 
   // Show loading state
-  if (loading && !inPerformance) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-zinc-950">
         <div className="text-center">
           <Loader className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" />
           <p className="text-zinc-300">
-            {leadershipChoice ? 'Initializing performance mode...' : 'Loading setlists...'}
+            {setlistId ? 'Initializing performance mode...' : 'Loading setlists...'}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-zinc-950 p-4 flex items-center justify-center">
+        <div className="card-modern p-6 w-full max-w-md text-center">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <XCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+          </div>
+          <h2 className="text-xl font-bold text-zinc-100 mb-4">Error</h2>
+          <p className="text-zinc-300 mb-6">{error}</p>
+          <div className="space-y-3">
+            <button
+              onClick={() => {
+                setError(null);
+                setLeadershipChoice(null);
+                setNeedsLeadershipChoice(false);
+                if (setlistId) {
+                  checkLeadershipRequirements(setlistId);
+                } else {
+                  fetchSetlists();
+                }
+              }}
+              className="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+            >
+              Try Again
+            </button>
+            {error.includes('rejected') && (
+              <>
+                <button
+                  onClick={() => handleLeadershipChoiceMade('follower')}
+                  className="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                >
+                  <Users size={16} className="mr-2" />
+                  Continue as Follower
+                </button>
+                <button
+                  onClick={() => handleLeadershipChoiceMade('standalone')}
+                  className="w-full inline-flex items-center justify-center px-4 py-2 bg-zinc-600 text-white rounded-xl hover:bg-zinc-500 transition-colors"
+                >
+                  <Music size={16} className="mr-2" />
+                  Enter Standalone Mode
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => navigate('/setlists')}
+              className="w-full text-zinc-400 hover:text-zinc-300 transition-colors"
+            >
+              ← Back to Setlists
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -707,13 +833,6 @@ const PerformanceMode = () => {
             </div>
           </div>
 
-          {error && (
-            <div className="bg-red-900/30 border border-red-800/50 text-red-200 px-4 py-3 rounded-xl mb-6">
-              <strong className="font-bold">Error!</strong>
-              <span className="block sm:inline"> {error}</span>
-            </div>
-          )}
-
           <div className="card-modern p-6">
             <div className="mb-6">
               <label htmlFor="setlist-select" className="block text-sm font-medium text-zinc-300 mb-3">
@@ -736,27 +855,15 @@ const PerformanceMode = () => {
 
             <div className="flex justify-end">
               <button
-                onClick={() => navigate(`/performance?setlist=${selectedSetlistId}`)}
+                onClick={() => handleStartPerformance(selectedSetlistId)}
                 disabled={!selectedSetlistId || loading}
                 className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-animate shadow-lg font-medium"
               >
                 <Play size={20} className="mr-2" />
-                {loading ? 'Loading...' : 'Enter Performance Mode'}
+                Enter Performance Mode
               </button>
             </div>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Performance mode loading state
-  if (loading) {
-    return (
-      <div className="h-screen bg-zinc-950 flex items-center justify-center">
-        <div className="text-center">
-          <Loader className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" />
-          <p className="text-zinc-300">Initializing performance mode...</p>
         </div>
       </div>
     );
