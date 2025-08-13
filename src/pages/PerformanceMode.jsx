@@ -24,6 +24,7 @@ const PerformanceMode = () => {
   const [error, setError] = useState(null);
   const [leadershipChoice, setLeadershipChoice] = useState(null);
   const [needsLeadershipChoice, setNeedsLeadershipChoice] = useState(false);
+  const [existingSession, setExistingSession] = useState(null);
 
   // Performance state
   const [inPerformance, setInPerformance] = useState(false);
@@ -52,6 +53,7 @@ const PerformanceMode = () => {
 
   // Notifications
   const [notification, setNotification] = useState(null);
+  const [lastLeaderId, setLastLeaderId] = useState(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -77,38 +79,56 @@ const PerformanceMode = () => {
     };
   }, [setlistId]);
 
-  // Initialize performance mode when we have both setlist and leadership choice
+  // Initialize performance mode when we have leadership choice
   useEffect(() => {
     if (setlistId && leadershipChoice && !inPerformance) {
       initializePerformanceMode(setlistId, leadershipChoice);
     }
-  }, [setlistId, leadershipChoice, inPerformance]);
+  }, [setlistId, leadershipChoice]);
 
   const showNotification = (type, message) => {
+    if (!mountedRef.current) return;
+    
     setNotification({ type, message });
-    setTimeout(() => setNotification(null), 4000);
+    setTimeout(() => {
+      if (mountedRef.current) {
+        setNotification(null);
+      }
+    }, 4000);
   };
 
   const checkLeadershipRequirements = async (setlistId) => {
     try {
       setLoading(true);
+      setError(null);
       
       // Check if there's an existing active session
-      const existingSession = await performanceService.getActiveSession(setlistId);
+      const activeSession = await performanceService.getActiveSession(setlistId);
       
-      if (existingSession) {
-        // There's an active session, user needs to choose role
-        setNeedsLeadershipChoice(true);
-        setSession(existingSession);
+      if (activeSession) {
+        // There's an active session
+        setExistingSession(activeSession);
+        
+        if (activeSession.leader_id === user.id) {
+          // User is the current leader, rejoin automatically
+          setLeadershipChoice('leader');
+        } else {
+          // Different leader, show choice modal
+          setNeedsLeadershipChoice(true);
+        }
       } else {
         // No active session, user can start as leader immediately
         setLeadershipChoice('leader');
       }
     } catch (err) {
       console.error('Error checking leadership requirements:', err);
-      setError(err.message);
+      if (mountedRef.current) {
+        setError(err.message);
+      }
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -146,12 +166,12 @@ const PerformanceMode = () => {
       
       if (choice === 'leader') {
         // Check if there's already an active session
-        const existingSession = await performanceService.getActiveSession(setlistId);
+        const result = await performanceService.getOrCreateSession(setlistId, user.id, 'leader');
         
-        if (existingSession && existingSession.leader_id !== user.id) {
-          // Someone else is leader, request transfer
+        if (result.needsTransfer) {
+          // Need to request leadership transfer
           await performanceService.requestLeadershipTransfer(
-            existingSession.id, 
+            result.session.id, 
             user.id, 
             user.name
           );
@@ -161,20 +181,14 @@ const PerformanceMode = () => {
             setLoading(false);
           }
           return;
-        } else if (existingSession && existingSession.leader_id === user.id) {
-          // User is already the leader, rejoin
-          sessionResult = { session: existingSession, isNewSession: false };
-          isLeaderRole = true;
         } else {
-          // No existing session, create new one
-          const newSession = await performanceService.createSession(setlistId, user.id);
-          sessionResult = { session: newSession, isNewSession: true };
-          isLeaderRole = true;
+          sessionResult = result;
+          isLeaderRole = result.isLeader;
         }
       } else if (choice === 'follower') {
-        const existingSession = await performanceService.getActiveSession(setlistId);
+        const activeSession = await performanceService.getActiveSession(setlistId);
         
-        if (!existingSession) {
+        if (!activeSession) {
           if (mountedRef.current) {
             setError('No active session to join as follower');
             setLoading(false);
@@ -183,7 +197,7 @@ const PerformanceMode = () => {
         }
         
         await performanceService.joinSession(setlistId, user.id);
-        sessionResult = { session: existingSession, isNewSession: false };
+        sessionResult = { session: activeSession, isNewSession: false };
         isLeaderRole = false;
       } else if (choice === 'standalone') {
         // Standalone mode - no session interaction
@@ -196,6 +210,7 @@ const PerformanceMode = () => {
         setSession(sessionResult.session);
         setIsLeader(isLeaderRole);
         setStandaloneMode(isStandalone);
+        setLastLeaderId(sessionResult.session?.leader_id || null);
         
         await loadPerformanceData(setlistId, sessionResult.session);
 
@@ -393,24 +408,33 @@ const PerformanceMode = () => {
       
       setSession(prev => ({ ...prev, ...newSession }));
       
-      // Check if leadership changed
-      if (newSession.leader_id !== session?.leader_id) {
-        const wasLeader = session?.leader_id === user.id;
+      // Check if leadership changed - only notify if it actually changed
+      if (newSession.leader_id !== lastLeaderId) {
+        const wasLeader = lastLeaderId === user.id;
         const isNowLeader = newSession.leader_id === user.id;
         
-        if (wasLeader && !isNowLeader) {
-          // We lost leadership
-          setIsLeader(false);
-          localStorage.setItem('performanceMode_isLeader', 'false');
-          showNotification('info', 'Leadership transferred to another user');
-        } else if (!wasLeader && isNowLeader) {
+        if (!wasLeader && isNowLeader) {
           // We gained leadership
           setIsLeader(true);
           localStorage.setItem('performanceMode_isLeader', 'true');
-          showNotification('success', 'You are now the session leader');
+          performanceService.showNotification('success', 'You are now the session leader');
+          
+          // Subscribe to leadership requests now that we're leader
+          performanceService.subscribeToLeadershipRequests(
+            newSession.id,
+            handleLeadershipRequest
+          );
+        } else if (wasLeader && !isNowLeader) {
+          // We lost leadership
+          setIsLeader(false);
+          localStorage.setItem('performanceMode_isLeader', 'false');
+          performanceService.showNotification('info', 'Leadership transferred to another user');
         }
+        
+        setLastLeaderId(newSession.leader_id);
       }
       
+      // Update current song/set if changed
       if (newSession.current_song_id !== currentSong?.id) {
         loadCurrentSong(newSession.current_song_id);
       }
@@ -428,7 +452,7 @@ const PerformanceMode = () => {
     await loadFollowers(session.id);
     
     // Show notification for new participants
-    if (payload.eventType === 'INSERT' && payload.new) {
+    if (payload.eventType === 'INSERT' && payload.new && payload.new.is_active) {
       // Fetch user name for notification
       try {
         const { data: userData } = await supabase
@@ -437,8 +461,30 @@ const PerformanceMode = () => {
           .eq('id', payload.new.user_id)
           .single();
         
-        if (userData?.name) {
-          showNotification('info', `${userData.name} joined the session`);
+        if (userData?.name && payload.new.user_id !== user.id) {
+          performanceService.showNotification(
+            'info', 
+            `${userData.name} joined ${setlistData?.name || 'the session'}`,
+            payload.new.user_id
+          );
+        }
+      } catch (err) {
+        console.warn('Could not fetch user name for notification:', err);
+      }
+    } else if (payload.eventType === 'UPDATE' && payload.new && !payload.new.is_active) {
+      // User left session
+      try {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('name')
+          .eq('id', payload.new.user_id)
+          .single();
+        
+        if (userData?.name && payload.new.user_id !== user.id) {
+          performanceService.showNotification(
+            'info', 
+            `${userData.name} left ${setlistData?.name || 'the session'}`
+          );
         }
       } catch (err) {
         console.warn('Could not fetch user name for notification:', err);
@@ -452,12 +498,17 @@ const PerformanceMode = () => {
     const request = payload.new;
     
     if (payload.eventType === 'INSERT' && request.status === 'pending') {
+      console.log('👑 New leadership request received:', request);
       setLeadershipRequestData(request);
       setShowLeadershipRequest(true);
     } else if (payload.eventType === 'UPDATE' && request.status !== 'pending') {
       // Request was resolved
       setShowLeadershipRequest(false);
       setLeadershipRequestData(null);
+      
+      if (request.status === 'approved') {
+        performanceService.showNotification('info', `Leadership transferred to ${request.requesting_user_name}`);
+      }
     }
   };
 
@@ -661,8 +712,8 @@ const PerformanceMode = () => {
       setShowLeadershipRequest(false);
       setLeadershipRequestData(null);
       
-      if (approved) {
-        showNotification('info', `Leadership transferred to ${leadershipRequestData.requesting_user_name}`);
+      if (!approved) {
+        performanceService.showNotification('info', `Leadership request from ${leadershipRequestData.requesting_user_name} was rejected`);
       }
       
       // Refresh followers list
@@ -681,7 +732,7 @@ const PerformanceMode = () => {
   );
 
   // Leadership choice modal
-  if (setlistId && needsLeadershipChoice && !loading) {
+  if (setlistId && needsLeadershipChoice && !loading && existingSession) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
         <div className="card-modern p-6 w-full max-w-md">
@@ -689,15 +740,13 @@ const PerformanceMode = () => {
             <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
               <Crown className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             </div>
-            <h2 className="text-2xl font-bold text-zinc-100">Performance Mode</h2>
+            <h2 className="text-2xl font-bold text-zinc-100">Join Performance</h2>
             <p className="text-zinc-300 mt-2">
               How would you like to join this session?
             </p>
-            {session && (
-              <p className="text-sm text-zinc-400 mt-2">
-                Current leader: {session.users?.name || 'Unknown'}
-              </p>
-            )}
+            <p className="text-sm text-zinc-400 mt-2">
+              Current leader: {existingSession?.users?.name || 'Unknown'}
+            </p>
           </div>
 
           <div className="space-y-4">
@@ -706,7 +755,7 @@ const PerformanceMode = () => {
               className="w-full inline-flex items-center justify-center px-6 py-4 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors font-medium"
             >
               <Crown size={20} className="mr-2" />
-              {session ? 'Request Leadership' : 'Start as Leader'}
+              Request Leadership
             </button>
             
             <button
@@ -779,7 +828,7 @@ const PerformanceMode = () => {
             >
               Try Again
             </button>
-            {error.includes('rejected') && (
+            {error.includes('Waiting for current leader response') && (
               <>
                 <button
                   onClick={() => handleLeadershipChoiceMade('follower')}

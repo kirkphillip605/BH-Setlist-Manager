@@ -6,11 +6,14 @@ const STORAGE_KEYS = {
   SONGS_DATA: 'performanceMode_songsData',
   SESSION_ID: 'performanceMode_sessionId',
   IS_LEADER: 'performanceMode_isLeader',
-  CACHE_TIMESTAMP: 'performanceMode_cacheTimestamp'
+  CACHE_TIMESTAMP: 'performanceMode_cacheTimestamp',
+  LAST_ACTIVITY: 'performanceMode_lastActivity'
 };
 
 // Cache expiry time (5 minutes)
 const CACHE_EXPIRY = 5 * 60 * 1000;
+// Session stale timeout (2 minutes of inactivity)
+const SESSION_STALE_TIMEOUT = 2 * 60 * 1000;
 
 class PerformanceService {
   constructor() {
@@ -18,6 +21,8 @@ class PerformanceService {
     this.isInPerformanceMode = false;
     this.leadershipRequests = new Map();
     this.notificationCallbacks = new Map();
+    this.lastNotifiedLeader = null;
+    this.notifiedParticipants = new Set();
   }
 
   // Check if we're currently in performance mode
@@ -28,6 +33,18 @@ class PerformanceService {
   // Set performance mode status
   setActive(status) {
     this.isInPerformanceMode = status;
+    if (status) {
+      this.updateLastActivity();
+    }
+  }
+
+  // Update last activity timestamp
+  updateLastActivity() {
+    try {
+      localStorage.setItem(STORAGE_KEYS.LAST_ACTIVITY, Date.now().toString());
+    } catch (error) {
+      console.warn('Failed to update activity timestamp:', error);
+    }
   }
 
   // Check if cached data is still valid
@@ -42,6 +59,57 @@ class PerformanceService {
       return age < CACHE_EXPIRY;
     } catch (error) {
       return false;
+    }
+  }
+
+  // Check if session is stale based on last activity
+  isSessionStale(sessionData) {
+    try {
+      if (!sessionData || !sessionData.created_at) return false;
+      
+      const lastActivity = localStorage.getItem(STORAGE_KEYS.LAST_ACTIVITY);
+      const activityTime = lastActivity ? parseInt(lastActivity) : new Date(sessionData.created_at).getTime();
+      
+      return Date.now() - activityTime > SESSION_STALE_TIMEOUT;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  // Clean up stale sessions
+  async cleanupStaleSessions(setlistId, currentUserId) {
+    try {
+      const { data: staleSessions, error } = await supabase
+        .from('performance_sessions')
+        .select('*')
+        .eq('setlist_id', setlistId)
+        .eq('is_active', true);
+
+      if (error || !staleSessions) return;
+
+      for (const session of staleSessions) {
+        // Check if session is stale (created more than 10 minutes ago with no recent updates)
+        const sessionAge = Date.now() - new Date(session.created_at).getTime();
+        const isOld = sessionAge > 10 * 60 * 1000; // 10 minutes
+
+        if (isOld || this.isSessionStale(session)) {
+          console.log(`🧹 Cleaning up stale session ${session.id}`);
+          
+          // Mark session as inactive
+          await supabase
+            .from('performance_sessions')
+            .update({ is_active: false })
+            .eq('id', session.id);
+
+          // Mark participants as inactive
+          await supabase
+            .from('session_participants')
+            .update({ is_active: false })
+            .eq('session_id', session.id);
+        }
+      }
+    } catch (error) {
+      console.warn('Error cleaning up stale sessions:', error);
     }
   }
 
@@ -137,70 +205,80 @@ class PerformanceService {
       Object.values(STORAGE_KEYS).forEach(key => {
         localStorage.removeItem(key);
       });
+      this.lastNotifiedLeader = null;
+      this.notifiedParticipants.clear();
       console.log('🧹 Performance cache cleared');
     } catch (error) {
       console.warn('Error clearing cache:', error);
     }
   }
 
-  // Get or create unique session for setlist
-  async getOrCreateSession(setlistId, userId, forceAsLeader = false) {
+  // Get or create session with improved logic
+  async getOrCreateSession(setlistId, userId, role = 'follower') {
     try {
+      // Clean up stale sessions first
+      await this.cleanupStaleSessions(setlistId, userId);
+      
       // Check for existing active session
       let activeSession = await this.getActiveSession(setlistId);
 
       if (activeSession) {
         if (activeSession.leader_id === userId) {
-          // User is the current leader or forcing leadership, return session
-          console.log(`🎭 User ${userId} is leader of existing session`);
+          // User is rejoining as the same leader
+          console.log(`👑 User ${userId} rejoining as existing leader`);
           return { session: activeSession, isNewSession: false, isLeader: true };
+        } else if (role === 'leader') {
+          // Different leader exists, user wants to request leadership
+          console.log(`🤝 Different leader exists, leadership transfer required`);
+          return { session: activeSession, isNewSession: false, isLeader: false, needsTransfer: true };
         } else {
-          // Different leader exists
-          console.log(`🎭 Different leader exists for session`);
+          // User joining as follower
+          console.log(`👥 User ${userId} joining as follower`);
           return { session: activeSession, isNewSession: false, isLeader: false };
         }
       }
 
-      // Only create new session if forceAsLeader is true or no session exists
-      if (!forceAsLeader && !activeSession) {
+      // No active session exists
+      if (role === 'leader') {
+        // Create new session as leader
+        console.log(`🎭 Creating new session for setlist ${setlistId}`);
+        
+        // Pre-fetch data before creating session
+        const { setlistData } = await this.prefetchAndCacheSetlistData(setlistId);
+
+        if (!setlistData.sets || setlistData.sets.length === 0) {
+          throw new Error('Setlist has no sets');
+        }
+
+        const firstSet = setlistData.sets[0];
+        const firstSong = firstSet.set_songs?.[0]?.songs || null;
+
+        const { data: newSession, error } = await supabase
+          .from('performance_sessions')
+          .insert({
+            setlist_id: setlistId,
+            leader_id: userId,
+            current_set_id: firstSet.id,
+            current_song_id: firstSong?.id || null,
+            is_active: true
+          })
+          .select(`
+            *,
+            setlists (name),
+            users (name),
+            sets (name),
+            songs (title, original_artist)
+          `)
+          .single();
+
+        if (error) throw new Error(error.message);
+        
+        console.log('🎭 New performance session created');
+        return { session: newSession, isNewSession: true, isLeader: true };
+      } else {
+        // No session exists and user wants to be follower
         return { session: null, isNewSession: false, isLeader: false };
       }
-
-      // No active session exists, create new one
-      console.log(`🎭 Creating new session for setlist ${setlistId}`);
-      
-      // Pre-fetch data before creating session
-      const { setlistData } = await this.prefetchAndCacheSetlistData(setlistId);
-
-      if (!setlistData.sets || setlistData.sets.length === 0) {
-        throw new Error('Setlist has no sets');
-      }
-
-      const firstSet = setlistData.sets[0];
-      const firstSong = firstSet.set_songs?.[0]?.songs || null;
-
-      const { data: newSession, error } = await supabase
-        .from('performance_sessions')
-        .insert({
-          setlist_id: setlistId,
-          leader_id: userId,
-          current_set_id: firstSet.id,
-          current_song_id: firstSong?.id || null,
-          is_active: true
-        })
-        .select(`
-          *,
-          setlists (name),
-          users (name),
-          sets (name),
-          songs (title, original_artist)
-        `)
-        .single();
-
-      if (error) throw new Error(error.message);
-      
-      console.log('🎭 New performance session created');
-      return { session: newSession, isNewSession: true, isLeader: true };
     } catch (error) {
       console.error('Error getting/creating session:', error);
       throw error;
@@ -210,7 +288,7 @@ class PerformanceService {
   // Create a new performance session (leader)
   async createSession(setlistId, userId) {
     try {
-      const result = await this.getOrCreateSession(setlistId, userId, true);
+      const result = await this.getOrCreateSession(setlistId, userId, 'leader');
       
       // Store session info
       try {
@@ -231,7 +309,7 @@ class PerformanceService {
   // Join existing session (follower)
   async joinSession(setlistId, userId) {
     try {
-      // Get the existing session without creating a new one
+      // Get the existing session
       const activeSession = await this.getActiveSession(setlistId);
       
       if (!activeSession) {
@@ -250,7 +328,7 @@ class PerformanceService {
         });
 
       if (participantError) {
-        console.warn('Failed to add participant (may already exist):', participantError);
+        console.warn('Failed to add participant:', participantError);
       }
 
       // Check if cache is valid, otherwise refresh
@@ -260,7 +338,7 @@ class PerformanceService {
 
       // Store session info as follower
       try {
-        localStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionResult.session.id);
+        localStorage.setItem(STORAGE_KEYS.SESSION_ID, activeSession.id);
         localStorage.setItem(STORAGE_KEYS.IS_LEADER, 'false');
       } catch (storageError) {
         console.warn('Failed to store session info:', storageError);
@@ -275,14 +353,14 @@ class PerformanceService {
     }
   }
 
-  // Get active session for a setlist
+  // Get active session for a setlist with full user data
   async getActiveSession(setlistId) {
     const { data, error } = await supabase
       .from('performance_sessions')
       .select(`
         *,
         setlists (name),
-        users (name),
+        users (id, name, email, role),
         sets (name),
         songs (title, original_artist)
       `)
@@ -294,22 +372,6 @@ class PerformanceService {
       throw new Error(error.message);
     }
     return data;
-  }
-
-  // Clean up expired sessions and leadership requests
-  async cleanupExpiredSessions() {
-    try {
-      // Remove expired leadership requests
-      await supabase
-        .from('leadership_requests')
-        .delete()
-        .eq('status', 'pending')
-        .lt('expires_at', new Date().toISOString());
-
-      // Note: We don't auto-expire sessions as they should remain active until manually ended
-    } catch (error) {
-      console.warn('Error cleaning up expired sessions:', error);
-    }
   }
 
   // Get all followers for a session
@@ -337,9 +399,20 @@ class PerformanceService {
     }
   }
 
-  // Request leadership transfer
+  // Request leadership transfer with auto-timeout
   async requestLeadershipTransfer(sessionId, requestingUserId, requestingUserName) {
     try {
+      // Check if current leader is active (has recent activity)
+      const { data: session } = await supabase
+        .from('performance_sessions')
+        .select('leader_id, created_at')
+        .eq('id', sessionId)
+        .single();
+
+      if (!session) {
+        throw new Error('Session not found');
+      }
+
       // Cancel any existing pending requests from this user for this session
       await supabase
         .from('leadership_requests')
@@ -361,7 +434,27 @@ class PerformanceService {
         .single();
 
       if (error) throw error;
+
       console.log('🤝 Leadership transfer requested');
+      
+      // Set up auto-approval after timeout
+      setTimeout(async () => {
+        try {
+          const { data: request } = await supabase
+            .from('leadership_requests')
+            .select('status')
+            .eq('id', data.id)
+            .single();
+
+          if (request && request.status === 'pending') {
+            console.log('⏰ Auto-approving leadership request due to timeout');
+            await this.respondToLeadershipRequest(data.id, 'approved', session.leader_id);
+          }
+        } catch (autoError) {
+          console.warn('Error in auto-approval:', autoError);
+        }
+      }, 30000);
+
       return data;
     } catch (error) {
       console.error('Error requesting leadership transfer:', error);
@@ -379,7 +472,6 @@ class PerformanceService {
           responded_at: new Date()
         })
         .eq('id', requestId)
-        .eq('status', 'pending')
         .select()
         .single();
 
@@ -419,6 +511,8 @@ class PerformanceService {
 
   // Update current song/set in session (leader only)
   async updateSession(sessionId, updates) {
+    this.updateLastActivity();
+    
     const { data, error } = await supabase
       .from('performance_sessions')
       .update(updates)
@@ -426,7 +520,7 @@ class PerformanceService {
       .select(`
         *,
         setlists (name),
-        users (name),
+        users (id, name, email, role),
         sets (name),
         songs (title, original_artist)
       `)
@@ -473,6 +567,8 @@ class PerformanceService {
         .eq('session_id', sessionId)
         .eq('user_id', userId);
 
+      this.setActive(false);
+      this.cleanupSubscriptions();
       console.log('🚪 Left performance session');
     } catch (error) {
       console.error('Error leaving session:', error);
@@ -482,11 +578,8 @@ class PerformanceService {
 
   // Subscribe to session changes (for real-time updates)
   subscribeToSession(sessionId, callback) {
-    if (!this.isActive()) {
-      console.warn('Attempted to subscribe while not in performance mode');
-      return null;
-    }
-
+    if (!sessionId || sessionId === 'standalone') return null;
+    
     // Clean up existing subscription if any
     this.unsubscribeFromSession(sessionId);
     
@@ -507,13 +600,15 @@ class PerformanceService {
       )
       .subscribe();
 
-    this.activeSubscriptions.set(sessionId, subscription);
+    this.activeSubscriptions.set(`session_${sessionId}`, subscription);
     console.log('🔔 Subscribed to performance session updates');
     return subscription;
   }
 
   // Subscribe to participant changes
   subscribeToParticipants(sessionId, callback) {
+    if (!sessionId || sessionId === 'standalone') return null;
+    
     const subscription = supabase
       .channel(`session_participants_${sessionId}`)
       .on(
@@ -538,31 +633,20 @@ class PerformanceService {
 
   // Subscribe to leadership requests
   subscribeToLeadershipRequests(sessionId, callback) {
+    if (!sessionId || sessionId === 'standalone') return null;
+    
     const subscription = supabase
       .channel(`leadership_requests_${sessionId}`)
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'leadership_requests',
           filter: `session_id=eq.${sessionId}`
         },
         (payload) => {
-          console.log('👑 Leadership request received:', payload.new);
-          setTimeout(() => callback(payload), 0);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'leadership_requests',
-          filter: `session_id=eq.${sessionId}`
-        },
-        (payload) => {
-          console.log('👑 Leadership request updated:', payload.new);
+          console.log('👑 Leadership request event:', payload);
           setTimeout(() => callback(payload), 0);
         }
       )
@@ -583,8 +667,26 @@ class PerformanceService {
     this.notificationCallbacks.delete(key);
   }
 
-  // Show notification to all registered callbacks
-  showNotification(type, message) {
+  // Show notification to all registered callbacks (with deduplication)
+  showNotification(type, message, userId = null) {
+    // Prevent duplicate notifications
+    if (type === 'leadership' && this.lastNotifiedLeader === userId) {
+      return;
+    }
+    if (type === 'participant_join' && userId && this.notifiedParticipants.has(userId)) {
+      return;
+    }
+
+    // Track notifications to prevent duplicates
+    if (type === 'leadership') {
+      this.lastNotifiedLeader = userId;
+    }
+    if (type === 'participant_join' && userId) {
+      this.notifiedParticipants.add(userId);
+      // Clear after 5 seconds to allow re-notification if user leaves and rejoins
+      setTimeout(() => this.notifiedParticipants.delete(userId), 5000);
+    }
+
     this.notificationCallbacks.forEach(callback => {
       try {
         callback(type, message);
@@ -596,10 +698,10 @@ class PerformanceService {
 
   // Unsubscribe from specific session
   unsubscribeFromSession(sessionId) {
-    const subscription = this.activeSubscriptions.get(sessionId);
-    if (subscription) {
-      supabase.removeChannel(subscription);
-      this.activeSubscriptions.delete(sessionId);
+    const sessionSub = this.activeSubscriptions.get(`session_${sessionId}`);
+    if (sessionSub) {
+      supabase.removeChannel(sessionSub);
+      this.activeSubscriptions.delete(`session_${sessionId}`);
       console.log('🔕 Unsubscribed from performance session');
     }
     
@@ -635,16 +737,17 @@ class PerformanceService {
       });
     }
 
-    for (const [sessionId, subscription] of this.activeSubscriptions) {
+    for (const [key, subscription] of this.activeSubscriptions) {
       try {
         supabase.removeChannel(subscription);
       } catch (error) {
-        console.warn(`Failed to remove subscription ${sessionId}:`, error);
+        console.warn(`Failed to remove subscription ${key}:`, error);
       }
     }
     this.activeSubscriptions.clear();
-    this.notificationCallbacks.clear();
     this.setActive(false);
+    this.lastNotifiedLeader = null;
+    this.notifiedParticipants.clear();
     console.log('🧹 All performance subscriptions cleaned up');
   }
 
