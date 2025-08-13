@@ -221,28 +221,38 @@ const MobilePerformanceLayout = ({
               <div className="flex-1 overflow-auto p-4">
                 <div className="mobile-zoom-container" style={{ 
                   transform: `scale(${lyricsZoom})`, 
-                  <ZoomIn size={16} />
+                  transformOrigin: 'top left',
+                  width: lyricsZoom > 1 ? `${100 / lyricsZoom}%` : '100%',
+                  lineHeight: 1.6,
+                  wordWrap: 'break-word'
+                }}>
+                  {children}
                 </div>
               </div>
             </div>
-                  className="p-2 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors shadow-lg border border-zinc-600"
-        </div>
-                  className="p-2 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors shadow-lg border border-zinc-600"
-                  <ZoomOut size={16} />
-            className="w-full text-left p-3 bg-zinc-800 rounded-xl border border-zinc-700 hover:bg-zinc-700 transition-colors"
-          >
-            <div className="flex items-center justify-between">
-                  className="px-2 py-1 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors text-xs font-medium shadow-lg border border-zinc-600"
-                <p className="text-base font-medium text-zinc-100 truncate">{currentSong.title}</p>
-                <p className="text-sm text-zinc-400 truncate">
-                  {currentSong.original_artist} {currentSong.key_signature && `• ${currentSong.key_signature}`}
-                </p>
-              </div>
-              <ChevronUp size={20} className="text-zinc-400 ml-2" />
+          )}
+
+          {/* Current Song Footer - Only show when not in lyrics view */}
+          {!showLyrics && currentSong && (
+            <div className="bg-zinc-900 border-t border-zinc-800 p-4">
+              <button
+                onClick={() => setShowLyrics(true)}
+                className="w-full text-left p-3 bg-zinc-800 rounded-xl border border-zinc-700 hover:bg-zinc-700 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-base font-medium text-zinc-100 truncate">{currentSong.title}</p>
+                    <p className="text-sm text-zinc-400 truncate">
+                      {currentSong.original_artist} {currentSong.key_signature && `• ${currentSong.key_signature}`}
+                    </p>
+                  </div>
+                  <ChevronUp size={20} className="text-zinc-400 ml-2" />
+                </div>
+              </button>
             </div>
-          </button>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
