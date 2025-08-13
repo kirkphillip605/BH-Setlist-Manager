@@ -1,26 +1,16 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.10'
 
-function getCorsHeaders(requestOrigin: string | null) {
-  const headers: Record<string, string> = {
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Credentials': 'true',
-  };
-
-  if (requestOrigin) {
-    headers['Access-Control-Allow-Origin'] = requestOrigin;
-  } else {
-    headers['Access-Control-Allow-Origin'] = '*';
-  }
-  return headers;
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Credentials': 'true',
 }
 
 serve(async (req) => {
-  const requestOrigin = req.headers.get('Origin');
-
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: getCorsHeaders(requestOrigin) })
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
@@ -29,11 +19,11 @@ serve(async (req) => {
     if (!userId) {
       return new Response(
         JSON.stringify({ error: 'User ID is required' }),
-        { status: 400, headers: { ...getCorsHeaders(requestOrigin), 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Create admin client
+    // Create admin client with service role key
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -45,12 +35,12 @@ serve(async (req) => {
       }
     )
 
-    // Verify admin permissions
+    // Verify the requesting user is an admin (level 3)
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Authorization header required' }),
-        { status: 401, headers: { ...getCorsHeaders(requestOrigin), 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -64,11 +54,11 @@ serve(async (req) => {
     if (userError || !user) {
       return new Response(
         JSON.stringify({ error: 'Invalid token' }),
-        { status: 401, headers: { ...getCorsHeaders(requestOrigin), 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Check if user is admin
+    // Check if user is admin using service role
     const { data: userData, error: userDataError } = await supabaseAdmin
       .from('users')
       .select('user_level')
@@ -78,30 +68,31 @@ serve(async (req) => {
     if (userDataError || !userData || userData.user_level !== 3) {
       return new Response(
         JSON.stringify({ error: 'Admin access required' }),
-        { status: 403, headers: { ...getCorsHeaders(requestOrigin), 'Content-Type': 'application/json' } }
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Delete from auth.users (this will cascade)
-    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId)
-    if (authError) {
-      throw new Error(authError.message)
+    // Delete user from auth.users using service role
+    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(userId)
+    if (authDeleteError) {
+      throw authDeleteError
     }
 
     // Also delete from public.users to ensure cleanup
-    const { error: profileError } = await supabaseAdmin
+    const { error: profileDeleteError } = await supabaseAdmin
       .from('users')
       .delete()
       .eq('id', userId)
 
-    if (profileError) {
-      console.warn('Error deleting user profile:', profileError)
+    if (profileDeleteError) {
+      console.warn('Error deleting user profile:', profileDeleteError)
+      // Don't throw error as auth deletion succeeded
     }
 
     return new Response(
       JSON.stringify({ success: true, message: 'User deleted successfully' }),
       { 
-        headers: { ...getCorsHeaders(requestOrigin), 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 
       }
     )
@@ -112,7 +103,7 @@ serve(async (req) => {
       JSON.stringify({ error: error.message }),
       { 
         status: 500, 
-        headers: { ...getCorsHeaders(requestOrigin), 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     )
   }
