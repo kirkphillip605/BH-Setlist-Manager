@@ -548,19 +548,19 @@ const PerformanceMode = () => {
   const canGoNext = (currentIndex < currentSetSongs.length - 1 && !isSearchSong) || (isSearchSong && previousSetSong);
 
   return (
-    <div className="h-screen bg-zinc-950 flex overflow-hidden">
+    <div className="h-screen bg-zinc-950 flex overflow-hidden safe-area-inset-top">
       {/* Performance Sidebar */}
-      <div className="w-80 bg-zinc-900 border-r border-zinc-800 flex flex-col">
+      <div className="w-full sm:w-80 bg-zinc-900 border-r border-zinc-800 flex flex-col">
         {/* Header */}
-        <div className="p-4 border-b border-zinc-800">
-          <h2 className="text-lg font-bold text-zinc-100 mb-1">
+        <div className="p-4 sm:p-4 border-b border-zinc-800 safe-area-inset-top">
+          <h2 className="text-lg sm:text-lg font-bold text-zinc-100 mb-1">
             {setlistData?.name}
           </h2>
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm sm:text-sm text-zinc-400">
             {isLeader ? 'Leader' : 'Follower'} • {currentSet?.name}
           </p>
           {isSearchSong && (
-            <p className="text-xs text-amber-400 mt-1">
+            <p className="text-sm sm:text-xs text-amber-400 mt-1">
               🎵 Search Song Active
             </p>
           )}
@@ -569,14 +569,14 @@ const PerformanceMode = () => {
         {/* Sets Navigation (Leader only) */}
         {isLeader && setlistData?.sets && setlistData.sets.length > 1 && (
           <div className="p-4 border-b border-zinc-800">
-            <label className="block text-sm font-medium text-zinc-300 mb-2">Current Set</label>
+            <label className="block text-base sm:text-sm font-medium text-zinc-300 mb-2">Current Set</label>
             <select
               value={currentSet?.id || ''}
               onChange={(e) => {
                 const set = setlistData.sets.find(s => s.id === e.target.value);
                 if (set) handleSetChange(set);
               }}
-              className="input-modern text-sm"
+              className="input-modern text-base sm:text-sm"
             >
               {setlistData.sets.map((set) => (
                 <option key={set.id} value={set.id}>
@@ -593,38 +593,38 @@ const PerformanceMode = () => {
             <div className="relative">
               <button
                 onClick={() => setShowSearch(!showSearch)}
-                className="w-full inline-flex items-center justify-center px-3 py-2 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-all btn-animate text-sm font-medium"
+                className="w-full inline-flex items-center justify-center px-4 py-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-all btn-animate text-base sm:text-sm font-medium mobile-form-button"
               >
-                <Search size={16} className="mr-2" />
+                <Search size={20} className="mr-2 sm:w-4 sm:h-4" />
                 Search Songs
-                <ChevronDown size={16} className={`ml-2 transition-transform ${showSearch ? 'rotate-180' : ''}`} />
+                <ChevronDown size={20} className={`ml-2 sm:w-4 sm:h-4 transition-transform ${showSearch ? 'rotate-180' : ''}`} />
               </button>
               
               {showSearch && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl z-50 max-h-80 overflow-hidden">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl z-50 max-h-80 overflow-hidden mobile-modal">
                   <div className="p-3 border-b border-zinc-700">
                     <input
                       type="text"
                       placeholder="Search songs..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full px-3 py-2 bg-zinc-700 border border-zinc-600 text-zinc-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+                      className="w-full px-4 py-3 sm:px-3 sm:py-2 bg-zinc-700 border border-zinc-600 text-zinc-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-base sm:text-sm mobile-action-btn"
                       autoFocus
                     />
                   </div>
-                  <div className="max-h-60 overflow-y-auto">
+                  <div className="max-h-60 overflow-y-auto scroll-container">
                     {filteredSongs.slice(0, 20).map((song) => (
                       <button
                         key={song.id}
                         onClick={() => loadSearchSong(song)}
-                        className="w-full text-left p-3 hover:bg-zinc-700 transition-colors border-b border-zinc-800 last:border-b-0"
+                        className="w-full text-left p-4 sm:p-3 hover:bg-zinc-700 transition-colors border-b border-zinc-800 last:border-b-0 mobile-nav-item"
                       >
-                        <p className="text-sm font-medium text-zinc-100">{song.title}</p>
-                        <p className="text-xs text-zinc-400">{song.original_artist}</p>
+                        <p className="text-base sm:text-sm font-medium text-zinc-100">{song.title}</p>
+                        <p className="text-sm sm:text-xs text-zinc-400">{song.original_artist}</p>
                       </button>
                     ))}
                     {filteredSongs.length === 0 && searchQuery && (
-                      <p className="p-3 text-sm text-zinc-400">No songs found</p>
+                      <p className="p-4 sm:p-3 text-base sm:text-sm text-zinc-400">No songs found</p>
                     )}
                   </div>
                 </div>
@@ -634,14 +634,14 @@ const PerformanceMode = () => {
         )}
 
         {/* Songs List */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="space-y-2">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-4 scroll-container safe-area-inset-bottom">
+          <div className="space-y-3 sm:space-y-2">
             {currentSetSongs.map((song, index) => (
               <button
                 key={song.id}
                 onClick={() => isLeader && !isSearchSong && handleSongSelect(song)}
                 disabled={!isLeader || isSearchSong}
-                className={`w-full text-left p-3 rounded-xl transition-all ${
+                className={`w-full text-left p-4 sm:p-3 rounded-xl transition-all mobile-nav-item ${
                   currentSong?.id === song.id && !isSearchSong
                     ? 'bg-blue-600 text-white shadow-lg'
                     : isLeader && !isSearchSong
@@ -650,7 +650,7 @@ const PerformanceMode = () => {
                 } ${isSearchSong ? 'opacity-50' : ''}`}
               >
                 <div className="flex items-center space-x-3">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                  <div className={`w-8 h-8 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-sm sm:text-xs font-medium ${
                     currentSong?.id === song.id && !isSearchSong
                       ? 'bg-blue-500 text-white'
                       : 'bg-zinc-700 text-zinc-400'
@@ -658,8 +658,8 @@ const PerformanceMode = () => {
                     {index + 1}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{song.title}</p>
-                    <p className="text-xs opacity-75 truncate">
+                    <p className="text-base sm:text-sm font-medium truncate">{song.title}</p>
+                    <p className="text-sm sm:text-xs opacity-75 truncate">
                       {song.original_artist} {song.key_signature && `• ${song.key_signature}`}
                     </p>
                   </div>
@@ -673,17 +673,17 @@ const PerformanceMode = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col relative">
         {/* Lyrics Display */}
-        <div className="flex-1 overflow-y-auto p-6 pb-24">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-32 sm:pb-24 scroll-container">
           {currentSong ? (
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto px-2 sm:px-0">
               <div className="mb-6">
-                <h1 className="text-3xl font-bold text-zinc-100 mb-2">{currentSong.title}</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-zinc-100 mb-2">{currentSong.title}</h1>
                 <div className="flex items-center space-x-2">
-                  <p className="text-xl text-zinc-400">
+                  <p className="text-lg sm:text-xl text-zinc-400">
                     {currentSong.original_artist} {currentSong.key_signature && `• ${currentSong.key_signature}`}
                   </p>
                   {isSearchSong && (
-                    <span className="px-2 py-1 bg-amber-600 text-white text-xs font-medium rounded-full">
+                    <span className="px-3 py-1 sm:px-2 sm:py-1 bg-amber-600 text-white text-sm sm:text-xs font-medium rounded-full">
                       Search Song
                     </span>
                   )}
@@ -693,12 +693,12 @@ const PerformanceMode = () => {
                     <svg className="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
                     </svg>
-                    <p className="text-lg text-amber-300 font-medium">{currentSong.performance_note}</p>
+                    <p className="text-base sm:text-lg text-amber-300 font-medium">{currentSong.performance_note}</p>
                   </div>
                 )}
               </div>
               <div 
-                className="prose prose-invert prose-lg max-w-none text-zinc-200 leading-relaxed"
+                className="prose prose-invert prose-lg max-w-none text-zinc-200 leading-relaxed text-base sm:text-lg"
                 dangerouslySetInnerHTML={{ __html: currentSongLyrics }}
               />
             </div>
@@ -706,42 +706,42 @@ const PerformanceMode = () => {
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
                 <Music className="h-16 w-16 text-zinc-600 mx-auto mb-4" />
-                <p className="text-xl text-zinc-400">No song selected</p>
+                <p className="text-lg sm:text-xl text-zinc-400">No song selected</p>
               </div>
             </div>
           )}
         </div>
 
         {/* Fixed Bottom Controls */}
-        <div className="absolute bottom-0 left-0 right-0 bg-zinc-900/95 backdrop-blur border-t border-zinc-800 p-4">
-          <div className="flex justify-between items-center max-w-4xl mx-auto">
+        <div className="absolute bottom-0 left-0 right-0 bg-zinc-900/98 backdrop-blur border-t border-zinc-800 p-4 sm:p-4 safe-area-inset-bottom">
+          <div className="flex flex-col sm:flex-row justify-between items-center max-w-4xl mx-auto space-y-4 sm:space-y-0">
             {/* Exit Button */}
             <button
               onClick={handleExitPerformance}
-              className="inline-flex items-center px-4 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all btn-animate shadow-lg font-medium"
+              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-4 sm:px-4 sm:py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all btn-animate shadow-lg font-medium mobile-form-button"
             >
-              <X size={20} className="mr-2" />
+              <X size={24} className="mr-2 sm:w-5 sm:h-5" />
               Exit Performance Mode
             </button>
 
             {/* Navigation Controls (Leader only) */}
             {isLeader && (
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto">
                 <button
                   onClick={handlePreviousSong}
                   disabled={!canGoPrevious}
-                  className="inline-flex items-center px-6 py-3 bg-zinc-700 text-zinc-300 rounded-xl hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-animate shadow-lg font-medium"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center px-6 py-4 sm:px-6 sm:py-3 bg-zinc-700 text-zinc-300 rounded-xl hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-animate shadow-lg font-medium mobile-form-button"
                 >
-                  <SkipBack size={20} className="mr-2" />
+                  <SkipBack size={24} className="mr-2 sm:w-5 sm:h-5" />
                   Previous
                 </button>
                 <button
                   onClick={handleNextSong}
                   disabled={!canGoNext}
-                  className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-animate shadow-lg font-medium"
+                  className="flex-1 sm:flex-none inline-flex items-center justify-center px-6 py-4 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-animate shadow-lg font-medium mobile-form-button"
                 >
                   Next
-                  <SkipForward size={20} className="ml-2" />
+                  <SkipForward size={24} className="ml-2 sm:w-5 sm:h-5" />
                 </button>
               </div>
             )}

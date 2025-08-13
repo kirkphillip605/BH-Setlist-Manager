@@ -138,14 +138,14 @@ const ManageSetlists = () => {
   return (
     <div className="max-w-7xl mx-auto fade-in">
       {/* Page Header */}
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <div className="flex items-center space-x-3 mb-2">
           <div className="w-10 h-10 bg-emerald-500/10 rounded-2xl flex items-center justify-center">
             <ListMusic className="h-5 w-5 text-emerald-400" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-zinc-100">Setlists</h1>
-            <p className="text-zinc-400">Manage your performance setlists</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-zinc-100">Setlists</h1>
+            <p className="text-sm sm:text-base text-zinc-400">Manage your performance setlists</p>
           </div>
         </div>
       </div>
@@ -157,9 +157,9 @@ const ManageSetlists = () => {
         </div>
       )}
 
-      <div className="card-modern p-4 lg:p-6">
+      <div className="card-modern p-4 sm:p-6 lg:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0">
-          <div className="w-full sm:w-1/2 lg:w-1/3">
+          <div className="w-full sm:w-2/3 lg:w-1/2">
             <input
               type="text"
               placeholder="Search setlists..."
@@ -168,10 +168,10 @@ const ManageSetlists = () => {
               className="input-modern"
             />
           </div>
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+          <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
             <button
               onClick={() => setShowDuplicateForm(!showDuplicateForm)}
-              className="inline-flex items-center px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all btn-animate shadow-lg font-medium"
+              className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all btn-animate shadow-lg font-medium mobile-form-button"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
@@ -180,7 +180,7 @@ const ManageSetlists = () => {
             </button>
             <button
               onClick={() => navigate('/setlists/add')}
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all btn-animate shadow-lg font-medium"
+              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all btn-animate shadow-lg font-medium mobile-form-button"
             >
               <PlusCircle size={20} className="mr-2" />
               New Setlist
@@ -190,10 +190,10 @@ const ManageSetlists = () => {
 
         {/* Duplicate Setlist Form */}
         {showDuplicateForm && (
-          <div className="bg-zinc-800 rounded-xl p-4 lg:p-6 border border-zinc-700 mb-6">
-            <h3 className="text-lg font-medium text-zinc-100 mb-4">Duplicate Existing Setlist</h3>
-            <form onSubmit={handleDuplicateSetlist} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-zinc-800 rounded-xl p-4 sm:p-6 border border-zinc-700 mb-6">
+            <h3 className="text-lg sm:text-lg font-medium text-zinc-100 mb-4">Duplicate Existing Setlist</h3>
+            <form onSubmit={handleDuplicateSetlist} className="space-y-4 sm:space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-4 mobile-form-grid">
                 <div>
                   <label htmlFor="sourceSetlist" className="block text-sm font-medium text-zinc-300 mb-2">
                     Source Setlist
@@ -228,30 +228,30 @@ const ManageSetlists = () => {
                   />
                 </div>
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center space-x-3">
                 <input
                   id="duplicateIsPublic"
                   type="checkbox"
                   checked={duplicateFormData.isPublic}
                   onChange={(e) => setDuplicateFormData(prev => ({ ...prev, isPublic: e.target.checked }))}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-zinc-600 rounded bg-zinc-700"
+                  className="h-5 w-5 sm:h-4 sm:w-4 text-blue-600 focus:ring-blue-500 border-zinc-600 rounded bg-zinc-700"
                 />
-                <label htmlFor="duplicateIsPublic" className="ml-2 block text-sm text-zinc-300">
+                <label htmlFor="duplicateIsPublic" className="block text-base sm:text-sm text-zinc-300">
                   Make this setlist public (visible to all users)
                 </label>
               </div>
-              <div className="flex justify-end space-x-3">
+              <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
                 <button
                   type="button"
                   onClick={() => setShowDuplicateForm(false)}
-                  className="inline-flex items-center px-4 py-2 border border-zinc-600 rounded-xl text-zinc-300 bg-zinc-700 hover:bg-zinc-600 transition-colors"
+                  className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-3 border border-zinc-600 rounded-xl text-zinc-300 bg-zinc-700 hover:bg-zinc-600 transition-colors mobile-form-button"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mobile-form-button"
                 >
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
@@ -268,11 +268,11 @@ const ManageSetlists = () => {
         {!loading && setlists.length === 0 && !error && (
           <div className="text-center py-12">
             <ListMusic className="mx-auto h-12 w-12 text-zinc-400 mb-4" />
-            <p className="text-zinc-300 text-lg mb-2">No setlists found</p>
-            <p className="text-zinc-400 mb-6">Create your first setlist to get started</p>
+            <p className="text-zinc-300 text-lg sm:text-lg mb-2">No setlists found</p>
+            <p className="text-zinc-400 mb-6 px-4">Create your first setlist to get started</p>
             <button
               onClick={() => navigate('/setlists/add')}
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all btn-animate font-medium"
+              className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all btn-animate font-medium mobile-form-button"
             >
               <PlusCircle size={20} className="mr-2" />
               Create Setlist
@@ -282,7 +282,8 @@ const ManageSetlists = () => {
 
         {!loading && setlists.length > 0 && (
           <>
-            <div className="bg-zinc-900/50 rounded-xl overflow-hidden border border-zinc-800">
+            {/* Desktop Table View */}
+            <div className="hidden sm:block bg-zinc-900/50 rounded-xl overflow-hidden border border-zinc-800">
               <table className="min-w-full divide-y divide-zinc-700">
                 <thead className="bg-zinc-800">
                   <tr>
@@ -366,15 +367,70 @@ const ManageSetlists = () => {
               </table>
             </div>
 
+            {/* Mobile Card View */}
+            <div className="sm:hidden space-y-3">
+              {currentSetlists.map((setlist) => (
+                <div key={setlist.id} className="mobile-table-card">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <button
+                        onClick={() => navigate(`/setlists/${setlist.id}`)}
+                        className="text-lg font-semibold text-blue-400 hover:text-blue-300 transition-colors text-left block mb-2"
+                      >
+                        {setlist.name}
+                      </button>
+                      <div className="flex items-center space-x-3 mb-2">
+                        {setlist.is_public ? (
+                          <span className="badge badge-success text-sm">
+                            Public
+                          </span>
+                        ) : (
+                          <span className="badge badge-secondary text-sm">
+                            Private
+                          </span>
+                        )}
+                        <span className="text-sm text-zinc-400">
+                          {new Date(setlist.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      onClick={() => handlePrintSetlist(setlist)}
+                      className="mobile-action-btn flex items-center justify-center"
+                      title="Print Setlist"
+                    >
+                      <Printer size={20} className="text-green-400" />
+                    </button>
+                    <button
+                      onClick={() => navigate(`/setlists/edit/${setlist.id}`)}
+                      className="mobile-action-btn flex items-center justify-center"
+                      title="Edit Setlist"
+                    >
+                      <Edit size={20} className="text-blue-400" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteSetlist(setlist.id)}
+                      className="mobile-action-btn flex items-center justify-center"
+                      title="Delete Setlist"
+                    >
+                      <Trash2 size={20} className="text-red-400" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {totalPages > 1 && (
               <div className="flex flex-col sm:flex-row justify-between items-center mt-6 space-y-4 sm:space-y-0">
-                <div className="flex items-center space-x-2">
-                  <label htmlFor="items-per-page" className="text-sm text-slate-300">Items per page:</label>
+                <div className="flex items-center space-x-3 sm:space-x-2">
+                  <label htmlFor="items-per-page" className="text-base sm:text-sm text-zinc-300 font-medium">Items per page:</label>
                   <select
                     id="items-per-page"
                     value={itemsPerPage}
                     onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                    className="block w-20 px-3 py-2 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                    className="block w-24 sm:w-20 px-4 py-3 sm:px-3 sm:py-2 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors mobile-action-btn"
                   >
                     <option value="5">5</option>
                     <option value="10">10</option>
@@ -382,21 +438,21 @@ const ManageSetlists = () => {
                     <option value="50">50</option>
                   </select>
                 </div>
-                <nav className="flex space-x-1">
+                <nav className="flex items-center space-x-2 sm:space-x-1">
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
-                    className="px-3 py-2 rounded-lg border border-zinc-600 bg-zinc-700 text-zinc-300 hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-4 py-3 sm:px-3 sm:py-2 rounded-xl border border-zinc-600 bg-zinc-700 text-base sm:text-sm text-zinc-300 hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mobile-action-btn"
                   >
                     Previous
                   </button>
-                  <span className="px-4 py-2 text-zinc-300">
+                  <span className="px-4 py-3 sm:px-4 sm:py-2 text-base sm:text-sm text-zinc-300">
                     {currentPage} of {totalPages}
                   </span>
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
-                    className="px-3 py-2 rounded-lg border border-zinc-600 bg-zinc-700 text-zinc-300 hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-4 py-3 sm:px-3 sm:py-2 rounded-xl border border-zinc-600 bg-zinc-700 text-base sm:text-sm text-zinc-300 hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mobile-action-btn"
                   >
                     Next
                   </button>

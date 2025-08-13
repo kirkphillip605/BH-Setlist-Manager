@@ -92,7 +92,7 @@ const Dashboard = () => {
   return (
     <div className="max-w-7xl mx-auto fade-in">
       {/* Page Header */}
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <div className="flex items-center space-x-3 mb-2">
           <div className="w-10 h-10 bg-blue-500/10 rounded-2xl flex items-center justify-center">
             <svg className="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -101,28 +101,28 @@ const Dashboard = () => {
             </svg>
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-zinc-100">Dashboard</h1>
-            <p className="text-zinc-400">Welcome back to your setlist manager</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-zinc-100">Dashboard</h1>
+            <p className="text-sm sm:text-base text-zinc-400">Welcome back to your setlist manager</p>
           </div>
         </div>
       </div>
       
       {/* Active Performance Session Card */}
       {activeSession && (
-        <div className="card-modern p-6 mb-8 border-l-4 border-l-green-500 bg-gradient-to-r from-green-500/10 to-transparent">
-          <div className="flex items-center justify-between">
+        <div className="card-modern p-4 sm:p-6 mb-6 sm:mb-8 border-l-4 border-l-green-500 bg-gradient-to-r from-green-500/10 to-transparent">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-zinc-100 mb-1">🎭 Performance Mode Active</h3>
-              <p className="text-zinc-300 mb-1">
+              <h3 className="text-lg sm:text-lg font-semibold text-zinc-100 mb-2 sm:mb-1">🎭 Performance Mode Active</h3>
+              <p className="text-base sm:text-base text-zinc-300 mb-2 sm:mb-1">
                 <span className="font-medium">{activeSession.setlist.name}</span> is being performed
               </p>
-              <p className="text-zinc-400 text-sm">
+              <p className="text-zinc-400 text-sm sm:text-sm">
                 Led by {activeSession.users?.name || 'Unknown'} • Started {new Date(activeSession.created_at).toLocaleTimeString()}
               </p>
             </div>
             <button
               onClick={() => navigate(`/performance?setlist=${activeSession.setlist.id}`)}
-              className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all btn-animate shadow-lg font-medium"
+              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all btn-animate shadow-lg font-medium mobile-form-button"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
@@ -133,75 +133,75 @@ const Dashboard = () => {
         </div>
       )}
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
         {/* Quick Stats Cards */}
         <button
           onClick={() => navigate('/songs')}
-          className="card-modern p-6 text-left hover:scale-105 btn-animate group"
+          className="card-modern p-6 sm:p-6 text-left hover:scale-105 btn-animate group mobile-table-card"
         >
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold text-zinc-100">Songs</h3>
+            <h3 className="text-lg sm:text-lg font-semibold text-zinc-100">Songs</h3>
             <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
               <Music className="h-6 w-6 text-blue-400" />
             </div>
           </div>
           <div className="flex items-baseline space-x-2">
-            <p className="text-3xl font-bold text-zinc-100 tracking-tight">
+            <p className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight">
               {loading ? '...' : stats.totalSongs}
             </p>
-            <p className="text-sm text-zinc-400">in library</p>
+            <p className="text-base sm:text-sm text-zinc-400">in library</p>
           </div>
         </button>
         
         <button
           onClick={() => navigate('/setlists')}
-          className="card-modern p-6 text-left hover:scale-105 btn-animate group"
+          className="card-modern p-6 sm:p-6 text-left hover:scale-105 btn-animate group mobile-table-card"
         >
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold text-zinc-100">Setlists</h3>
+            <h3 className="text-lg sm:text-lg font-semibold text-zinc-100">Setlists</h3>
             <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
               <ListMusic className="h-6 w-6 text-emerald-400" />
             </div>
           </div>
           <div className="flex items-baseline space-x-2">
-            <p className="text-3xl font-bold text-zinc-100 tracking-tight">
+            <p className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight">
               {loading ? '...' : stats.totalSetlists}
             </p>
-            <p className="text-sm text-zinc-400">created</p>
+            <p className="text-base sm:text-sm text-zinc-400">created</p>
           </div>
         </button>
         
         <button
           onClick={() => navigate('/song-collections')}
-          className="card-modern p-6 text-left hover:scale-105 btn-animate group"
+          className="card-modern p-6 sm:p-6 text-left hover:scale-105 btn-animate group mobile-table-card sm:col-span-2 lg:col-span-1"
         >
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold text-zinc-100">Collections</h3>
+            <h3 className="text-lg sm:text-lg font-semibold text-zinc-100">Collections</h3>
             <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
               <Collection className="h-6 w-6 text-purple-400" />
             </div>
           </div>
           <div className="flex items-baseline space-x-2">
-            <p className="text-3xl font-bold text-zinc-100 tracking-tight">
+            <p className="text-2xl sm:text-3xl font-bold text-zinc-100 tracking-tight">
               {loading ? '...' : stats.totalCollections}
             </p>
-            <p className="text-sm text-zinc-400">curated</p>
+            <p className="text-base sm:text-sm text-zinc-400">curated</p>
           </div>
         </button>
       </div>
       
       {/* Recent Data Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Recent Songs */}
-        <div className="card-modern p-6 slide-up">
+        <div className="card-modern p-4 sm:p-6 slide-up">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h2 className="text-xl font-semibold text-zinc-100 mb-1">Recent Songs</h2>
-              <p className="text-sm text-zinc-400">Latest additions to your library</p>
+              <h2 className="text-lg sm:text-xl font-semibold text-zinc-100 mb-1">Recent Songs</h2>
+              <p className="text-sm sm:text-sm text-zinc-400">Latest additions to your library</p>
             </div>
             <Link 
               to="/songs" 
-              className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors hover:underline"
+              className="text-blue-400 hover:text-blue-300 text-base sm:text-sm font-medium transition-colors hover:underline"
             >
               View All
             </Link>
