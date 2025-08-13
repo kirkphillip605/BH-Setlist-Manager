@@ -554,7 +554,7 @@ const PerformanceMode = () => {
             </p>
           </div>
 
-          {session.leader_id === user.id ? (
+          {session?.leader_id === user.id ? (
             <div className="space-y-4">
               <button
                 onClick={() => handleStartPerformance('leader')}
