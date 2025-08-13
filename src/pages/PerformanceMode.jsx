@@ -129,9 +129,13 @@ const PerformanceMode = () => {
         activeSession = null;
       }
       
+     // Always set session state to reflect active session status
+     if (mountedRef.current) {
+       setSession(activeSession);
+     }
+     
       if (activeSession && !leadershipChoice) {
         // Show leadership choice modal
-        setSession(activeSession);
         setLoading(false);
         return;
       }
@@ -554,7 +558,7 @@ const PerformanceMode = () => {
             </p>
           </div>
 
-          {session?.leader_id === user.id ? (
+          {session && session.leader_id === user.id ? (
             <div className="space-y-4">
               <button
                 onClick={() => handleStartPerformance('leader')}
@@ -564,7 +568,7 @@ const PerformanceMode = () => {
                 Continue as Leader
               </button>
             </div>
-          ) : (
+          ) : session ? (
             <div className="space-y-4">
               <button
                 onClick={() => handleStartPerformance('leader')}
@@ -579,6 +583,23 @@ const PerformanceMode = () => {
               >
                 <Users size={20} className="mr-2" />
                 Join as Follower
+              </button>
+              <button
+                onClick={() => handleStartPerformance('standalone')}
+                className="w-full inline-flex items-center justify-center px-6 py-4 bg-zinc-600 text-white rounded-xl hover:bg-zinc-500 transition-colors font-medium"
+              >
+                <Music size={20} className="mr-2" />
+                Standalone Mode
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <button
+                onClick={() => handleStartPerformance('leader')}
+                className="w-full inline-flex items-center justify-center px-6 py-4 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors font-medium"
+              >
+                <Crown size={20} className="mr-2" />
+                Start as Leader
               </button>
               <button
                 onClick={() => handleStartPerformance('standalone')}
