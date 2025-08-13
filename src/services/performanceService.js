@@ -445,6 +445,7 @@ class PerformanceService {
   // Take over leadership of existing session (admin override)
   async takeOverLeadership(sessionId, newLeaderId) {
     try {
+      const { supabase } = await import('../supabaseClient');
       console.log(`👑 Taking over leadership of session ${sessionId} for user ${newLeaderId}`);
       
       // Get current session info

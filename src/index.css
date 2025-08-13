@@ -304,6 +304,53 @@ html, body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Performance zoom container */
+.performance-zoom-container {
+  overflow: auto;
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-zoom-container {
+  transform-origin: top left;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  min-height: 100%;
+  line-height: 1.6;
+}
+
+/* Better text handling at different zoom levels */
+.mobile-zoom-container p {
+  margin-bottom: 1em;
+  line-height: 1.7;
+  word-break: break-word;
+}
+
+.mobile-zoom-container h1,
+.mobile-zoom-container h2,
+.mobile-zoom-container h3 {
+  line-height: 1.3;
+  margin-bottom: 0.8em;
+  word-break: break-word;
+}
+
+.mobile-zoom-container strong {
+  word-break: break-word;
+}
+
+.mobile-zoom-container em {
+  word-break: break-word;
+}
+
+/* Fix for zoomed content */
+@media (max-width: 768px) {
+  .mobile-zoom-container {
+    font-size: 16px;
+    line-height: 1.7;
+  }
+}
+
 /* Mobile improvements */
 @media (max-width: 768px) {
   .card-modern {

@@ -86,7 +86,7 @@ export const setlistsService = {
 
 
     return newSetlist;
-  },
+  }
 
   // Update a setlist
   async updateSetlist(id, setlistData) {
