@@ -267,7 +267,7 @@ class PerformanceService {
   }
 
   // Create or join session with improved logic
-  async createOrJoinSession(setlistId, userId, userLevel, role = 'follower') {
+  async getOrCreateSession(setlistId, userId, userLevel, role = 'follower') {
     try {
       // Step 1: Clean up any truly stale sessions
       await this.cleanupStaleSessionsForSetlist(setlistId);
@@ -391,9 +391,210 @@ class PerformanceService {
         }
       }
     } catch (error) {
-      console.error('Error in createOrJoinSession:', error);
+      console.error('Error in getOrCreateSession:', error);
       throw error;
     }
+  }
+
+  // Create new session as leader
+  async createSession(setlistId, userId) {
+    try {
+      console.log(`🎭 Creating new session for setlist ${setlistId}`);
+      
+      // Clean up any stale sessions first
+      await this.cleanupStaleSessionsForSetlist(setlistId);
+      
+      // Pre-fetch data before creating session
+      const { setlistData } = await this.prefetchAndCacheSetlistData(setlistId);
+
+      if (!setlistData.sets || setlistData.sets.length === 0) {
+        throw new Error('Setlist has no sets');
+      }
+
+      const firstSet = setlistData.sets[0];
+      const firstSong = firstSet.set_songs?.[0]?.songs || null;
+
+      const { data: newSession, error } = await supabase
+        .from('performance_sessions')
+        .insert({
+          setlist_id: setlistId,
+          leader_id: userId,
+          current_set_id: firstSet.id,
+          current_song_id: firstSong?.id || null,
+          is_active: true
+        })
+        .select(`
+          *,
+          setlists (name),
+          users (id, name, email, role),
+          sets (name),
+          songs (title, original_artist)
+        `)
+        .single();
+
+      if (error) throw new Error(error.message);
+      
+      console.log('🎭 New performance session created');
+      return newSession;
+    } catch (error) {
+      console.error('Error creating session:', error);
+      throw error;
+    }
+  }
+
+  // Join existing session as follower
+  async joinAsFollower(sessionId, userId) {
+    try {
+      console.log(`👥 User ${userId} joining session ${sessionId} as follower`);
+      
+      // Add user as participant
+      await supabase
+        .from('session_participants')
+        .upsert({
+          session_id: sessionId,
+          user_id: userId,
+          is_active: true
+        }, {
+          onConflict: 'session_id,user_id'
+        });
+        
+      return true;
+    } catch (error) {
+      console.error('Error joining as follower:', error);
+      throw error;
+    }
+  }
+
+  // Request leadership from current leader
+  async requestLeadership(sessionId, userId, userName) {
+    try {
+      console.log(`🙋 User ${userId} requesting leadership for session ${sessionId}`);
+      
+      // Check if there's already a pending request from this user
+      const { data: existingRequest } = await supabase
+        .from('leadership_requests')
+        .select('id')
+        .eq('session_id', sessionId)
+        .eq('requesting_user_id', userId)
+        .eq('status', 'pending')
+        .single();
+        
+      if (existingRequest) {
+        throw new Error('You already have a pending leadership request');
+      }
+      
+      // Create new leadership request
+      const { data, error } = await supabase
+        .from('leadership_requests')
+        .insert({
+          session_id: sessionId,
+          requesting_user_id: userId,
+          requesting_user_name: userName,
+          status: 'pending',
+          expires_at: new Date(Date.now() + 30000) // 30 seconds from now
+        })
+        .select()
+        .single();
+        
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error requesting leadership:', error);
+      throw error;
+    }
+  }
+
+  // Approve leadership request and transfer leadership
+  async approveLeadershipRequest(requestId, newLeaderId) {
+    try {
+      console.log(`✅ Approving leadership request ${requestId} for user ${newLeaderId}`);
+      
+      // Get the request details first
+      const { data: request, error: requestError } = await supabase
+        .from('leadership_requests')
+        .select('session_id, requesting_user_id')
+        .eq('id', requestId)
+        .single();
+        
+      if (requestError) throw requestError;
+      
+      // Update request status
+      await supabase
+        .from('leadership_requests')
+        .update({ 
+          status: 'approved',
+          responded_at: new Date()
+        })
+        .eq('id', requestId);
+      
+      // Transfer leadership
+      const { data: updatedSession, error: sessionError } = await supabase
+        .from('performance_sessions')
+        .update({ leader_id: newLeaderId })
+        .eq('id', request.session_id)
+        .select(`
+          *,
+          setlists (name),
+          users (id, name, email, role),
+          sets (name),
+          songs (title, original_artist)
+        `)
+        .single();
+        
+      if (sessionError) throw sessionError;
+      
+      console.log('👑 Leadership transferred successfully');
+      return updatedSession;
+    } catch (error) {
+      console.error('Error approving leadership request:', error);
+      throw error;
+    }
+  }
+
+  // Reject leadership request
+  async rejectLeadershipRequest(requestId) {
+    try {
+      console.log(`❌ Rejecting leadership request ${requestId}`);
+      
+      const { error } = await supabase
+        .from('leadership_requests')
+        .update({ 
+          status: 'rejected',
+          responded_at: new Date()
+        })
+        .eq('id', requestId);
+        
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error rejecting leadership request:', error);
+      throw error;
+    }
+  }
+
+  // Subscribe to leadership requests (for leaders)
+  subscribeToLeadershipRequests(sessionId, callback) {
+    if (!sessionId || sessionId === 'standalone') return null;
+    
+    const subscription = supabase
+      .channel(`leadership_requests_${sessionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'leadership_requests',
+          filter: `session_id=eq.${sessionId}`
+        },
+        (payload) => {
+          console.log('🙋 Leadership request received:', payload.new);
+          setTimeout(() => callback(payload), 0);
+        }
+      )
+      .subscribe();
+
+    this.activeSubscriptions.set(`leadership_requests_${sessionId}`, subscription);
+    console.log('🔔 Subscribed to leadership request updates');
+    return subscription;
   }
 
   // Get all followers for a session

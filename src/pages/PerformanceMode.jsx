@@ -114,19 +114,13 @@ const PerformanceMode = () => {
       if (activeSession) {
         console.log('📡 Found existing session:', activeSession);
         
-        if (activeSession.leader_id === user.id) {
-          // User is the leader, rejoin as leader
-          console.log('👑 Rejoining as existing leader');
-          await startPerformanceMode(setlistId, 'leader', activeSession);
-        } else {
-          // Different leader exists, show role choice
-          console.log('🤔 Different leader exists, showing choice');
-          setExistingSession(activeSession);
-          setShowRoleChoice(true);
-        }
+        // Always show role choice when session exists, but provide context
+        console.log('📡 Found existing session, showing role choice');
+        setExistingSession(activeSession);
+        setShowRoleChoice(true);
       } else {
-        // No existing session, show role choice for new session
-        console.log('🆕 No existing session, showing role choice');
+        // No existing session, always show role choice
+        console.log('🆕 No existing session, showing role choice for new session');
         setExistingSession(null);
         setShowRoleChoice(true);
       }
@@ -157,31 +151,7 @@ const PerformanceMode = () => {
     
     setShowRoleChoice(false);
     
-    if (role === 'force_leader') {
-      // Admin force takeover
-      console.log('👑 Admin forcing leadership takeover');
-      await startPerformanceMode(setlistId, 'leader', existingSession);
-    } else if (role === 'request_leader' && existingSession) {
-      // Request leadership from existing leader
-      console.log('🙋 Requesting leadership transfer');
-      await requestLeadership(existingSession);
-    } else {
-      // Normal role selection
-      await startPerformanceMode(setlistId, role);
-    }
-  };
-
-  const requestLeadership = async (session) => {
-    try {
-      console.log('📨 Sending leadership request');
-      await performanceService.requestLeadership(session.id, user.id, user.name);
-      
-      // Join as follower while waiting for response
-      await startPerformanceMode(setlistId, 'follower', session);
-    } catch (err) {
-      console.error('Error requesting leadership:', err);
-      setError(err.message);
-    }
+    await startPerformanceMode(setlistId, role, existingSession);
   };
 
   const startPerformanceMode = async (setlistId, role, existingSessionData = null) => {
@@ -203,10 +173,60 @@ const PerformanceMode = () => {
         await performanceService.prefetchAndCacheSetlistData(setlistId);
         sessionData = { id: 'standalone', setlist_id: setlistId };
         isStandalone = true;
+      } else if (role === 'force_leader') {
+        // Admin force takeover
+        console.log('👑 Admin forcing leadership takeover');
+        if (existingSessionData) {
+          // Take over existing session
+          const { data: updatedSession, error } = await supabase
+            .from('performance_sessions')
+            .update({ 
+              leader_id: user.id,
+              created_at: new Date()
+            })
+            .eq('id', existingSessionData.id)
+            .select(`
+              *,
+              setlists (name),
+              users (id, name, email, role),
+              sets (name),
+              songs (title, original_artist)
+            `)
+            .single();
+            
+          if (error) throw error;
+          sessionData = updatedSession;
+        } else {
+          // Create new session
+          sessionData = await performanceService.createSession(setlistId, user.id);
+        }
+        isLeaderRole = true;
+      } else if (role === 'request_leader' && existingSessionData) {
+        // Request leadership from existing leader
+        console.log('🙋 Requesting leadership transfer');
+        
+        try {
+          await performanceService.requestLeadership(existingSessionData.id, user.id, user.name);
+          setError('Leadership transfer requested. Waiting for current leader response...');
+          
+          // Join as follower while waiting for response
+          await performanceService.joinAsFollower(existingSessionData.id, user.id);
+          sessionData = existingSessionData;
+          isLeaderRole = false;
+        } catch (err) {
+          console.error('Error requesting leadership:', err);
+          setError(err.message);
+          return;
+        }
       } else if (role === 'leader') {
-        // Create new session or take over existing
-        console.log('👑 Creating/taking over session as leader');
-        sessionData = await performanceService.createSession(setlistId, user.id);
+        // Create new session as leader or rejoin existing
+        if (existingSessionData && existingSessionData.leader_id === user.id) {
+          console.log('👑 Rejoining as existing leader');
+          sessionData = existingSessionData;
+        } else {
+          console.log('👑 Creating new session as leader');
+          sessionData = await performanceService.createSession(setlistId, user.id);
+        }
         isLeaderRole = true;
       } else if (role === 'follower' && existingSessionData) {
         // Join existing session as follower
@@ -214,6 +234,10 @@ const PerformanceMode = () => {
         await performanceService.joinAsFollower(existingSessionData.id, user.id);
         sessionData = existingSessionData;
         isLeaderRole = false;
+      } else if (role === 'follower' && !existingSessionData) {
+        // No session exists but user wants to be follower
+        setError('No active session exists. Please start as leader or use standalone mode.');
+        return;
       } else {
         throw new Error('Invalid role or missing session data');
       }
