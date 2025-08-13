@@ -1016,34 +1016,7 @@ const PerformanceMode = () => {
             </button>
           </div>
         </div>
-        
-        {/* Fixed position zoom controls for mobile lyrics view */}
-        {showLyrics && (
-          <div className="md:hidden absolute bottom-20 right-4 flex flex-col space-y-2 safe-area-inset-bottom">
-            <button
-              onClick={onZoomIn}
-              className="p-3 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
-              title="Zoom In"
-            >
-              <ZoomIn size={18} />
-            </button>
-            <button
-              onClick={onZoomOut}
-              className="p-3 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
-              title="Zoom Out"
-            >
-              <ZoomOut size={18} />
-            </button>
-            <button
-              onClick={onResetZoom}
-              className="px-3 py-2 bg-zinc-800/95 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600 text-xs font-medium"
-              title="Reset Zoom"
-            >
-              {Math.round(lyricsZoom * 100)}%
-            </button>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 

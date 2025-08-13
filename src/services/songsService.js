@@ -120,28 +120,44 @@ export const songsService = {
       .eq('id', id)
       .select()
       .maybeSingle();
-    if (existingSong && existingError?.code !== 'PGRST116') {
-    }
+
     if (error) throw new Error(error.message);
-    return data;
-    if (existingError && existingError.code !== 'PGRST116') {
+    
+    if (!data) {
+      throw new Error('Failed to update song - song may have been deleted.');
     }
-  }
+    
+    return data;
+  },
 
   // Delete a song
   async deleteSong(id) {
+    if (!id) {
+      throw new Error('Song ID is required.');
+    }
+
+    // Check if song exists first
+    const { data: existingSong, error: checkError } = await supabase
+      .from('songs')
+      .select('id')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (checkError) {
+      throw new Error(checkError.message);
+    }
+
+    if (!existingSong) {
+      throw new Error('Song not found.');
+    }
+
     const { error } = await supabase
       .from('songs')
       .delete()
-      .maybeSingle();
+      .eq('id', id);
 
     if (error) {
       throw new Error(error.message);
     }
-
-    if (!data) {
-      throw new Error('Failed to update song - song may have been deleted.');
-    }
-
   }
 };

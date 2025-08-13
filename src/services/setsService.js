@@ -101,7 +101,7 @@ export const setsService = {
       .from('sets')
       .insert([{ name, setlist_id, set_order: nextOrder }])
       .select()
-      .single();
+      .maybeSingle();
 
     if (setError) throw new Error(setError.message);
 

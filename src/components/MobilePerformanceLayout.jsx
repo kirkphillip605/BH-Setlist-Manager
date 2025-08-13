@@ -79,14 +79,16 @@ const MobilePerformanceLayout = ({
           <div className="flex-1 relative">
             {/* Zoomable lyrics container */}
             <div className="h-full overflow-auto p-6 performance-zoom-container">
-              <div className="mobile-zoom-container" style={{ 
+              <div 
+                className="mobile-zoom-container" 
+                style={{ 
                 transform: `scale(${lyricsZoom})`, 
                 transformOrigin: 'top left',
-                width: lyricsZoom > 1 ? `${100 / lyricsZoom}%` : '100%',
-                lineHeight: 1.6,
-                wordWrap: 'break-word'
-              }}>
-              {children}
+                width: `${100 / lyricsZoom}%`,
+                minHeight: `${100 / lyricsZoom}%`
+                }}
+              >
+                {children}
               </div>
             </div>
             {/* Zoom controls */}
@@ -123,14 +125,16 @@ const MobilePerformanceLayout = ({
           </div>
           <div className="flex-1 relative">
             <div className="h-full overflow-auto p-4 performance-zoom-container">
-              <div className="mobile-zoom-container" style={{ 
+              <div 
+                className="mobile-zoom-container" 
+                style={{ 
                 transform: `scale(${lyricsZoom})`, 
                 transformOrigin: 'top left',
-                width: lyricsZoom > 1 ? `${100 / lyricsZoom}%` : '100%',
-                lineHeight: 1.6,
-                wordWrap: 'break-word'
-              }}>
-              {children}
+                width: `${100 / lyricsZoom}%`,
+                minHeight: `${100 / lyricsZoom}%`
+                }}
+              >
+                {children}
               </div>
             </div>
             <div className="absolute top-4 right-4 flex space-x-1">

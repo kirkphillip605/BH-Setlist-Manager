@@ -17,10 +17,6 @@ export const setlistsService = {
     if (!id) {
       throw new Error('Setlist ID is required.');
     }
-
-    if (!id) {
-      throw new Error('Setlist ID is required');
-    }
     
     const { data, error } = await supabase
       .from('setlists')
@@ -35,17 +31,12 @@ export const setlistsService = {
       `)
       .eq('id', id)
       .order('set_order', { foreignTable: 'sets', ascending: true })
-      .single();
+      .maybeSingle();
 
     if (error) {
       throw new Error(error.message);
     }
 
-    if (!data) {
-      throw new Error('Setlist not found');
-    }
-
-    
     if (!data) {
       throw new Error('Setlist not found');
     }
@@ -67,13 +58,14 @@ export const setlistsService = {
       .select('id')
       .eq('name', name)
       .eq('user_id', user_id)
-      .single();
+      .maybeSingle();
+
+    if (existingError && existingError.code !== 'PGRST116') {
+      throw new Error(existingError.message);
+    }
 
     if (existingSetlist) {
       throw new Error('A setlist with this name already exists.');
-    }
-    if (existingError && existingError.code !== 'PGRST116') {
-      throw new Error(existingError.message);
     }
 
     const { data: newSetlist, error: setlistError } = await supabase
@@ -84,9 +76,8 @@ export const setlistsService = {
 
     if (setlistError) throw new Error(setlistError.message);
 
-
     return newSetlist;
-  }
+  },
 
   // Update a setlist
   async updateSetlist(id, setlistData) {
@@ -122,13 +113,14 @@ export const setlistsService = {
       .eq('name', name)
       .eq('user_id', setlist.user_id)
       .neq('id', id)
-      .single();
+      .maybeSingle();
+
+    if (existingError && existingError.code !== 'PGRST116') {
+      throw new Error(existingError.message);
+    }
 
     if (existingSetlist) {
       throw new Error('Another setlist with this name already exists.');
-    }
-    if (existingError && existingError.code !== 'PGRST116') {
-      throw new Error(existingError.message);
     }
 
     const { data: updatedSetlist, error: setlistError } = await supabase
@@ -136,16 +128,38 @@ export const setlistsService = {
       .update({ name, is_public })
       .eq('id', id)
       .select()
-      .single();
+      .maybeSingle();
 
     if (setlistError) throw new Error(setlistError.message);
 
+    if (!updatedSetlist) {
+      throw new Error('Failed to update setlist - setlist may have been deleted.');
+    }
 
     return updatedSetlist;
   },
 
   // Delete a setlist
   async deleteSetlist(id) {
+    if (!id) {
+      throw new Error('Setlist ID is required.');
+    }
+
+    // Check if setlist exists first
+    const { data: existingSetlist, error: checkError } = await supabase
+      .from('setlists')
+      .select('id')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (checkError) {
+      throw new Error(checkError.message);
+    }
+
+    if (!existingSetlist) {
+      throw new Error('Setlist not found.');
+    }
+
     const { error } = await supabase
       .from('setlists')
       .delete()
@@ -156,8 +170,8 @@ export const setlistsService = {
 
   // Duplicate an existing setlist
   async duplicateSetlist(sourceSetlistId, newName, userId, isPublic = false) {
-    if (!newName || !userId) {
-      throw new Error('New setlist name and user_id are required.');
+    if (!sourceSetlistId || !newName || !userId) {
+      throw new Error('Source setlist ID, new setlist name and user_id are required.');
     }
 
     // Check for duplicate setlist name for this user
@@ -166,13 +180,14 @@ export const setlistsService = {
       .select('id')
       .eq('name', newName)
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
+
+    if (existingError && existingError.code !== 'PGRST116') {
+      throw new Error(existingError.message);
+    }
 
     if (existingSetlist) {
       throw new Error('A setlist with this name already exists.');
-    }
-    if (existingError && existingError.code !== 'PGRST116') {
-      throw new Error(existingError.message);
     }
 
     // Get the source setlist with all its sets and songs
@@ -200,9 +215,9 @@ export const setlistsService = {
           )
         `)
         .eq('id', sourceSet.id)
-        .single();
+        .maybeSingle();
 
-      if (setError) continue; // Skip this set if error
+      if (setError || !fullSet) continue; // Skip this set if error or not found
 
       // Create new set
       const { data: newSet, error: newSetError } = await supabase
@@ -215,7 +230,7 @@ export const setlistsService = {
         .select()
         .single();
 
-      if (newSetError) continue; // Skip this set if error
+      if (newSetError || !newSet) continue; // Skip this set if error
 
       // Add songs to new set
       if (fullSet.set_songs && fullSet.set_songs.length > 0) {
