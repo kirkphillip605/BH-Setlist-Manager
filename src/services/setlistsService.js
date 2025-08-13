@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient';
+import { apiService } from './apiService';
 
 export const setlistsService = {
   // Get all setlists for the current user

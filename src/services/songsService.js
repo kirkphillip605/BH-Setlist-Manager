@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient';
+import { apiService } from './apiService';
 
 export const songsService = {
   // Get all songs

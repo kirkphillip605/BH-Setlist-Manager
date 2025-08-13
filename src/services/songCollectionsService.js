@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient';
+import { apiService } from './apiService';
 
 export const songCollectionsService = {
   // Get all song collections for the current user
