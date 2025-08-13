@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ChevronUp, ChevronDown, Search, Users, Settings } from 'lucide-react';
+import { X, ChevronUp, ChevronDown, Search, Users, Settings, ZoomIn, ZoomOut } from 'lucide-react';
 
 const MobilePerformanceLayout = ({
   children,
@@ -14,14 +14,14 @@ const MobilePerformanceLayout = ({
   searchContent,
   setlistName,
   currentSetName,
-  isSearchSong
+  isSearchSong,
+  onZoomIn,
+  onZoomOut,
+  onResetZoom,
+  lyricsZoom
 }) => {
   const [showLyrics, setShowLyrics] = useState(false);
-  const [lyricsZoom, setLyricsZoom] = useState(1);
 
-  const handleLyricsZoom = (delta) => {
-    setLyricsZoom(prev => Math.max(0.8, Math.min(2, prev + delta)));
-  };
 
   return (
     <div className="h-screen bg-zinc-950 flex flex-col safe-area-inset-top">
@@ -84,22 +84,25 @@ const MobilePerformanceLayout = ({
             {/* Zoom controls */}
             <div className="absolute top-4 right-4 flex flex-col space-y-2">
               <button
-                onClick={() => handleLyricsZoom(0.1)}
-                className="p-2 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors border border-zinc-600"
+                onClick={onZoomIn}
+                className="p-3 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
+                title="Zoom In"
               >
-                <ChevronUp size={16} />
+                <ZoomIn size={20} />
               </button>
               <button
-                onClick={() => handleLyricsZoom(-0.1)}
-                className="p-2 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors border border-zinc-600"
+                onClick={onZoomOut}
+                className="p-3 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
+                title="Zoom Out"
               >
-                <ChevronDown size={16} />
+                <ZoomOut size={20} />
               </button>
               <button
-                onClick={() => setLyricsZoom(1)}
-                className="px-2 py-1 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors border border-zinc-600 text-xs"
+                onClick={onResetZoom}
+                className="px-3 py-2 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600 text-xs font-medium"
+                title="Reset Zoom"
               >
-                100%
+                {Math.round(lyricsZoom * 100)}%
               </button>
             </div>
           </div>
@@ -116,16 +119,25 @@ const MobilePerformanceLayout = ({
             </div>
             <div className="absolute top-4 right-4 flex space-x-2">
               <button
-                onClick={() => handleLyricsZoom(0.1)}
-                className="p-2 bg-zinc-800 text-zinc-300 rounded-lg"
+                onClick={onZoomIn}
+                className="p-3 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
+                title="Zoom In"
               >
-                <ChevronUp size={16} />
+                <ZoomIn size={18} />
               </button>
               <button
-                onClick={() => handleLyricsZoom(-0.1)}
-                className="p-2 bg-zinc-800 text-zinc-300 rounded-lg"
+                onClick={onZoomOut}
+                className="p-3 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
+                title="Zoom Out"
               >
-                <ChevronDown size={16} />
+                <ZoomOut size={18} />
+              </button>
+              <button
+                onClick={onResetZoom}
+                className="px-3 py-2 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600 text-xs font-medium"
+                title="Reset Zoom"
+              >
+                {Math.round(lyricsZoom * 100)}%
               </button>
             </div>
           </div>
@@ -150,16 +162,16 @@ const MobilePerformanceLayout = ({
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => handleLyricsZoom(0.1)}
-                    className="p-2 bg-zinc-800 text-zinc-300 rounded-lg"
+                    onClick={onZoomIn}
+                    className="p-2 bg-zinc-800 text-zinc-300 rounded-xl"
                   >
-                    <ChevronUp size={16} />
+                    <ZoomIn size={16} />
                   </button>
                   <button
-                    onClick={() => handleLyricsZoom(-0.1)}
-                    className="p-2 bg-zinc-800 text-zinc-300 rounded-lg"
+                    onClick={onZoomOut}
+                    className="p-2 bg-zinc-800 text-zinc-300 rounded-xl"
                   >
-                    <ChevronDown size={16} />
+                    <ZoomOut size={16} />
                   </button>
                   <button
                     onClick={() => setShowLyrics(false)}
