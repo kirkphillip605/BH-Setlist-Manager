@@ -121,9 +121,12 @@ export const songsService = {
       .select()
       .maybeSingle();
     if (existingSong && existingError?.code !== 'PGRST116') {
+    }
     if (error) throw new Error(error.message);
     return data;
     if (existingError && existingError.code !== 'PGRST116') {
+    }
+  }
 
   // Delete a song
   async deleteSong(id) {
