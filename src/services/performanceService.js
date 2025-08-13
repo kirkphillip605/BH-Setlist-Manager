@@ -258,7 +258,6 @@ class PerformanceService {
   // Request leadership transfer
   async requestLeadershipTransfer(sessionId, requestingUserId, requestingUserName) {
     try {
-      // Create leadership request in database
       const { data, error } = await supabase
         .from('leadership_requests')
         .insert({
