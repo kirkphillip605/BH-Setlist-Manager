@@ -7,6 +7,7 @@ import { setsService } from '../services/setsService';
 import { songCollectionsService } from '../services/songCollectionsService';
 import SongSelector from '../components/SongSelector';
 import DuplicateModal from '../components/DuplicateModal';
+import CollectionDuplicateModal from '../components/CollectionDuplicateModal';
 
 const SetFormPage = () => {
   const { setlistId, setId } = useParams();
@@ -23,6 +24,9 @@ const SetFormPage = () => {
   const [collections, setCollections] = useState([]);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicates, setDuplicates] = useState([]);
+  const [showCollectionDuplicateModal, setShowCollectionDuplicateModal] = useState(false);
+  const [collectionDuplicates, setCollectionDuplicates] = useState({});
+  const [pendingCollectionSongs, setPendingCollectionSongs] = useState([]);
 
   const isEditing = !!setId;
 
@@ -118,11 +122,83 @@ const SetFormPage = () => {
         }))
         .sort((a, b) => a.song_order - b.song_order) || [];
       
-      setSetSongs(prev => [...prev, ...collectionSongs]);
-      setShowCollectionSelector(false);
+      if (collectionSongs.length === 0) {
+        setError('Selected collection is empty');
+        return;
+      }
+
+      // Check for duplicates in the setlist
+      const songIds = collectionSongs.map(song => song.id);
+      const duplicates = await setsService.checkCollectionDuplicates(setlistId, songIds, setId);
+      
+      if (Object.keys(duplicates).length > 0) {
+        // Show duplicate modal
+        setCollectionDuplicates(duplicates);
+        setPendingCollectionSongs(collectionSongs);
+        setShowCollectionDuplicateModal(true);
+      } else {
+        // No duplicates, add all songs
+        setSetSongs(prev => [...prev, ...collectionSongs]);
+        setShowCollectionSelector(false);
+      }
     } catch (err) {
       console.error('Error loading collection songs:', err);
       setError('Failed to load collection songs');
+    }
+  };
+
+  const handleSkipDuplicates = () => {
+    // Filter out duplicate songs and add the rest
+    const duplicateSongIds = new Set();
+    Object.values(collectionDuplicates).forEach(setInfo => {
+      setInfo.songs.forEach(song => duplicateSongIds.add(song.id));
+    });
+    
+    const songsToAdd = pendingCollectionSongs.filter(song => !duplicateSongIds.has(song.id));
+    
+    if (songsToAdd.length > 0) {
+      setSetSongs(prev => [...prev, ...songsToAdd]);
+    }
+    
+    // Clean up state
+    setShowCollectionDuplicateModal(false);
+    setShowCollectionSelector(false);
+    setCollectionDuplicates({});
+    setPendingCollectionSongs([]);
+  };
+
+  const handleMoveSongs = async (fromSetId, songIds) => {
+    try {
+      // Move songs from other set to current set
+      if (isEditing) {
+        await setsService.moveSongsBetweenSets(songIds, fromSetId, setId);
+      }
+      
+      // Update local state - remove moved songs from duplicates
+      const updatedDuplicates = { ...collectionDuplicates };
+      const setInfo = updatedDuplicates[fromSetId];
+      
+      if (setInfo) {
+        setInfo.songs = setInfo.songs.filter(song => !songIds.includes(song.id));
+        if (setInfo.songs.length === 0) {
+          delete updatedDuplicates[fromSetId];
+        }
+      }
+      
+      setCollectionDuplicates(updatedDuplicates);
+      
+      // Add moved songs to current set
+      const movedSongs = pendingCollectionSongs.filter(song => songIds.includes(song.id));
+      setSetSongs(prev => [...prev, ...movedSongs]);
+      
+      // If no more duplicates, close modal and add remaining songs
+      if (Object.keys(updatedDuplicates).length === 0) {
+        handleSkipDuplicates();
+      }
+      
+    } catch (err) {
+      console.error('Error moving songs:', err);
+      setError('Failed to move songs between sets');
     }
   };
 
@@ -336,6 +412,20 @@ const SetFormPage = () => {
           setlistId={setlistId}
         />
       )}
+      
+      {/* Collection Duplicate Modal */}
+      <CollectionDuplicateModal
+        isOpen={showCollectionDuplicateModal}
+        onClose={() => {
+          setShowCollectionDuplicateModal(false);
+          setCollectionDuplicates({});
+          setPendingCollectionSongs([]);
+        }}
+        duplicates={collectionDuplicates}
+        onSkipDuplicates={handleSkipDuplicates}
+        onMoveSongs={handleMoveSongs}
+        targetSetName={setName || 'this set'}
+      />
       
       {/* Duplicate Modal */}
       <DuplicateModal

@@ -3,45 +3,29 @@ import { supabase } from '../supabaseClient';
 export const songsService = {
   // Get all songs
   async getAllSongs() {
-    // Add timeout and error handling for better performance feedback
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-
-    try {
-    const { data, error } = await supabase
-      .from('songs')
-      .select('*')
-      .order('original_artist', { ascending: true })
-      .order('title', { ascending: true })
-      .abortSignal(controller.signal);
-
-      clearTimeout(timeoutId);
-    if (error) throw new Error(error.message);
-    return data;
-    } catch (err) {
-      clearTimeout(timeoutId);
-      if (err.name === 'AbortError') {
-        throw new Error('Request timed out. Please check your connection and try again.');
-      }
-      throw err;
-    }
+    return apiService.executeQuery(() => {
+      return supabase
+        .from('songs')
+        .select('*')
+        .order('original_artist', { ascending: true })
+        .order('title', { ascending: true });
+    });
   },
 
   // Get a single song by ID
   async getSongById(id) {
-    const { data, error } = await supabase
-      .from('songs')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
+    return apiService.executeQuery(() => {
+      return supabase
+        .from('songs')
+        .select('*')
+        .eq('id', id)
+        .single();
+    }).catch(error => {
+      if (error.message?.includes('PGRST116')) {
         throw new Error('Song not found');
       }
-      throw new Error(error.message);
-    }
-    return data;
+      throw error;
+    });
   },
 
   // Create a new song

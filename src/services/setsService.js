@@ -183,13 +183,16 @@ export const setsService = {
   },
 
   // Check for duplicate songs in a setlist (across all sets)
-  async checkForDuplicatesInSetlist(setlistId, songIds, excludeSetId = null) {
+  async checkForDuplicatesInSetlist(setlistId, songIds, excludeSetId = null, includeSetNames = false) {
     let query = supabase
       .from('set_songs')
-      .select(`
+      .select(includeSetNames ? `
         song_id,
         sets!inner(id, name, setlist_id),
         songs(title, original_artist)
+      ` : `
+        song_id,
+        sets!inner(id, setlist_id)
       `)
       .eq('sets.setlist_id', setlistId)
       .in('song_id', songIds);
@@ -203,6 +206,64 @@ export const setsService = {
     if (error) throw new Error(error.message);
     
     return data || [];
+  },
+
+  // Check for duplicates when adding songs from collection
+  async checkCollectionDuplicates(setlistId, songIds, targetSetId = null) {
+    const duplicates = await this.checkForDuplicatesInSetlist(setlistId, songIds, targetSetId, true);
+    
+    // Group duplicates by set for better UX
+    const duplicatesBySet = duplicates.reduce((acc, dup) => {
+      const setId = dup.sets.id;
+      if (!acc[setId]) {
+        acc[setId] = {
+          setName: dup.sets.name,
+          songs: []
+        };
+      }
+      acc[setId].songs.push({
+        id: dup.song_id,
+        title: dup.songs.title,
+        original_artist: dup.songs.original_artist
+      });
+      return acc;
+    }, {});
+
+    return duplicatesBySet;
+  },
+
+  // Move multiple songs between sets
+  async moveSongsBetweenSets(songIds, fromSetId, toSetId) {
+    // Remove from original sets
+    const { error: deleteError } = await supabase
+      .from('set_songs')
+      .delete()
+      .in('song_id', songIds);
+
+    if (deleteError) throw new Error(deleteError.message);
+
+    // Get next order for target set
+    const { data: maxOrder } = await supabase
+      .from('set_songs')
+      .select('song_order')
+      .eq('set_id', toSetId)
+      .order('song_order', { ascending: false })
+      .limit(1);
+    
+    let nextOrder = (maxOrder && maxOrder[0]?.song_order || 0) + 1;
+
+    // Add to new set
+    const setSongsToInsert = songIds.map((songId) => ({
+      set_id: toSetId,
+      song_id: songId,
+      song_order: nextOrder++
+    }));
+
+    const { error: insertError } = await supabase
+      .from('set_songs')
+      .insert(setSongsToInsert);
+
+    if (insertError) throw new Error(insertError.message);
   },
 
   // Move song to another set within the same setlist
