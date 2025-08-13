@@ -85,17 +85,17 @@ const MobilePerformanceLayout = ({
             <div className="absolute top-4 right-4 flex flex-col space-y-2">
               <button
                 onClick={onZoomIn}
-                className="p-3 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
+                className="p-2 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
                 title="Zoom In"
               >
-                <ZoomIn size={20} />
+                <ZoomIn size={16} />
               </button>
               <button
                 onClick={onZoomOut}
-                className="p-3 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
+                className="p-2 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
                 title="Zoom Out"
               >
-                <ZoomOut size={20} />
+                <ZoomOut size={16} />
               </button>
               <button
                 onClick={onResetZoom}
@@ -120,17 +120,17 @@ const MobilePerformanceLayout = ({
             <div className="absolute top-4 right-4 flex space-x-2">
               <button
                 onClick={onZoomIn}
-                className="p-3 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
+                className="p-2 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
                 title="Zoom In"
               >
-                <ZoomIn size={18} />
+                <ZoomIn size={16} />
               </button>
               <button
                 onClick={onZoomOut}
-                className="p-3 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
+                className="p-2 bg-zinc-800/90 backdrop-blur text-zinc-300 rounded-xl hover:bg-zinc-700 transition-all shadow-lg border border-zinc-600"
                 title="Zoom Out"
               >
-                <ZoomOut size={18} />
+                <ZoomOut size={16} />
               </button>
               <button
                 onClick={onResetZoom}
@@ -163,19 +163,28 @@ const MobilePerformanceLayout = ({
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={onZoomIn}
-                    className="p-2 bg-zinc-800 text-zinc-300 rounded-xl"
+                    className="p-2 bg-zinc-800 text-zinc-300 rounded-xl hover:bg-zinc-700 transition-colors"
+                    title="Zoom In"
                   >
                     <ZoomIn size={16} />
                   </button>
                   <button
                     onClick={onZoomOut}
-                    className="p-2 bg-zinc-800 text-zinc-300 rounded-xl"
+                    className="p-2 bg-zinc-800 text-zinc-300 rounded-xl hover:bg-zinc-700 transition-colors"
+                    title="Zoom Out"
                   >
                     <ZoomOut size={16} />
                   </button>
                   <button
+                    onClick={onResetZoom}
+                    className="px-2 py-1 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors text-xs font-medium"
+                    title="Reset Zoom"
+                  >
+                    {Math.round(lyricsZoom * 100)}%
+                  </button>
+                  <button
                     onClick={() => setShowLyrics(false)}
-                    className="p-2 bg-red-600 text-white rounded-lg"
+                    className="p-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
                   >
                     <ChevronDown size={20} />
                   </button>
