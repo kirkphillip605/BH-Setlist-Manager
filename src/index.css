@@ -398,7 +398,7 @@ html, body {
 }
 
 .mobile-table-card:active {
-  @apply transform scale-98 bg-zinc-700;
+  @apply transform scale-95 bg-zinc-700;
 }
 
 /* Mobile action buttons */
