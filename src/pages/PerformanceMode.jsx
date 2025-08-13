@@ -103,6 +103,17 @@ const PerformanceMode = () => {
     }
   };
 
+  const loadFollowers = async (sessionId) => {
+    try {
+      const followersData = await performanceService.getSessionFollowers(sessionId);
+      if (mountedRef.current) {
+        setFollowers(followersData);
+      }
+    } catch (err) {
+      console.error('Error loading followers:', err);
+    }
+  };
+
   const fetchAllSongs = async () => {
     try {
       const songs = await songsService.getAllSongs();
@@ -201,6 +212,11 @@ const PerformanceMode = () => {
               handleLeadershipRequest
             );
           }
+        }
+
+        // Load followers if we're the leader
+        if (isLeaderRole && sessionData.id !== 'standalone') {
+          await loadFollowers(sessionData.id);
         }
 
         await fetchAllSongs();
@@ -516,6 +532,14 @@ const PerformanceMode = () => {
     }
   };
 
+  // Refresh followers when showing the modal
+  const handleShowFollowers = async () => {
+    if (session && session.id !== 'standalone') {
+      await loadFollowers(session.id);
+    }
+    setShowFollowers(true);
+  };
+
   const handleLeadershipResponse = async (approved) => {
     try {
       await performanceService.respondToLeadershipRequest(
@@ -532,6 +556,11 @@ const PerformanceMode = () => {
 
       setShowLeadershipRequest(false);
       setLeadershipRequestData(null);
+      
+      // Refresh followers list
+      if (session && session.id !== 'standalone') {
+        await loadFollowers(session.id);
+      }
     } catch (err) {
       console.error('Error responding to leadership request:', err);
       setError('Failed to respond to leadership request');
@@ -895,7 +924,7 @@ const PerformanceMode = () => {
         currentSongLyrics={currentSongLyrics}
         isLeader={isLeader || standaloneMode}
         onExit={handleExitPerformance}
-        onShowFollowers={() => setShowFollowers(true)}
+        onShowFollowers={handleShowFollowers}
         onShowSearch={() => setShowSearch(true)}
         showSearch={showSearch}
         searchContent={searchContent}

@@ -205,6 +205,22 @@ class PerformanceService {
         throw new Error('No active performance session found');
       }
 
+      // Add user as participant in the session
+      const { error: participantError } = await supabase
+        .from('session_participants')
+        .upsert({
+          session_id: activeSession.id,
+          user_id: userId,
+          is_active: true
+        }, {
+          onConflict: 'session_id,user_id'
+        });
+
+      if (participantError) {
+        console.warn('Failed to add participant:', participantError);
+        // Don't throw error as this is not critical for basic functionality
+      }
+
       // Check if cache is valid, otherwise refresh
       if (!this.isCacheValid(setlistId)) {
         await this.prefetchAndCacheSetlistData(setlistId);
@@ -250,9 +266,27 @@ class PerformanceService {
 
   // Get all followers for a session
   async getSessionFollowers(sessionId) {
-    // This would require a followers table, for now return empty array
-    // In a real implementation, you'd track followers in a separate table
-    return [];
+    try {
+      const { data, error } = await supabase
+        .from('session_participants')
+        .select(`
+          *,
+          users (
+            id,
+            name,
+            email,
+            role
+          )
+        `)
+        .eq('session_id', sessionId)
+        .eq('is_active', true);
+
+      if (error) throw error;
+      return data?.map(p => p.users) || [];
+    } catch (error) {
+      console.error('Error fetching session followers:', error);
+      return [];
+    }
   }
 
   // Request leadership transfer
@@ -331,6 +365,12 @@ class PerformanceService {
       this.clearCache();
       this.cleanupSubscriptions();
       
+      // Remove all participants from this session
+      await supabase
+        .from('session_participants')
+        .update({ is_active: false })
+        .eq('session_id', sessionId);
+
       const { error } = await supabase
         .from('performance_sessions')
         .update({ is_active: false })
@@ -426,6 +466,23 @@ class PerformanceService {
 
   // Clean up all subscriptions and performance state
   cleanupSubscriptions() {
+    // Remove user from session participants when leaving
+    const cachedSessionInfo = this.getCachedSessionInfo();
+    if (cachedSessionInfo.sessionId && cachedSessionInfo.sessionId !== 'standalone') {
+      // Asynchronously remove participant (don't await to avoid blocking cleanup)
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          supabase
+            .from('session_participants')
+            .update({ is_active: false })
+            .eq('session_id', cachedSessionInfo.sessionId)
+            .eq('user_id', user.id)
+            .then(() => console.log('🚪 Removed from session participants'))
+            .catch(err => console.warn('Failed to remove participant:', err));
+        }
+      });
+    }
+
     for (const [sessionId, subscription] of this.activeSubscriptions) {
       supabase.removeChannel(subscription);
     }
