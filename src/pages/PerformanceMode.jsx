@@ -57,13 +57,13 @@ const PerformanceMode = () => {
     mountedRef.current = true;
     setPageTitle('Performance Mode');
     
-    if (setlistId) {
-      // Check for existing session for this setlist
-      checkExistingSession(setlistId);
-    } else {
-      // Load setlists for selection
-      fetchSetlists();
-    }
+    // Always start with fetching setlists first
+    fetchSetlists().then(() => {
+      if (setlistId && mountedRef.current) {
+        // Check for existing session for this setlist
+        checkExistingSession(setlistId);
+      }
+    });
     
     return () => {
       mountedRef.current = false;
@@ -125,7 +125,9 @@ const PerformanceMode = () => {
       } else {
         console.log('🆕 No existing session, showing role choice');
         setExistingSession(null);
-        setShowRoleChoice(true);
+        if (mountedRef.current) {
+          setShowRoleChoice(true);
+        }
       }
     } catch (err) {
       console.error('Error checking existing session:', err);
@@ -145,8 +147,16 @@ const PerformanceMode = () => {
       return;
     }
     
-    setSelectedSetlistId(selectedSetlistId);
-    navigate(`/performance?setlist=${selectedSetlistId}`);
+    if (mountedRef.current) {
+      setSelectedSetlistId(selectedSetlistId);
+      // Update URL and trigger session check
+      const newUrl = new URL(window.location);
+      newUrl.searchParams.set('setlist', selectedSetlistId);
+      window.history.replaceState({}, '', newUrl);
+      
+      // Check for existing session
+      await checkExistingSession(selectedSetlistId);
+    }
   };
 
   const handleRoleChoice = async (role) => {
@@ -683,11 +693,10 @@ const PerformanceMode = () => {
   );
 
   // Show role choice modal
-  if (setlistId && showRoleChoice && !loading) {
+  if (showRoleChoice && !loading && setlistId) {
     const hasActiveLeader = existingSession && existingSession.leader_id;
-    const isCurrentLeader = hasActiveLeader && existingSession.leader_id === user.id;
     const canForceLeadership = user.user_level >= 3;
-    const leaderName = existingSession.users?.name || 'Unknown';
+    const leaderName = existingSession?.users?.name || 'Unknown';
 
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
@@ -785,7 +794,7 @@ const PerformanceMode = () => {
                 }}
                 className="text-zinc-400 hover:text-zinc-300 transition-colors text-sm"
               >
-                ← {setlistId ? 'Choose Different Setlist' : 'Back to Setlists'}
+                ← Choose Different Setlist
               </button>
             </div>
           </div>
@@ -1043,48 +1052,24 @@ const PerformanceMode = () => {
       <div className="flex-1 overflow-y-auto p-4">
         <div className="space-y-2">
           {filteredSongs.slice(0, 50).map((song) => (
-            <button
-              key={song.id}
-              onClick={() => loadSearchSong(song)}
-              className="w-full text-left p-4 bg-zinc-800 rounded-xl hover:bg-zinc-700 transition-colors border border-zinc-700"
-            >
-              <p className="text-base font-medium text-zinc-100">{song.title}</p>
-              <p className="text-sm text-zinc-400">{song.original_artist}</p>
-            </button>
-          ))}
-          {filteredSongs.length === 0 && searchQuery && (
-            <p className="text-center text-zinc-400 py-8">No songs found</p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  // Main lyrics content
-  const lyricsContent = (
-    <div className="h-full relative">
-      {currentSong ? (
-        <div className="max-w-4xl mx-auto">
-          <div style={{ zoom: lyricsZoom }}>
-            <div className="mb-6">
-              <h1 className="text-2xl sm:text-3xl font-bold text-zinc-100 mb-2">{currentSong.title}</h1>
-              <div className="flex items-center space-x-2">
-                <p className="text-lg sm:text-xl text-zinc-400">
-                  {currentSong.original_artist} {currentSong.key_signature && `• ${currentSong.key_signature}`}
-                </p>
-                {isSearchSong && (
-                  <span className="px-2 py-1 bg-amber-600 text-white text-xs font-medium rounded-full">
-                    Search Song
-                  </span>
-                )}
-              </div>
-              {currentSong.performance_note && (
-                <div className="flex items-center space-x-2 mt-2">
-                  <svg className="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                  </svg>
-                  <p className="text-base sm:text-lg text-amber-300 font-medium">{currentSong.performance_note}</p>
-                </div>
+              {/* Always show leader option */}
+              <button
+                onClick={() => handleRoleChoice('leader')}
+                className="w-full inline-flex items-center justify-center px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
+              >
+                <Crown size={20} className="mr-2" />
+                {hasActiveLeader ? 'Take Leadership' : 'Start as Leader'}
+              </button>
+              
+              {/* Follower option - only show if session exists */}
+              {hasActiveLeader && (
+                <button
+                  onClick={() => handleRoleChoice('follower')}
+                  className="w-full inline-flex items-center justify-center px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium"
+                >
+                  <Users size={20} className="mr-2" />
+                  Join as Follower
+                </button>
               )}
             </div>
             <div 

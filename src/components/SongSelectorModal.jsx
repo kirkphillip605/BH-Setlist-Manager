@@ -2,15 +2,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Plus, X, Music } from 'lucide-react';
 import Fuse from 'fuse.js';
 import { songsService } from '../services/songsService';
-import { setlistsService } from '../services/setlistsService';
-import { setsService } from '../services/setsService';
 
 const SongSelectorModal = ({ 
   isOpen, 
   onClose, 
   onSongsSelected, 
-  selectedSongs = [], 
-  setlistId = null 
+  selectedSongs = []
 }) => {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,18 +16,20 @@ const SongSelectorModal = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [localSelectedSongs, setLocalSelectedSongs] = useState(new Set());
-  const [allSetlistSongs, setAllSetlistSongs] = useState(new Set());
 
   // Configure Fuse.js for fuzzy search
   const fuseOptions = {
     keys: [
-      { name: 'title', weight: 0.7 },
-      { name: 'original_artist', weight: 0.3 }
+      { name: 'title', weight: 0.6 },
+      { name: 'original_artist', weight: 0.4 }
     ],
-    threshold: 0.4, // Lower = more strict, higher = more fuzzy
+    threshold: 0.5, // Lower = more strict, higher = more fuzzy
     ignoreLocation: true,
     includeScore: true,
-    minMatchCharLength: 2
+    minMatchCharLength: 1,
+    shouldSort: true,
+    tokenize: true,
+    matchAllTokens: false
   };
 
   const fuse = useMemo(() => new Fuse(songs, fuseOptions), [songs]);
@@ -38,11 +37,8 @@ const SongSelectorModal = ({
   useEffect(() => {
     if (isOpen) {
       fetchSongs();
-      if (setlistId) {
-        fetchSetlistSongs();
-      }
     }
-  }, [isOpen, setlistId]);
+  }, [isOpen]);
 
   useEffect(() => {
     // Reset local selection when modal opens
@@ -53,24 +49,6 @@ const SongSelectorModal = ({
     }
   }, [isOpen]);
 
-  const fetchSetlistSongs = async () => {
-    try {
-      const setlistData = await setlistsService.getSetlistById(setlistId);
-      const allSongIds = new Set();
-      
-      // Get all songs from all sets in the setlist
-      for (const set of setlistData.sets || []) {
-        const setData = await setsService.getSetById(set.id);
-        setData.set_songs?.forEach(ss => {
-          allSongIds.add(ss.songs.id);
-        });
-      }
-      
-      setAllSetlistSongs(allSongIds);
-    } catch (err) {
-      console.error('Error fetching setlist songs:', err);
-    }
-  };
 
   const fetchSongs = async () => {
     setLoading(true);
@@ -120,10 +98,6 @@ const SongSelectorModal = ({
     return selectedSongs.some(s => (s.id || s) === songId);
   };
 
-  // Check if song is already in setlist
-  const isInSetlist = (songId) => {
-    return allSetlistSongs.has(songId);
-  };
 
   if (!isOpen) return null;
 
@@ -201,9 +175,7 @@ const SongSelectorModal = ({
               <div className="space-y-2">
                 {currentSongs.map((song) => {
                   const alreadySelected = isAlreadySelected(song.id);
-                  const inSetlist = isInSetlist(song.id);
                   const locallySelected = localSelectedSongs.has(song.id);
-                  const isDisabled = alreadySelected || (inSetlist && !locallySelected);
 
                   return (
                     <div
@@ -213,8 +185,6 @@ const SongSelectorModal = ({
                           ? 'bg-blue-600/20 border-blue-500'
                           : alreadySelected
                             ? 'bg-green-600/20 border-green-500'
-                            : inSetlist
-                              ? 'bg-gray-600/20 border-gray-500'
                               : 'bg-zinc-700 border-zinc-600 hover:bg-zinc-650'
                       }`}
                     >
@@ -236,10 +206,6 @@ const SongSelectorModal = ({
                         {alreadySelected ? (
                           <span className="px-3 py-2 bg-green-600 text-white text-sm rounded-xl font-medium">
                             Already in Set
-                          </span>
-                        ) : inSetlist && !locallySelected ? (
-                          <span className="px-3 py-2 bg-gray-600 text-white text-sm rounded-xl font-medium">
-                            In Setlist
                           </span>
                         ) : (
                           <button

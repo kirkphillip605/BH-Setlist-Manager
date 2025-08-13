@@ -162,17 +162,25 @@ export const userService = {
   // Delete user (admin only)
   async deleteUser(userId) {
     try {
-      // Delete from auth.users (this will cascade to public.users via RLS)
-      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-      if (authError) throw authError;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
 
-      // Ensure deletion from public.users
-      const { error: profileError } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userId);
+      // Use Edge Function for user deletion
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-user`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ userId })
+      });
 
-      if (profileError) throw profileError;
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete user');
+      }
     } catch (error) {
       console.error('Error deleting user:', error);
       throw error;

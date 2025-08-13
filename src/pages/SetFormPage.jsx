@@ -76,18 +76,22 @@ const SetFormPage = () => {
   };
 
   const handleSongsSelected = (selectedSongs) => {
-    // Only add songs that aren't already in the set
+    // Filter out songs that are already in the set
     const existingSongIds = new Set(setSongs.map(s => s.id));
-    const newSongs = selectedSongs
-      .filter(song => !existingSongIds.has(song.id))
-      .map((song, index) => ({
-        ...song,
-        song_order: setSongs.length + index + 1
-      }));
+    const newSongs = selectedSongs.filter(song => !existingSongIds.has(song.id));
     
     if (newSongs.length > 0) {
-      setSetSongs(prev => [...prev, ...newSongs]);
+      const startOrder = setSongs.length + 1;
+      const songsWithOrder = newSongs.map((song, index) => ({
+        ...song,
+        song_order: startOrder + index
+      }));
+      
+      setSetSongs(prev => [...prev, ...songsWithOrder]);
     }
+    
+    // Close the modal
+    setShowSongSelector(false);
   };
 
   const handleCollectionSelected = async (collection) => {
