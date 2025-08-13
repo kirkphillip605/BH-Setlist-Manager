@@ -697,6 +697,7 @@ const PerformanceMode = () => {
     const hasActiveLeader = existingSession && existingSession.leader_id;
     const canForceLeadership = user.user_level >= 3;
     const leaderName = existingSession?.users?.name || 'Unknown';
+    const isCurrentLeader = existingSession?.leader_id === user.id;
 
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
@@ -751,6 +752,26 @@ const PerformanceMode = () => {
                   >
                     <Crown size={20} className="mr-2" />
                     Force Take Leadership (Admin)
+                  </button>
+                )}
+
+                {/* Always show leader option */}
+                <button
+                  onClick={() => handleRoleChoice('leader')}
+                  className="w-full inline-flex items-center justify-center px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
+                >
+                  <Crown size={20} className="mr-2" />
+                  {hasActiveLeader ? 'Take Leadership' : 'Start as Leader'}
+                </button>
+                
+                {/* Follower option - only show if session exists */}
+                {hasActiveLeader && (
+                  <button
+                    onClick={() => handleRoleChoice('follower')}
+                    className="w-full inline-flex items-center justify-center px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium"
+                  >
+                    <Users size={20} className="mr-2" />
+                    Join as Follower
                   </button>
                 )}
               </div>
@@ -1052,26 +1073,35 @@ const PerformanceMode = () => {
       <div className="flex-1 overflow-y-auto p-4">
         <div className="space-y-2">
           {filteredSongs.slice(0, 50).map((song) => (
-              {/* Always show leader option */}
-              <button
-                onClick={() => handleRoleChoice('leader')}
-                className="w-full inline-flex items-center justify-center px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
-              >
-                <Crown size={20} className="mr-2" />
-                {hasActiveLeader ? 'Take Leadership' : 'Start as Leader'}
-              </button>
-              
-              {/* Follower option - only show if session exists */}
-              {hasActiveLeader && (
-                <button
-                  onClick={() => handleRoleChoice('follower')}
-                  className="w-full inline-flex items-center justify-center px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium"
-                >
-                  <Users size={20} className="mr-2" />
-                  Join as Follower
-                </button>
-              )}
-            </div>
+            <button
+              key={song.id}
+              onClick={() => (isLeader || standaloneMode) && loadSearchSong(song)}
+              disabled={!isLeader && !standaloneMode}
+              className={`w-full text-left p-3 rounded-xl transition-all ${
+                (isLeader || standaloneMode)
+                  ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100'
+                  : 'bg-zinc-800 text-zinc-300 cursor-default opacity-50'
+              }`}
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{song.title}</p>
+                <p className="text-xs opacity-75 truncate">
+                  {song.original_artist} {song.key_signature && `• ${song.key_signature}`}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Lyrics content
+  const lyricsContent = (
+    <div className="h-full flex flex-col">
+      {currentSong ? (
+        <div className="flex-1 overflow-y-auto p-6" style={{ fontSize: `${lyricsZoom}rem` }}>
+          <div className="max-w-4xl mx-auto">
             <div 
               className="prose prose-invert prose-lg max-w-none text-zinc-200 leading-relaxed text-base sm:text-lg"
               dangerouslySetInnerHTML={{ __html: currentSongLyrics }}
