@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Play, SkipBack, SkipForward, X, Music, Search, ChevronDown, Loader } from 'lucide-react';
+import { ArrowLeft, Play, SkipBack, SkipForward, X, Music, Search, ChevronDown, Loader, Crown, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 import { setlistsService } from '../services/setlistsService';
 import { setsService } from '../services/setsService';
 import { songsService } from '../services/songsService';
 import { performanceService } from '../services/performanceService';
+import MobilePerformanceLayout from '../components/MobilePerformanceLayout';
+import LeadershipRequestModal from '../components/LeadershipRequestModal';
+import FollowersModal from '../components/FollowersModal';
 
 const PerformanceMode = () => {
   const { user } = useAuth();
@@ -20,6 +23,7 @@ const PerformanceMode = () => {
   const [selectedSetlistId, setSelectedSetlistId] = useState(setlistId || '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [leadershipChoice, setLeadershipChoice] = useState(null); // 'leader', 'follower', 'standalone'
 
   // Performance state
   const [inPerformance, setInPerformance] = useState(!!setlistId);
@@ -30,6 +34,7 @@ const PerformanceMode = () => {
   const [currentSong, setCurrentSong] = useState(null);
   const [currentSongLyrics, setCurrentSongLyrics] = useState('');
   const [isLeader, setIsLeader] = useState(false);
+  const [standaloneMode, setStandaloneMode] = useState(false);
   const mountedRef = useRef(true);
 
   // Search functionality
@@ -39,14 +44,28 @@ const PerformanceMode = () => {
   const [isSearchSong, setIsSearchSong] = useState(false);
   const [previousSetSong, setPreviousSetSong] = useState(null);
 
+  // Leadership and followers
+  const [showLeadershipRequest, setShowLeadershipRequest] = useState(false);
+  const [leadershipRequestData, setLeadershipRequestData] = useState(null);
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [followers, setFollowers] = useState([]);
+
   useEffect(() => {
     mountedRef.current = true;
     
-    // Only initialize performance operations when needed
     const initialize = async () => {
       setPageTitle('Performance Mode');
       
       if (setlistId) {
+        // Check if cache is valid and setlist data exists
+        if (performanceService.isCacheValid(setlistId)) {
+          const cached = performanceService.getCachedSetlistData();
+          if (cached.setlistData) {
+            await initializePerformanceMode(setlistId);
+            return;
+          }
+        }
+        // Fresh fetch needed
         await initializePerformanceMode(setlistId);
       } else {
         await fetchSetlists();
@@ -57,12 +76,11 @@ const PerformanceMode = () => {
     
     return () => {
       mountedRef.current = false;
-      // Clean up performance mode when component unmounts
       if (inPerformance && session?.id) {
         performanceService.cleanupSubscriptions();
       }
     };
-  }, [setlistId, inPerformance, session?.id]);
+  }, [setlistId]);
 
   const fetchSetlists = async () => {
     if (!mountedRef.current) return;
@@ -108,40 +126,73 @@ const PerformanceMode = () => {
       try {
         activeSession = await performanceService.getActiveSession(setlistId);
       } catch (err) {
-        console.log('No existing active session found');
         activeSession = null;
       }
       
+      if (activeSession && !leadershipChoice) {
+        // Show leadership choice modal
+        setSession(activeSession);
+        setLoading(false);
+        return;
+      }
+
       let sessionData;
-      let isLeader = false;
+      let isLeaderRole = false;
+      let isStandalone = false;
       
-      if (activeSession) {
-        // Join as follower
-        sessionData = activeSession;
-        isLeader = activeSession.leader_id === user.id;
-        
-        if (!isLeader) {
-          // Join existing session as follower
-          sessionData = await performanceService.joinSession(setlistId, user.id);
+      if (leadershipChoice === 'leader') {
+        if (activeSession && activeSession.leader_id !== user.id) {
+          // Request leadership transfer
+          await performanceService.requestLeadershipTransfer(
+            activeSession.id, 
+            user.id, 
+            user.name
+          );
+          setError('Leadership transfer requested. Waiting for current leader response...');
+          setLoading(false);
+          return;
+        } else {
+          // Create new session or take over
+          sessionData = await performanceService.createSession(setlistId, user.id);
+          isLeaderRole = true;
         }
-      } else {
-        // Create new session as leader
-        sessionData = await performanceService.createSession(setlistId, user.id);
-        isLeader = true;
+      } else if (leadershipChoice === 'follower') {
+        if (!activeSession) {
+          setError('No active session to join as follower');
+          setLoading(false);
+          return;
+        }
+        sessionData = await performanceService.joinSession(setlistId, user.id);
+        isLeaderRole = false;
+      } else if (leadershipChoice === 'standalone') {
+        // Standalone mode - no session interaction
+        await performanceService.prefetchAndCacheSetlistData(setlistId);
+        isStandalone = true;
+        sessionData = { id: 'standalone', setlist_id: setlistId };
       }
 
       if (mountedRef.current) {
         setSession(sessionData);
-        setIsLeader(isLeader);
+        setIsLeader(isLeaderRole);
+        setStandaloneMode(isStandalone);
         await loadPerformanceData(setlistId, sessionData);
 
-        // Subscribe to session updates (only when in performance mode)
-        performanceService.subscribeToSession(
-          sessionData.id,
-          handleSessionUpdate
-        );
+        if (!isStandalone && sessionData.id !== 'standalone') {
+          // Subscribe to session updates
+          performanceService.subscribeToSession(
+            sessionData.id,
+            handleSessionUpdate
+          );
 
-        // Fetch all songs for search functionality
+          if (isLeaderRole) {
+            // Subscribe to leadership requests
+            performanceService.subscribeToLeadershipRequests(
+              sessionData.id,
+              handleLeadershipRequest
+            );
+          }
+        }
+
         await fetchAllSongs();
       }
 
@@ -160,7 +211,6 @@ const PerformanceMode = () => {
     if (!mountedRef.current) return;
     
     try {
-      // Always use cached data for performance
       const { setlistData: cachedSetlist, songsData: cachedSongs } = performanceService.getCachedSetlistData();
       
       if (cachedSetlist && Object.keys(cachedSongs).length > 0) {
@@ -174,15 +224,20 @@ const PerformanceMode = () => {
       }
 
       if (sessionData.current_set_id) {
-        // Find set data from cached setlist
         const currentSetData = cachedSetlist?.sets?.find(s => s.id === sessionData.current_set_id);
         if (mountedRef.current) {
           setCurrentSet(currentSetData);
+        }
+      } else if (cachedSetlist?.sets?.[0]) {
+        if (mountedRef.current) {
+          setCurrentSet(cachedSetlist.sets[0]);
         }
       }
 
       if (sessionData.current_song_id) {
         await loadCurrentSong(sessionData.current_song_id);
+      } else if (cachedSetlist?.sets?.[0]?.set_songs?.[0]) {
+        await loadCurrentSong(cachedSetlist.sets[0].set_songs[0].songs.id);
       }
 
       if (mountedRef.current) {
@@ -200,7 +255,6 @@ const PerformanceMode = () => {
     if (!mountedRef.current) return;
     
     try {
-      // Always use cached song data for fast loading
       const cachedSongs = performanceService.getCachedSetlistData().songsData;
       
       if (cachedSongs[songId]) {
@@ -221,19 +275,16 @@ const PerformanceMode = () => {
     if (!mountedRef.current) return;
     
     try {
-      // Store previous set song for navigation
       if (mountedRef.current) {
         setPreviousSetSong(currentSong);
       }
       
-      // Use cached data for search songs too
-      const cachedSongs = performanceService.getCachedSetlistData().songsData;
       let songData = songsData[song.id] || song;
       if (!songData.lyrics) {
         songData = await songsService.getSongById(song.id);
       }
       
-      if (isLeader && session) {
+      if ((isLeader || standaloneMode) && session && session.id !== 'standalone') {
         await performanceService.updateSession(session.id, {
           current_song_id: songData.id
         });
@@ -254,35 +305,38 @@ const PerformanceMode = () => {
     }
   };
 
-  // Optimized session update handler
   const handleSessionUpdate = (payload) => {
-    if (!mountedRef.current || !payload?.new) return;
+    if (!mountedRef.current || !payload?.new || standaloneMode) return;
     
     const newSession = payload.new;
     
-    // Defer updates to prevent blocking
     setTimeout(() => {
       if (!mountedRef.current) return;
       
       setSession(newSession);
       
-      // Handle song changes
       if (newSession.current_song_id !== currentSong?.id) {
         loadCurrentSong(payload.new.current_song_id);
       }
       
-      // Handle set changes
       if (newSession.current_set_id !== currentSet?.id) {
         loadCurrentSet(payload.new.current_set_id);
       }
     }, 0);
   };
 
+  const handleLeadershipRequest = (payload) => {
+    if (!mountedRef.current || !isLeader) return;
+    
+    const request = payload.new;
+    setLeadershipRequestData(request);
+    setShowLeadershipRequest(true);
+  };
+
   const loadCurrentSet = async (setId) => {
     if (!mountedRef.current) return;
     
     try {
-      // Use cached set data
       const cachedSetlist = performanceService.getCachedSetlistData().setlistData;
       const setData = cachedSetlist?.sets?.find(s => s.id === setId);
       
@@ -294,30 +348,30 @@ const PerformanceMode = () => {
     }
   };
 
-  const handleStartPerformance = async () => {
+  const handleStartPerformance = async (choice) => {
     if (!selectedSetlistId) {
       setError('Please select a setlist');
       return;
     }
+    
+    setLeadershipChoice(choice);
     navigate(`/performance?setlist=${selectedSetlistId}`);
   };
 
-  // Optimized set change handler
   const handleSetChange = async (set) => {
-    if (!isLeader || !session) return;
+    if ((!isLeader && !standaloneMode) || !session) return;
 
     try {
-      const setData = await setsService.getSetById(set.id);
-      const firstSong = setData.set_songs && setData.set_songs.length > 0 
-        ? setData.set_songs[0].songs 
-        : null;
+      const setData = set; // Already have full data from cache
+      const firstSong = setData.set_songs?.[0]?.songs;
 
-      await performanceService.updateSession(session.id, {
-        current_set_id: set.id,
-        current_song_id: firstSong?.id || null
-      });
+      if (session.id !== 'standalone') {
+        await performanceService.updateSession(session.id, {
+          current_set_id: set.id,
+          current_song_id: firstSong?.id || null
+        });
+      }
       
-      // Update local state immediately for leader
       if (mountedRef.current) {
         setCurrentSet(setData);
         setIsSearchSong(false);
@@ -332,16 +386,16 @@ const PerformanceMode = () => {
     }
   };
 
-  // Optimized song selection handler
   const handleSongSelect = async (song) => {
-    if (!isLeader || !session) return;
+    if ((!isLeader && !standaloneMode) || !session) return;
 
     try {
-      await performanceService.updateSession(session.id, {
-        current_song_id: song.id
-      });
+      if (session.id !== 'standalone') {
+        await performanceService.updateSession(session.id, {
+          current_song_id: song.id
+        });
+      }
       
-      // Update local state immediately for leader
       if (mountedRef.current) {
         await loadCurrentSong(song.id);
         setIsSearchSong(false);
@@ -366,13 +420,14 @@ const PerformanceMode = () => {
   };
 
   const handlePreviousSong = async () => {
-    if (!isLeader || !session) return;
+    if ((!isLeader && !standaloneMode) || !session) return;
 
-    // If currently viewing a search song, go back to the previous set song
     if (isSearchSong && previousSetSong) {
-      await performanceService.updateSession(session.id, {
-        current_song_id: previousSetSong.id
-      });
+      if (session.id !== 'standalone') {
+        await performanceService.updateSession(session.id, {
+          current_song_id: previousSetSong.id
+        });
+      }
       await loadCurrentSong(previousSetSong.id);
       setPreviousSetSong(null);
       return;
@@ -391,21 +446,24 @@ const PerformanceMode = () => {
     const currentIndex = getCurrentSongIndex();
     if (currentIndex > 0) {
       const previousSong = songs[currentIndex - 1];
-      await performanceService.updateSession(session.id, {
-        current_song_id: previousSong.id
-      });
+      if (session.id !== 'standalone') {
+        await performanceService.updateSession(session.id, {
+          current_song_id: previousSong.id
+        });
+      }
       await loadCurrentSong(previousSong.id);
     }
   };
 
   const handleNextSong = async () => {
-    if (!isLeader || !session) return;
+    if ((!isLeader && !standaloneMode) || !session) return;
 
-    // If currently viewing a search song, go back to the set
     if (isSearchSong && previousSetSong) {
-      await performanceService.updateSession(session.id, {
-        current_song_id: previousSetSong.id
-      });
+      if (session.id !== 'standalone') {
+        await performanceService.updateSession(session.id, {
+          current_song_id: previousSetSong.id
+        });
+      }
       await loadCurrentSong(previousSetSong.id);
       setPreviousSetSong(null);
       return;
@@ -424,19 +482,20 @@ const PerformanceMode = () => {
     const currentIndex = getCurrentSongIndex();
     if (currentIndex < songs.length - 1) {
       const nextSong = songs[currentIndex + 1];
-      await performanceService.updateSession(session.id, {
-        current_song_id: nextSong.id
-      });
+      if (session.id !== 'standalone') {
+        await performanceService.updateSession(session.id, {
+          current_song_id: nextSong.id
+        });
+      }
       await loadCurrentSong(nextSong.id);
     }
   };
 
   const handleExitPerformance = async () => {
     try {
-      if (isLeader && session) {
+      if (isLeader && session && session.id !== 'standalone') {
         await performanceService.endSession(session.id);
       } else {
-        // Clean up for followers
         performanceService.cleanupSubscriptions();
       }
       
@@ -447,14 +506,100 @@ const PerformanceMode = () => {
     }
   };
 
+  const handleLeadershipResponse = async (approved) => {
+    try {
+      await performanceService.respondToLeadershipRequest(
+        leadershipRequestData.id,
+        approved ? 'approved' : 'rejected',
+        user.id
+      );
+
+      if (approved) {
+        // Transfer leadership
+        setIsLeader(false);
+        localStorage.setItem(STORAGE_KEYS.IS_LEADER, 'false');
+      }
+
+      setShowLeadershipRequest(false);
+      setLeadershipRequestData(null);
+    } catch (err) {
+      console.error('Error responding to leadership request:', err);
+      setError('Failed to respond to leadership request');
+    }
+  };
+
   const filteredSongs = allSongs.filter(song =>
     song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     song.original_artist.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Leadership choice modal
+  if (session && !leadershipChoice && !standaloneMode && !loading) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
+        <div className="card-modern p-6 w-full max-w-md">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Crown className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-zinc-100">Performance Mode</h2>
+            <p className="text-zinc-300 mt-2">
+              How would you like to join this session?
+            </p>
+          </div>
+
+          {session.leader_id === user.id ? (
+            <div className="space-y-4">
+              <button
+                onClick={() => handleStartPerformance('leader')}
+                className="w-full inline-flex items-center justify-center px-6 py-4 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors font-medium"
+              >
+                <Crown size={20} className="mr-2" />
+                Continue as Leader
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <button
+                onClick={() => handleStartPerformance('leader')}
+                className="w-full inline-flex items-center justify-center px-6 py-4 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors font-medium"
+              >
+                <Crown size={20} className="mr-2" />
+                Request Leadership
+              </button>
+              <button
+                onClick={() => handleStartPerformance('follower')}
+                className="w-full inline-flex items-center justify-center px-6 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
+              >
+                <Users size={20} className="mr-2" />
+                Join as Follower
+              </button>
+              <button
+                onClick={() => handleStartPerformance('standalone')}
+                className="w-full inline-flex items-center justify-center px-6 py-4 bg-zinc-600 text-white rounded-xl hover:bg-zinc-500 transition-colors font-medium"
+              >
+                <Music size={20} className="mr-2" />
+                Standalone Mode
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // Show loading state
   if (loading && !inPerformance) {
-    return <div className="flex items-center justify-center min-h-screen bg-zinc-950"><Loader className="animate-spin" /></div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-zinc-950">
+        <div className="text-center">
+          <Loader className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" />
+          <p className="text-zinc-300">
+            {leadershipChoice ? 'Initializing performance mode...' : 'Loading setlists...'}
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (!inPerformance) {
@@ -510,12 +655,12 @@ const PerformanceMode = () => {
 
             <div className="flex justify-end">
               <button
-                onClick={handleStartPerformance}
+                onClick={() => navigate(`/performance?setlist=${selectedSetlistId}`)}
                 disabled={!selectedSetlistId || loading}
                 className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-animate shadow-lg font-medium"
               >
                 <Play size={20} className="mr-2" />
-                {loading ? 'Loading...' : 'Start Performance'}
+                {loading ? 'Loading...' : 'Enter Performance Mode'}
               </button>
             </div>
           </div>
@@ -535,6 +680,7 @@ const PerformanceMode = () => {
       </div>
     );
   }
+
   const currentSetSongs = currentSet?.set_songs
     ?.map(ss => ss.songs)
     .sort((a, b) => {
@@ -547,208 +693,210 @@ const PerformanceMode = () => {
   const canGoPrevious = (currentIndex > 0 && !isSearchSong) || (isSearchSong && previousSetSong);
   const canGoNext = (currentIndex < currentSetSongs.length - 1 && !isSearchSong) || (isSearchSong && previousSetSong);
 
-  return (
-    <div className="h-screen bg-zinc-950 flex overflow-hidden safe-area-inset-top">
-      {/* Performance Sidebar */}
-      <div className="w-full sm:w-80 bg-zinc-900 border-r border-zinc-800 flex flex-col">
-        {/* Header */}
-        <div className="p-4 sm:p-4 border-b border-zinc-800 safe-area-inset-top">
-          <h2 className="text-lg sm:text-lg font-bold text-zinc-100 mb-1">
-            {setlistData?.name}
-          </h2>
-          <p className="text-sm sm:text-sm text-zinc-400">
-            {isLeader ? 'Leader' : 'Follower'} • {currentSet?.name}
-          </p>
-          {isSearchSong && (
-            <p className="text-sm sm:text-xs text-amber-400 mt-1">
-              🎵 Search Song Active
-            </p>
-          )}
-        </div>
-
-        {/* Sets Navigation (Leader only) */}
-        {isLeader && setlistData?.sets && setlistData.sets.length > 1 && (
-          <div className="p-4 border-b border-zinc-800">
-            <label className="block text-base sm:text-sm font-medium text-zinc-300 mb-2">Current Set</label>
-            <select
-              value={currentSet?.id || ''}
-              onChange={(e) => {
-                const set = setlistData.sets.find(s => s.id === e.target.value);
-                if (set) handleSetChange(set);
-              }}
-              className="input-modern text-base sm:text-sm"
-            >
-              {setlistData.sets.map((set) => (
-                <option key={set.id} value={set.id}>
-                  {set.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        {/* Search Songs (Leader only) */}
-        {isLeader && (
-          <div className="p-4 border-b border-zinc-800">
-            <div className="relative">
-              <button
-                onClick={() => setShowSearch(!showSearch)}
-                className="w-full inline-flex items-center justify-center px-4 py-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-all btn-animate text-base sm:text-sm font-medium mobile-form-button"
-              >
-                <Search size={20} className="mr-2 sm:w-4 sm:h-4" />
-                Search Songs
-                <ChevronDown size={20} className={`ml-2 sm:w-4 sm:h-4 transition-transform ${showSearch ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {showSearch && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 border border-zinc-700 rounded-xl shadow-xl z-50 max-h-80 overflow-hidden mobile-modal">
-                  <div className="p-3 border-b border-zinc-700">
-                    <input
-                      type="text"
-                      placeholder="Search songs..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full px-4 py-3 sm:px-3 sm:py-2 bg-zinc-700 border border-zinc-600 text-zinc-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-base sm:text-sm mobile-action-btn"
-                      autoFocus
-                    />
-                  </div>
-                  <div className="max-h-60 overflow-y-auto scroll-container">
-                    {filteredSongs.slice(0, 20).map((song) => (
-                      <button
-                        key={song.id}
-                        onClick={() => loadSearchSong(song)}
-                        className="w-full text-left p-4 sm:p-3 hover:bg-zinc-700 transition-colors border-b border-zinc-800 last:border-b-0 mobile-nav-item"
-                      >
-                        <p className="text-base sm:text-sm font-medium text-zinc-100">{song.title}</p>
-                        <p className="text-sm sm:text-xs text-zinc-400">{song.original_artist}</p>
-                      </button>
-                    ))}
-                    {filteredSongs.length === 0 && searchQuery && (
-                      <p className="p-4 sm:p-3 text-base sm:text-sm text-zinc-400">No songs found</p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Songs List */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-4 scroll-container safe-area-inset-bottom">
-          <div className="space-y-3 sm:space-y-2">
-            {currentSetSongs.map((song, index) => (
-              <button
-                key={song.id}
-                onClick={() => isLeader && !isSearchSong && handleSongSelect(song)}
-                disabled={!isLeader || isSearchSong}
-                className={`w-full text-left p-4 sm:p-3 rounded-xl transition-all mobile-nav-item ${
-                  currentSong?.id === song.id && !isSearchSong
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : isLeader && !isSearchSong
-                      ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100'
-                      : 'bg-zinc-800 text-zinc-300 cursor-default'
-                } ${isSearchSong ? 'opacity-50' : ''}`}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className={`w-8 h-8 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-sm sm:text-xs font-medium ${
-                    currentSong?.id === song.id && !isSearchSong
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-zinc-700 text-zinc-400'
-                  }`}>
-                    {index + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base sm:text-sm font-medium truncate">{song.title}</p>
-                    <p className="text-sm sm:text-xs opacity-75 truncate">
-                      {song.original_artist} {song.key_signature && `• ${song.key_signature}`}
-                    </p>
-                  </div>
-                </div>
-              </button>
+  // Sidebar content
+  const sidebarContent = (
+    <div className="h-full flex flex-col">
+      {/* Sets Navigation */}
+      {(isLeader || standaloneMode) && setlistData?.sets && setlistData.sets.length > 1 && (
+        <div className="p-4 border-b border-zinc-800">
+          <label className="block text-sm font-medium text-zinc-300 mb-2">Current Set</label>
+          <select
+            value={currentSet?.id || ''}
+            onChange={(e) => {
+              const set = setlistData.sets.find(s => s.id === e.target.value);
+              if (set) handleSetChange(set);
+            }}
+            className="input-modern text-sm"
+          >
+            {setlistData.sets.map((set) => (
+              <option key={set.id} value={set.id}>
+                {set.name}
+              </option>
             ))}
-          </div>
+          </select>
         </div>
+      )}
+
+      {/* Songs List */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        {currentSetSongs.map((song, index) => (
+          <button
+            key={song.id}
+            onClick={() => (isLeader || standaloneMode) && !isSearchSong && handleSongSelect(song)}
+            disabled={(!isLeader && !standaloneMode) || isSearchSong}
+            className={`w-full text-left p-3 rounded-xl transition-all ${
+              currentSong?.id === song.id && !isSearchSong
+                ? 'bg-blue-600 text-white shadow-lg'
+                : (isLeader || standaloneMode) && !isSearchSong
+                  ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-100'
+                  : 'bg-zinc-800 text-zinc-300 cursor-default'
+            } ${isSearchSong ? 'opacity-50' : ''}`}
+          >
+            <div className="flex items-center space-x-3">
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                currentSong?.id === song.id && !isSearchSong
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-zinc-700 text-zinc-400'
+              }`}>
+                {index + 1}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{song.title}</p>
+                <p className="text-xs opacity-75 truncate">
+                  {song.original_artist} {song.key_signature && `• ${song.key_signature}`}
+                </p>
+              </div>
+            </div>
+          </button>
+        ))}
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col relative">
-        {/* Lyrics Display */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-32 sm:pb-24 scroll-container">
-          {currentSong ? (
-            <div className="max-w-4xl mx-auto px-2 sm:px-0">
-              <div className="mb-6">
-                <h1 className="text-2xl sm:text-3xl font-bold text-zinc-100 mb-2">{currentSong.title}</h1>
-                <div className="flex items-center space-x-2">
-                  <p className="text-lg sm:text-xl text-zinc-400">
-                    {currentSong.original_artist} {currentSong.key_signature && `• ${currentSong.key_signature}`}
-                  </p>
-                  {isSearchSong && (
-                    <span className="px-3 py-1 sm:px-2 sm:py-1 bg-amber-600 text-white text-sm sm:text-xs font-medium rounded-full">
-                      Search Song
-                    </span>
-                  )}
-                </div>
-                {currentSong.performance_note && (
-                  <div className="flex items-center space-x-2 mt-2">
-                    <svg className="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                    </svg>
-                    <p className="text-base sm:text-lg text-amber-300 font-medium">{currentSong.performance_note}</p>
-                  </div>
-                )}
-              </div>
-              <div 
-                className="prose prose-invert prose-lg max-w-none text-zinc-200 leading-relaxed text-base sm:text-lg"
-                dangerouslySetInnerHTML={{ __html: currentSongLyrics }}
-              />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <Music className="h-16 w-16 text-zinc-600 mx-auto mb-4" />
-                <p className="text-lg sm:text-xl text-zinc-400">No song selected</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Fixed Bottom Controls */}
-        <div className="absolute bottom-0 left-0 right-0 bg-zinc-900/98 backdrop-blur border-t border-zinc-800 p-4 sm:p-4 safe-area-inset-bottom">
-          <div className="flex flex-col sm:flex-row justify-between items-center max-w-4xl mx-auto space-y-4 sm:space-y-0">
-            {/* Exit Button */}
+      {/* Navigation Controls */}
+      {(isLeader || standaloneMode) && (
+        <div className="p-4 border-t border-zinc-800 space-y-3 safe-area-inset-bottom">
+          <div className="flex space-x-2">
             <button
-              onClick={handleExitPerformance}
-              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-4 sm:px-4 sm:py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all btn-animate shadow-lg font-medium mobile-form-button"
+              onClick={handlePreviousSong}
+              disabled={!canGoPrevious}
+              className="flex-1 inline-flex items-center justify-center px-4 py-3 bg-zinc-700 text-zinc-300 rounded-xl hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
-              <X size={24} className="mr-2 sm:w-5 sm:h-5" />
-              Exit Performance Mode
+              <SkipBack size={18} className="mr-2" />
+              Previous
             </button>
-
-            {/* Navigation Controls (Leader only) */}
-            {isLeader && (
-              <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto">
-                <button
-                  onClick={handlePreviousSong}
-                  disabled={!canGoPrevious}
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center px-6 py-4 sm:px-6 sm:py-3 bg-zinc-700 text-zinc-300 rounded-xl hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-animate shadow-lg font-medium mobile-form-button"
-                >
-                  <SkipBack size={24} className="mr-2 sm:w-5 sm:h-5" />
-                  Previous
-                </button>
-                <button
-                  onClick={handleNextSong}
-                  disabled={!canGoNext}
-                  className="flex-1 sm:flex-none inline-flex items-center justify-center px-6 py-4 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all btn-animate shadow-lg font-medium mobile-form-button"
-                >
-                  Next
-                  <SkipForward size={24} className="ml-2 sm:w-5 sm:h-5" />
-                </button>
-              </div>
-            )}
+            <button
+              onClick={handleNextSong}
+              disabled={!canGoNext}
+              className="flex-1 inline-flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            >
+              Next
+              <SkipForward size={18} className="ml-2" />
+            </button>
           </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // Search content
+  const searchContent = (
+    <div className="h-full flex flex-col bg-zinc-950">
+      <div className="bg-zinc-900 border-b border-zinc-800 px-4 py-3">
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={() => setShowSearch(false)}
+            className="p-2 text-zinc-400 hover:text-zinc-200"
+          >
+            <X size={20} />
+          </button>
+          <input
+            type="text"
+            placeholder="Search songs..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 px-4 py-2 bg-zinc-800 border border-zinc-700 text-zinc-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            autoFocus
+          />
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="space-y-2">
+          {filteredSongs.slice(0, 50).map((song) => (
+            <button
+              key={song.id}
+              onClick={() => loadSearchSong(song)}
+              className="w-full text-left p-4 bg-zinc-800 rounded-xl hover:bg-zinc-700 transition-colors border border-zinc-700"
+            >
+              <p className="text-base font-medium text-zinc-100">{song.title}</p>
+              <p className="text-sm text-zinc-400">{song.original_artist}</p>
+            </button>
+          ))}
+          {filteredSongs.length === 0 && searchQuery && (
+            <p className="text-center text-zinc-400 py-8">No songs found</p>
+          )}
         </div>
       </div>
     </div>
+  );
+
+  // Lyrics content
+  const lyricsContent = (
+    <div className="h-full">
+      {currentSong ? (
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-zinc-100 mb-2">{currentSong.title}</h1>
+            <div className="flex items-center space-x-2">
+              <p className="text-lg sm:text-xl text-zinc-400">
+                {currentSong.original_artist} {currentSong.key_signature && `• ${currentSong.key_signature}`}
+              </p>
+              {isSearchSong && (
+                <span className="px-2 py-1 bg-amber-600 text-white text-xs font-medium rounded-full">
+                  Search Song
+                </span>
+              )}
+            </div>
+            {currentSong.performance_note && (
+              <div className="flex items-center space-x-2 mt-2">
+                <svg className="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                <p className="text-base sm:text-lg text-amber-300 font-medium">{currentSong.performance_note}</p>
+              </div>
+            )}
+          </div>
+          <div 
+            className="prose prose-invert prose-lg max-w-none text-zinc-200 leading-relaxed text-base sm:text-lg"
+            dangerouslySetInnerHTML={{ __html: currentSongLyrics }}
+          />
+        </div>
+      ) : (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <Music className="h-16 w-16 text-zinc-600 mx-auto mb-4" />
+            <p className="text-xl text-zinc-400">No song selected</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      <MobilePerformanceLayout
+        sidebar={sidebarContent}
+        currentSong={currentSong}
+        currentSongLyrics={currentSongLyrics}
+        isLeader={isLeader || standaloneMode}
+        onExit={handleExitPerformance}
+        onShowFollowers={() => setShowFollowers(true)}
+        onShowSearch={() => setShowSearch(true)}
+        showSearch={showSearch}
+        searchContent={searchContent}
+        setlistName={setlistData?.name}
+        currentSetName={currentSet?.name}
+        isSearchSong={isSearchSong}
+      >
+        {lyricsContent}
+      </MobilePerformanceLayout>
+
+      {/* Leadership Request Modal */}
+      <LeadershipRequestModal
+        isOpen={showLeadershipRequest}
+        onClose={() => setShowLeadershipRequest(false)}
+        requestingUserName={leadershipRequestData?.requesting_user_name}
+        onAllow={() => handleLeadershipResponse(true)}
+        onReject={() => handleLeadershipResponse(false)}
+        autoApproveAfter={30}
+      />
+
+      {/* Followers Modal */}
+      <FollowersModal
+        isOpen={showFollowers}
+        onClose={() => setShowFollowers(false)}
+        followers={followers}
+        sessionData={session}
+      />
+    </>
   );
 };
 

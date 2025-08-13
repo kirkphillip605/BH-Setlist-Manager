@@ -414,7 +414,9 @@ const UserManagement = () => {
             <p className="text-zinc-400">Users will appear here once they are added to the system.</p>
           </div>
         ) : (
-          <div className="bg-zinc-900/50 rounded-xl overflow-hidden border border-zinc-800">
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block bg-zinc-900/50 rounded-xl overflow-hidden border border-zinc-800">
             <table className="min-w-full divide-y divide-slate-600">
               <thead className="bg-zinc-800">
                 <tr>
@@ -581,6 +583,141 @@ const UserManagement = () => {
               </tbody>
             </table>
           </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4">
+              {users.map((user) => (
+                <div key={user.id} className="bg-zinc-800 rounded-xl p-4 border border-zinc-700">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                        <span className="text-sm font-medium text-white">
+                          {user.name ? user.name.charAt(0).toUpperCase() : user.email?.charAt(0).toUpperCase() || 'U'}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-semibold text-zinc-100 truncate">{user.name || 'No name'}</h3>
+                        <p className="text-sm text-zinc-400 truncate">{user.email}</p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          {getUserLevelBadge(user.user_level)}
+                          {user.email_confirmed_at ? (
+                            <span className="badge badge-success text-xs">Confirmed</span>
+                          ) : (
+                            <span className="badge bg-yellow-600 text-white border-yellow-500 text-xs">Pending</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-sm text-zinc-300 mb-3">
+                    <p><strong>Role:</strong> {user.role || 'Not specified'}</p>
+                    <p><strong>Last Login:</strong> {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'Never'}</p>
+                  </div>
+
+                  {editingUser?.id === user.id ? (
+                    <form onSubmit={handleUpdateUser} className="space-y-3">
+                      <div className="grid grid-cols-1 gap-3">
+                        <input
+                          type="text"
+                          name="name"
+                          value={editingUser.name || ''}
+                          onChange={handleEditInputChange}
+                          placeholder="Full Name"
+                          className="input-modern text-sm"
+                        />
+                        <input
+                          type="email"
+                          name="email"
+                          value={editingUser.email || ''}
+                          onChange={handleEditInputChange}
+                          placeholder="Email"
+                          className="input-modern text-sm"
+                        />
+                        <select
+                          name="role"
+                          value={editingUser.role || ''}
+                          onChange={handleEditInputChange}
+                          className="input-modern text-sm"
+                        >
+                          <option value="">Select a role</option>
+                          <option value="Bass Guitar">Bass Guitar</option>
+                          <option value="Drums">Drums</option>
+                          <option value="Lead Guitar">Lead Guitar</option>
+                          <option value="Rhythm Guitar">Rhythm Guitar</option>
+                          <option value="Keyboard">Keyboard</option>
+                          <option value="Vocals">Vocals</option>
+                          <option value="Sound Engineer">Sound Engineer</option>
+                          <option value="Other">Other</option>
+                        </select>
+                        <select
+                          name="user_level"
+                          value={editingUser.user_level || 1}
+                          onChange={handleEditInputChange}
+                          className="input-modern text-sm"
+                        >
+                          <option value="1">User</option>
+                          <option value="2">Editor</option>
+                          <option value="3">Admin</option>
+                        </select>
+                      </div>
+                      <div className="flex justify-end space-x-2">
+                        <button
+                          type="submit"
+                          className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 text-sm transition-colors"
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingUser(null)}
+                          className="inline-flex items-center px-4 py-2 border border-zinc-600 bg-zinc-700 text-zinc-300 rounded-xl hover:bg-zinc-600 text-sm transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => handleShowPasswordModal(user)}
+                        className="inline-flex items-center px-3 py-2 bg-yellow-600 text-white rounded-xl hover:bg-yellow-700 transition-colors text-sm"
+                        title="Reset Password"
+                      >
+                        <Key size={16} className="mr-1" />
+                        Reset Password
+                      </button>
+                      <button
+                        onClick={() => handleResendInvite(user.email)}
+                        className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm"
+                        title="Resend Invitation"
+                      >
+                        <Mail size={16} className="mr-1" />
+                        Resend
+                      </button>
+                      <button
+                        onClick={() => setEditingUser(user)}
+                        className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm"
+                        title="Edit User"
+                      >
+                        <Edit size={16} className="mr-1" />
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUser(user.id)}
+                        disabled={user.id === authUser?.id}
+                        className="inline-flex items-center px-3 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+                        title={user.id === authUser?.id ? "Cannot delete yourself" : "Delete User"}
+                      >
+                        <Trash2 size={16} className="mr-1" />
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
         )}
       
       {/* Password Reset Modal */}

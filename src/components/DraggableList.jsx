@@ -1,6 +1,7 @@
 import React from 'react';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { GripVertical, Trash2, ArrowRight } from 'lucide-react';
+import MobileDragDrop from './MobileDragDrop';
 
 const DraggableList = ({ 
   items, 
@@ -11,6 +12,23 @@ const DraggableList = ({
   type = 'songs',
   showMoveToSet = false
 }) => {
+  // Use mobile-friendly drag and drop on smaller screens
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  
+  if (isMobile) {
+    return (
+      <MobileDragDrop
+        items={items}
+        onReorder={onReorder}
+        onRemove={onRemove}
+        onMoveToSet={onMoveToSet}
+        availableSets={availableSets}
+        type={type}
+        showMoveToSet={showMoveToSet}
+      />
+    );
+  }
+
   const handleDragEnd = (result) => {
     if (!result.destination) return;
 

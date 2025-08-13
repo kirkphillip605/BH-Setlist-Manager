@@ -1,20 +1,22 @@
 import { supabase } from '../supabaseClient';
-import { songsService } from './songsService';
-import { setlistsService } from './setlistsService';
-import { setsService } from './setsService';
 
 // Performance mode storage keys
 const STORAGE_KEYS = {
   SETLIST_DATA: 'performanceMode_setlistData',
   SONGS_DATA: 'performanceMode_songsData',
   SESSION_ID: 'performanceMode_sessionId',
-  IS_LEADER: 'performanceMode_isLeader'
+  IS_LEADER: 'performanceMode_isLeader',
+  CACHE_TIMESTAMP: 'performanceMode_cacheTimestamp'
 };
+
+// Cache expiry time (5 minutes)
+const CACHE_EXPIRY = 5 * 60 * 1000;
 
 class PerformanceService {
   constructor() {
     this.activeSubscriptions = new Map();
     this.isInPerformanceMode = false;
+    this.leadershipRequests = new Map();
   }
 
   // Check if we're currently in performance mode
@@ -27,70 +29,91 @@ class PerformanceService {
     this.isInPerformanceMode = status;
   }
 
-  // Comprehensive pre-fetch and cache of all setlist data
+  // Check if cached data is still valid
+  isCacheValid(setlistId) {
+    try {
+      const timestamp = localStorage.getItem(STORAGE_KEYS.CACHE_TIMESTAMP);
+      const cachedSetlistData = localStorage.getItem(STORAGE_KEYS.SETLIST_DATA);
+      
+      if (!timestamp || !cachedSetlistData) return false;
+      
+      const age = Date.now() - parseInt(timestamp);
+      return age < CACHE_EXPIRY;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  // Optimized bulk data fetching with single queries
   async prefetchAndCacheSetlistData(setlistId) {
     try {
       console.log('🚀 Pre-fetching setlist data for performance mode...');
       
-      // Get full setlist with all sets
-      const setlistData = await setlistsService.getSetlistById(setlistId);
+      // Single query to get complete setlist with all nested data
+      const { data: setlistData, error: setlistError } = await supabase
+        .from('setlists')
+        .select(`
+          *,
+          sets (
+            id,
+            name,
+            set_order,
+            created_at,
+            set_songs (
+              song_order,
+              songs (
+                id,
+                title,
+                original_artist,
+                key_signature,
+                performance_note,
+                lyrics,
+                created_at
+              )
+            )
+          )
+        `)
+        .eq('id', setlistId)
+        .order('set_order', { foreignTable: 'sets', ascending: true })
+        .order('song_order', { foreignTable: 'sets.set_songs', ascending: true })
+        .single();
+
+      if (setlistError) throw setlistError;
       
       if (!setlistData.sets || setlistData.sets.length === 0) {
         throw new Error('Setlist has no sets');
       }
 
-      // Collect all unique song IDs from all sets
-      const allSongIds = new Set();
-      const setsWithSongs = [];
-
-      for (const set of setlistData.sets) {
-        const setData = await setsService.getSetById(set.id);
-        setsWithSongs.push(setData);
-        
-        if (setData.set_songs) {
-          for (const setSong of setData.set_songs) {
-            allSongIds.add(setSong.songs.id);
-          }
-        }
-      }
-
-      // Batch fetch all songs with full lyrics
-      console.log(`📄 Fetching ${allSongIds.size} songs with lyrics...`);
+      // Create songs lookup for O(1) access
       const allSongs = {};
-      
-      for (const songId of allSongIds) {
-        try {
-          const fullSong = await songsService.getSongById(songId);
-          allSongs[songId] = fullSong;
-        } catch (err) {
-          console.warn(`Failed to fetch song ${songId}:`, err);
-        }
-      }
+      setlistData.sets.forEach(set => {
+        set.set_songs?.forEach(setSong => {
+          if (setSong.songs) {
+            allSongs[setSong.songs.id] = setSong.songs;
+          }
+        });
+      });
 
-      // Enhanced setlist data with full set information
-      const enhancedSetlistData = {
-        ...setlistData,
-        sets: setsWithSongs
-      };
+      console.log(`✅ Fetched complete setlist with ${Object.keys(allSongs).length} songs in single query`);
 
-      // Store in localStorage with compression for large data
+      // Store in localStorage
       try {
         const dataToStore = {
           timestamp: Date.now(),
-          setlistData: enhancedSetlistData,
+          setlistData,
           songsData: allSongs
         };
         
-        localStorage.setItem(STORAGE_KEYS.SETLIST_DATA, JSON.stringify(dataToStore.setlistData));
-        localStorage.setItem(STORAGE_KEYS.SONGS_DATA, JSON.stringify(dataToStore.songsData));
+        localStorage.setItem(STORAGE_KEYS.SETLIST_DATA, JSON.stringify(setlistData));
+        localStorage.setItem(STORAGE_KEYS.SONGS_DATA, JSON.stringify(allSongs));
+        localStorage.setItem(STORAGE_KEYS.CACHE_TIMESTAMP, Date.now().toString());
         
         console.log('✅ Performance data cached successfully');
       } catch (storageError) {
         console.warn('Failed to cache data in localStorage:', storageError);
-        // Continue without caching if storage fails
       }
       
-      return { setlistData: enhancedSetlistData, songsData: allSongs };
+      return { setlistData, songsData: allSongs };
     } catch (error) {
       console.error('Error pre-fetching setlist data:', error);
       throw error;
@@ -182,8 +205,10 @@ class PerformanceService {
         throw new Error('No active performance session found');
       }
 
-      // Pre-fetch data for follower
-      await this.prefetchAndCacheSetlistData(setlistId);
+      // Check if cache is valid, otherwise refresh
+      if (!this.isCacheValid(setlistId)) {
+        await this.prefetchAndCacheSetlistData(setlistId);
+      }
 
       // Store session info as follower
       try {
@@ -221,6 +246,70 @@ class PerformanceService {
       throw new Error(error.message);
     }
     return data;
+  }
+
+  // Get all followers for a session
+  async getSessionFollowers(sessionId) {
+    // This would require a followers table, for now return empty array
+    // In a real implementation, you'd track followers in a separate table
+    return [];
+  }
+
+  // Request leadership transfer
+  async requestLeadershipTransfer(sessionId, requestingUserId, requestingUserName) {
+    try {
+      // Create leadership request in database
+      const { data, error } = await supabase
+        .from('leadership_requests')
+        .insert({
+          session_id: sessionId,
+          requesting_user_id: requestingUserId,
+          requesting_user_name: requestingUserName,
+          status: 'pending',
+          expires_at: new Date(Date.now() + 30000) // 30 seconds
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error requesting leadership transfer:', error);
+      throw error;
+    }
+  }
+
+  // Respond to leadership request
+  async respondToLeadershipRequest(requestId, response, currentLeaderId) {
+    try {
+      const { data, error } = await supabase
+        .from('leadership_requests')
+        .update({
+          status: response,
+          responded_at: new Date()
+        })
+        .eq('id', requestId)
+        .eq('status', 'pending')
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (response === 'approved') {
+        // Transfer leadership
+        await supabase
+          .from('performance_sessions')
+          .update({
+            leader_id: data.requesting_user_id
+          })
+          .eq('id', data.session_id);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error responding to leadership request:', error);
+      throw error;
+    }
   }
 
   // Update current song/set in session (leader only)
@@ -288,7 +377,6 @@ class PerformanceService {
           filter: `id=eq.${sessionId}`
         },
         (payload) => {
-          // Defer callback execution as per Supabase best practices
           setTimeout(() => callback(payload), 0);
         }
       )
@@ -299,6 +387,28 @@ class PerformanceService {
     return subscription;
   }
 
+  // Subscribe to leadership requests
+  subscribeToLeadershipRequests(sessionId, callback) {
+    const subscription = supabase
+      .channel(`leadership_requests_${sessionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'leadership_requests',
+          filter: `session_id=eq.${sessionId}`
+        },
+        (payload) => {
+          setTimeout(() => callback(payload), 0);
+        }
+      )
+      .subscribe();
+
+    this.activeSubscriptions.set(`leadership_${sessionId}`, subscription);
+    return subscription;
+  }
+
   // Unsubscribe from specific session
   unsubscribeFromSession(sessionId) {
     const subscription = this.activeSubscriptions.get(sessionId);
@@ -306,6 +416,12 @@ class PerformanceService {
       supabase.removeChannel(subscription);
       this.activeSubscriptions.delete(sessionId);
       console.log('🔕 Unsubscribed from performance session');
+    }
+    
+    const leadershipSub = this.activeSubscriptions.get(`leadership_${sessionId}`);
+    if (leadershipSub) {
+      supabase.removeChannel(leadershipSub);
+      this.activeSubscriptions.delete(`leadership_${sessionId}`);
     }
   }
 

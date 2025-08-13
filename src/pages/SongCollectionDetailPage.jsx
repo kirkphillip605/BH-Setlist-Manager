@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Edit, ArrowLeft, Trash2 } from 'lucide-react';
 import { usePageTitle } from '../context/PageTitleContext';
 import { songCollectionsService } from '../services/songCollectionsService';
-import DraggableList from '../components/DraggableList';
+import MobileDragDrop from '../components/MobileDragDrop';
 
 const SongCollectionDetailPage = () => {
   const { collectionId } = useParams();
@@ -139,7 +139,7 @@ const SongCollectionDetailPage = () => {
             <p className="text-slate-300 text-lg">No songs in this collection</p>
           </div>
         ) : (
-          <DraggableList
+          <MobileDragDrop
             items={songs}
             onReorder={handleReorderSongs}
             onRemove={handleRemoveSong}

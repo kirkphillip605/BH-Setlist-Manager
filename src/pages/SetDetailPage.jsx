@@ -4,7 +4,7 @@ import { Edit, ArrowLeft } from 'lucide-react';
 import { usePageTitle } from '../context/PageTitleContext';
 import { setsService } from '../services/setsService';
 import { setlistsService } from '../services/setlistsService';
-import DraggableList from '../components/DraggableList';
+import MobileDragDrop from '../components/MobileDragDrop';
 
 const SetDetailPage = () => {
   const { setlistId, setId } = useParams();
@@ -163,7 +163,7 @@ const SetDetailPage = () => {
             <p className="text-slate-300 text-lg">No songs in this set</p>
           </div>
         ) : (
-          <DraggableList
+          <MobileDragDrop
             items={songs}
             onReorder={handleReorderSongs}
             onRemove={handleRemoveSong}

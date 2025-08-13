@@ -153,7 +153,8 @@ const ManageSongCollections = () => {
 
         {!loading && collections.length > 0 && (
           <>
-            <div className="bg-zinc-900/50 rounded-xl overflow-hidden border border-zinc-800">
+            {/* Desktop Table View */}
+            <div className="hidden md:block bg-zinc-900/50 rounded-xl overflow-hidden border border-zinc-800">
               <table className="min-w-full divide-y divide-zinc-700">
                 <thead className="bg-zinc-800">
                   <tr>
@@ -228,6 +229,54 @@ const ManageSongCollections = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4">
+              {currentCollections.map((collection) => (
+                <div key={collection.id} className="bg-zinc-800 rounded-xl p-4 border border-zinc-700">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <button
+                        onClick={() => navigate(`/song-collections/${collection.id}`)}
+                        className="text-lg font-semibold text-blue-400 hover:text-blue-300 transition-colors text-left block mb-2 truncate w-full"
+                      >
+                        {collection.name}
+                      </button>
+                      <div className="flex items-center space-x-3 mb-2">
+                        {collection.is_public ? (
+                          <span className="badge badge-success">
+                            Public
+                          </span>
+                        ) : (
+                          <span className="badge badge-secondary">
+                            Private
+                          </span>
+                        )}
+                        <span className="text-sm text-zinc-400">
+                          {new Date(collection.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      onClick={() => navigate(`/song-collections/edit/${collection.id}`)}
+                      className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm"
+                    >
+                      <Edit size={16} className="mr-1" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteCollection(collection.id)}
+                      className="inline-flex items-center px-3 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors text-sm"
+                    >
+                      <Trash2 size={16} className="mr-1" />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
 
             {totalPages > 1 && (
