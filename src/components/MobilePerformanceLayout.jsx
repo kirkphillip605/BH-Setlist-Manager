@@ -223,13 +223,15 @@ const MobilePerformanceLayout = ({
                 </div>
               </div>
               <div className="flex-1 overflow-auto p-4">
-                <div className="mobile-zoom-container" style={{ 
+                <div 
+                  className="mobile-zoom-container" 
+                  style={{ 
                   transform: `scale(${lyricsZoom})`, 
                   transformOrigin: 'top left',
-                  width: lyricsZoom > 1 ? `${100 / lyricsZoom}%` : '100%',
-                  lineHeight: 1.6,
-                  wordWrap: 'break-word'
-                }}>
+                  width: `${100 / lyricsZoom}%`,
+                  minHeight: `${100 / lyricsZoom}%`
+                  }}
+                >
                   {children}
                 </div>
               </div>
