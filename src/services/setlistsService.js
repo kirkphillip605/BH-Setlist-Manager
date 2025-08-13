@@ -35,6 +35,9 @@ export const setlistsService = {
       `)
       .eq('id', id)
       .order('set_order', { foreignTable: 'sets', ascending: true })
+      .single();
+
+    if (error) {
       throw new Error(error.message);
     }
 
@@ -93,22 +96,14 @@ export const setlistsService = {
       throw new Error('Setlist name is required.');
     }
 
-    if (!id) {
-      throw new Error('Setlist ID is required.');
-    }
-
     // Get the setlist to check ownership
     const { data: setlist, error: setlistFetchError } = await supabase
       .from('setlists')
       .select('user_id')
       .eq('id', id)
-      .maybeSingle();
+      .single();
 
     if (setlistFetchError) {
-      throw new Error(setlistFetchError.message);
-    }
-
-    if (!setlist) {
       throw new Error('Setlist not found');
     }
 
