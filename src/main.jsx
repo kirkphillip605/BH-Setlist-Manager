@@ -50,9 +50,11 @@ const PageLoader = () => (
 
 // Wrapper component for lazy-loaded pages
 const LazyPage = ({ children }) => (
-  <Suspense fallback={<PageLoader />}>
-    {children}
-  </Suspense>
+  <ErrorBoundary>
+    <Suspense fallback={<PageLoader />}>
+      {children}
+    </Suspense>
+  </ErrorBoundary>
 );
 
 const router = createBrowserRouter([

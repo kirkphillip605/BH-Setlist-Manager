@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
+import { apiService } from '../services/apiService';
+import { handleError } from '../utils/errorHandler';
 import { useNavigate } from 'react-router-dom';
 import { usePageTitle } from '../context/PageTitleContext';
 
@@ -21,37 +23,44 @@ const EditProfile = () => {
 
   useEffect(() => {
     setPageTitle('Edit Profile');
+    let isMounted = true;
+
     const fetchProfile = async () => {
-      if (user) {
-        setLoading(true);
-        setError(null);
-        try {
-          const { data, error } = await supabase
+      if (!user) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await apiService.executeQuery(() =>
+          supabase
             .from('users')
             .select('*')
             .eq('id', user.id)
-            .maybeSingle();
+            .maybeSingle()
+        );
 
-          if (error) {
-            throw error;
-          }
-
-          if (data) {
-            setProfile({
-              name: data.name || '',
-              role: data.role || '',
-              email: data.email || '',
-            });
-          }
-        } catch (error) {
-          setError(error.message);
-        } finally {
+        if (isMounted && data) {
+          setProfile({
+            name: data.name || '',
+            role: data.role || '',
+            email: data.email || '',
+          });
+        }
+      } catch (error) {
+        if (isMounted) {
+          setError(apiService.formatError(error));
+        }
+        handleError(error, 'Failed to load profile');
+      } finally {
+        if (isMounted) {
           setLoading(false);
         }
       }
     };
 
     fetchProfile();
+    return () => {
+      isMounted = false;
+    };
   }, [user, setPageTitle]);
 
   const handleChange = (e) => {
@@ -75,18 +84,16 @@ const EditProfile = () => {
 
     try {
       // Update user details
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({
-          name: profile.name,
-          role: profile.role,
-          email: profile.email,
-        })
-        .eq('id', user.id);
-
-      if (updateError) {
-        throw new Error(updateError.message);
-      }
+      await apiService.executeQuery(() =>
+        supabase
+          .from('users')
+          .update({
+            name: profile.name,
+            role: profile.role,
+            email: profile.email,
+          })
+          .eq('id', user.id)
+      );
 
       // Update password if provided
       if (password && password === confirmPassword) {
@@ -101,7 +108,8 @@ const EditProfile = () => {
         navigate('/profile', { replace: true });
       }, 2000); // Redirect after 2 seconds
     } catch (error) {
-      setError(error.message);
+      setError(apiService.formatError(error));
+      handleError(error, 'Failed to update profile');
     } finally {
       setLoading(false);
     }

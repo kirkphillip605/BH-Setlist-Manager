@@ -1,5 +1,6 @@
 import { supabase } from '../supabaseClient';
 import { apiService } from './apiService';
+import { handleError } from '../utils/errorHandler';
 
 export const userService = {
   // Get all users (admin only)
@@ -20,21 +21,19 @@ export const userService = {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-list-users`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+      const result = await apiService.fetchWithRetry(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-list-users`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
         }
-      });
+      );
 
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to fetch auth users');
-      }
-      
       return result.users || [];
     } catch (error) {
-      console.error('Error fetching auth users:', error);
+      handleError(error, 'Failed to fetch auth users');
       throw error;
     }
   },
@@ -77,30 +76,28 @@ export const userService = {
       }
 
       // Always call the Edge Function for user creation
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-invite-user`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          email,
-          name,
-          role: role || '',
-          user_level: user_level || 1,
-          password: password || null // Pass password if provided, otherwise null
-        })
-      });
-
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to create user via Edge Function');
-      }
+      const result = await apiService.fetchWithRetry(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-invite-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            email,
+            name,
+            role: role || '',
+            user_level: user_level || 1,
+            password: password || null,
+          }),
+        }
+      );
 
       const authUser = result.data.user;
       return authUser;
     } catch (error) {
-      console.error('Error creating user:', error);
+      handleError(error, 'Error creating user');
       throw error;
     }
   },
@@ -168,21 +165,21 @@ export const userService = {
       }
 
       // Use Edge Function for user deletion
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-user`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ userId })
-      });
+      await apiService.fetchWithRetry(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-user`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ userId }),
+        }
+      );
 
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to delete user');
-      }
+      return true;
     } catch (error) {
-      console.error('Error deleting user:', error);
+      handleError(error, 'Error deleting user');
       throw error;
     }
   },
@@ -211,22 +208,20 @@ export const userService = {
         if (error) throw error;
       } else {
         // Send password reset email
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-reset-password`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({ email })
-        });
-        
-        const result = await response.json();
-        if (!response.ok) {
-          throw new Error(result.error || 'Failed to reset password');
-        }
+        await apiService.fetchWithRetry(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-reset-password`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ email }),
+          }
+        );
       }
     } catch (error) {
-      console.error('Error resetting password:', error);
+      handleError(error, 'Error resetting password');
       throw error;
     }
   },
@@ -254,21 +249,19 @@ export const userService = {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-invite-user`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ email })
-      });
-      
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to resend invitation');
-      }
+      await apiService.fetchWithRetry(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-invite-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
     } catch (error) {
-      console.error('Error resending invitation:', error);
+      handleError(error, 'Failed to resend invitation');
       throw error;
     }
   }
