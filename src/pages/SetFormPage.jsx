@@ -225,9 +225,9 @@ const SetFormPage = () => {
       const setData = {
         name: setName,
         setlist_id: setlistId,
-        songs: setSongs.map((song, index) => ({
+        songs: setSongs.map((song) => ({
           song_id: song.id,
-          song_order: index + 1
+          song_order: song.song_order
         }))
       };
 
