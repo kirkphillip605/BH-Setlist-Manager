@@ -26,6 +26,7 @@ const SongFormPage = () => {
     original_artist: '',
     title: '',
     key_signature: '',
+    tempo: '',
     performance_note: '',
     lyrics: '',
   });
@@ -52,6 +53,7 @@ const SongFormPage = () => {
             original_artist: data.original_artist,
             title: data.title,
             key_signature: data.key_signature,
+            tempo: data.tempo ?? '',
             performance_note: data.performance_note || '',
             lyrics: data.lyrics,
           });
@@ -66,7 +68,7 @@ const SongFormPage = () => {
     } else {
       // Reset form for adding new song
       setPageTitle('Add New Song');
-      setFormData({ original_artist: '', title: '', key_signature: '', performance_note: '', lyrics: '' });
+      setFormData({ original_artist: '', title: '', key_signature: '', tempo: '', performance_note: '', lyrics: '' });
     }
   }, [songId, isEditing, setPageTitle]);
 
@@ -186,8 +188,8 @@ const SongFormPage = () => {
       )}
 
       <div className="card-modern p-4 sm:p-6">
-        <form id="song-form" onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-6 sm:gap-4 mobile-form-grid">
-          <div>
+        <form id="song-form" onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-4 mobile-form-grid">
+          <div className="md:col-span-6">
             <label htmlFor="title" className="block text-base sm:text-sm font-medium text-zinc-300 mb-3 sm:mb-2">Title</label>
             <input
               type="text"
@@ -199,7 +201,7 @@ const SongFormPage = () => {
               required
             />
           </div>
-          <div>
+          <div className="md:col-span-6">
             <label htmlFor="original_artist" className="block text-base sm:text-sm font-medium text-zinc-300 mb-3 sm:mb-2">Original Artist</label>
             <input
               type="text"
@@ -211,8 +213,8 @@ const SongFormPage = () => {
               required
             />
           </div>
-          
-          <div>
+
+          <div className="md:col-span-3">
             <label htmlFor="key_signature" className="block text-base sm:text-sm font-medium text-zinc-300 mb-3 sm:mb-2">Key Signature (Optional)</label>
             <input
               type="text"
@@ -229,7 +231,24 @@ const SongFormPage = () => {
               ))}
             </datalist>
           </div>
-          <div>
+          <div className="md:col-span-3">
+            <label htmlFor="tempo" className="block text-base sm:text-sm font-medium text-zinc-300 mb-3 sm:mb-2">Tempo (BPM)</label>
+            <div className="relative">
+              <input
+                type="number"
+                id="tempo"
+                name="tempo"
+                value={formData.tempo}
+                onChange={handleChange}
+                className="input-modern pr-16"
+                placeholder="e.g., 120"
+                min="0"
+                inputMode="numeric"
+              />
+              <span className="absolute inset-y-0 right-4 flex items-center text-sm font-medium text-zinc-400 pointer-events-none">BPM</span>
+            </div>
+          </div>
+          <div className="md:col-span-12">
             <label htmlFor="performance_note" className="block text-base sm:text-sm font-medium text-zinc-300 mb-3 sm:mb-2">Performance Note (Optional)</label>
             <input
               type="text"
@@ -241,7 +260,7 @@ const SongFormPage = () => {
               placeholder="e.g., Change guitars, Solo by John..."
             />
           </div>
-          <div className="col-span-1 md:col-span-2">
+          <div className="col-span-1 md:col-span-12">
             <label htmlFor="lyrics" className="block text-base sm:text-sm font-medium text-zinc-300 mb-3 sm:mb-2">Lyrics (Rich Text Editor)</label>
             <ReactQuill
               theme="snow"

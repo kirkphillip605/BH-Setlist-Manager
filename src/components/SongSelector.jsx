@@ -85,20 +85,33 @@ const SongSelector = ({ onSongsSelected, selectedSongs = [], showAddButton = tru
   };
 
   const filteredSongs = useMemo(() => {
+    const normalizedTerm = searchTerm.toLowerCase();
     return songs.filter(song =>
-      song.original_artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      song.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (song.key_signature && song.key_signature.toLowerCase().includes(searchTerm.toLowerCase()))
+      song.original_artist.toLowerCase().includes(normalizedTerm) ||
+      song.title.toLowerCase().includes(normalizedTerm) ||
+      (song.key_signature && song.key_signature.toLowerCase().includes(normalizedTerm)) ||
+      (song.tempo !== null && song.tempo !== undefined && song.tempo.toString().includes(normalizedTerm))
     );
   }, [songs, searchTerm]);
 
   const sortedSongs = useMemo(() => {
     if (!sortColumn) return filteredSongs;
     return [...filteredSongs].sort((a, b) => {
-      const aValue = a[sortColumn] || '';
-      const bValue = b[sortColumn] || '';
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
+
+      if (sortColumn === 'tempo') {
+        const aTempo = aValue !== null && aValue !== undefined ? Number(aValue) : -Infinity;
+        const bTempo = bValue !== null && bValue !== undefined ? Number(bValue) : -Infinity;
+        if (aTempo < bTempo) return sortDirection === 'asc' ? -1 : 1;
+        if (aTempo > bTempo) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      }
+
+      const aComparable = (aValue || '').toString().toLowerCase();
+      const bComparable = (bValue || '').toString().toLowerCase();
+      if (aComparable < bComparable) return sortDirection === 'asc' ? -1 : 1;
+      if (aComparable > bComparable) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
   }, [filteredSongs, sortColumn, sortDirection]);
@@ -181,12 +194,20 @@ const SongSelector = ({ onSongsSelected, selectedSongs = [], showAddButton = tru
                   Artist {renderSortIcon('original_artist')}
                 </div>
               </th>
-              <th 
+              <th
                 className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600 transition-colors"
                 onClick={() => handleSort('key_signature')}
               >
                 <div className="flex items-center">
                   Key {renderSortIcon('key_signature')}
+                </div>
+              </th>
+              <th
+                className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider cursor-pointer hover:bg-slate-600 transition-colors"
+                onClick={() => handleSort('tempo')}
+              >
+                <div className="flex items-center">
+                  Tempo (BPM) {renderSortIcon('tempo')}
                 </div>
               </th>
             </tr>
@@ -210,6 +231,7 @@ const SongSelector = ({ onSongsSelected, selectedSongs = [], showAddButton = tru
                 <td className="px-4 py-4 text-sm font-medium text-slate-100">{song.title}</td>
                 <td className="px-4 py-4 text-sm text-slate-300">{song.original_artist}</td>
                 <td className="px-4 py-4 text-sm text-slate-300">{song.key_signature || '-'}</td>
+                <td className="px-4 py-4 text-sm text-slate-300">{song.tempo !== null && song.tempo !== undefined ? `${song.tempo} BPM` : '-'}</td>
                 {song.performance_note && (
                   <td className="px-4 py-4 text-sm text-amber-300 flex items-center space-x-1">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -234,6 +256,9 @@ const SongSelector = ({ onSongsSelected, selectedSongs = [], showAddButton = tru
                 <p className="text-sm text-zinc-400 mb-1">{song.original_artist}</p>
                 {song.key_signature && (
                   <p className="text-sm text-zinc-500">Key: {song.key_signature}</p>
+                )}
+                {song.tempo !== null && song.tempo !== undefined && (
+                  <p className="text-sm text-zinc-500">Tempo: {song.tempo} BPM</p>
                 )}
                 {song.performance_note && (
                   <div className="flex items-center space-x-1 mt-2">

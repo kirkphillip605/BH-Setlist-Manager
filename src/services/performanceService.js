@@ -164,6 +164,7 @@ class PerformanceService {
                 title,
                 original_artist,
                 key_signature,
+                tempo,
                 performance_note,
                 lyrics,
                 created_at

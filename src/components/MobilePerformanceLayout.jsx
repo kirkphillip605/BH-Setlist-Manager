@@ -161,7 +161,9 @@ const MobilePerformanceLayout = ({
                 <div className="flex-1 min-w-0">
                   <h2 className="text-lg font-bold text-zinc-100 truncate">{currentSong?.title}</h2>
                   <p className="text-sm text-zinc-400 truncate">
-                    {currentSong?.original_artist} {currentSong?.key_signature && `• ${currentSong.key_signature}`}
+                    {currentSong?.original_artist}
+                    {currentSong?.key_signature && ` • ${currentSong.key_signature}`}
+                    {currentSong?.tempo !== null && currentSong?.tempo !== undefined && ` • ${currentSong.tempo} BPM`}
                   </p>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -225,7 +227,9 @@ const MobilePerformanceLayout = ({
                   <div className="flex-1 min-w-0">
                     <p className="text-base font-medium text-zinc-100 truncate">{currentSong.title}</p>
                     <p className="text-sm text-zinc-400 truncate">
-                      {currentSong.original_artist} {currentSong.key_signature && `• ${currentSong.key_signature}`}
+                      {currentSong.original_artist}
+                      {currentSong.key_signature && ` • ${currentSong.key_signature}`}
+                      {currentSong.tempo !== null && currentSong.tempo !== undefined && ` • ${currentSong.tempo} BPM`}
                     </p>
                   </div>
                   <ChevronUp size={20} className="text-zinc-400 ml-2" />
