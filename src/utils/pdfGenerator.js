@@ -92,6 +92,14 @@ export const generateSetlistPDF = async (setlist) => {
           x += pdf.getTextWidth(keyText) + 8;
         }
 
+        // Tempo: 12pt, grey
+        if (song.tempo !== null && song.tempo !== undefined) {
+          pdf.setFont(undefined, 'italic');
+          const tempoText = `${song.tempo} BPM`;
+          pdf.text(tempoText, x, y);
+          x += pdf.getTextWidth(tempoText) + 8;
+        }
+
         // Performance note: 12pt, grey, prefixed "Note:"
         if (song.performance_note) {
           pdf.setFont(undefined, 'bold');

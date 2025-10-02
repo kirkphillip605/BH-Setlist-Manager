@@ -71,7 +71,13 @@ const MobileDragDrop = ({
                   {item.title}
                 </p>
                 <p className="text-sm opacity-75 truncate">
-                  {item.original_artist} {item.key_signature && `• ${item.key_signature}`}
+                  {item.original_artist}
+                  {(item.key_signature || (item.tempo !== null && item.tempo !== undefined)) && (
+                    <>
+                      {item.key_signature && ` • ${item.key_signature}`}
+                      {item.tempo !== null && item.tempo !== undefined && ` • ${item.tempo} BPM`}
+                    </>
+                  )}
                 </p>
                 {item.performance_note && (
                   <div className="flex items-center space-x-1 mt-1">

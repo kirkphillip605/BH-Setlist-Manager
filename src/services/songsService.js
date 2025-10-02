@@ -40,7 +40,15 @@ export const songsService = {
 
   // Create a new song
   async createSong(songData) {
-    const { original_artist, title, key_signature, lyrics, performance_note } = songData;
+    const { original_artist, title, key_signature, lyrics, performance_note, tempo } = songData;
+
+    const parsedTempo = tempo !== undefined && tempo !== null && tempo !== ''
+      ? Number(tempo)
+      : null;
+
+    if (parsedTempo !== null && Number.isNaN(parsedTempo)) {
+      throw new Error('Tempo must be a valid number.');
+    }
 
     if (!original_artist || !title) {
       throw new Error('Artist and Title are required.');
@@ -63,7 +71,7 @@ export const songsService = {
 
     const { data, error } = await supabase
       .from('songs')
-      .insert([{ original_artist, title, key_signature, lyrics, performance_note }])
+      .insert([{ original_artist, title, key_signature, lyrics, performance_note, tempo: parsedTempo }])
       .select()
       .single();
 
@@ -73,7 +81,15 @@ export const songsService = {
 
   // Update a song
   async updateSong(id, songData) {
-    const { original_artist, title, key_signature, lyrics, performance_note } = songData;
+    const { original_artist, title, key_signature, lyrics, performance_note, tempo } = songData;
+
+    const parsedTempo = tempo !== undefined && tempo !== null && tempo !== ''
+      ? Number(tempo)
+      : null;
+
+    if (parsedTempo !== null && Number.isNaN(parsedTempo)) {
+      throw new Error('Tempo must be a valid number.');
+    }
 
     if (!original_artist || !title) {
       throw new Error('Artist and Title are required.');
@@ -116,7 +132,7 @@ export const songsService = {
 
     const { data, error } = await supabase
       .from('songs')
-      .update({ original_artist, title, key_signature, lyrics, performance_note })
+      .update({ original_artist, title, key_signature, lyrics, performance_note, tempo: parsedTempo })
       .eq('id', id)
       .select()
       .maybeSingle();

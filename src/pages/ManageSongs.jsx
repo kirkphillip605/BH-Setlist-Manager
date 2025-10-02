@@ -80,9 +80,12 @@ const ManageSongs = () => {
   };
 
   const filteredSongs = useMemo(() => {
+    const normalizedTerm = searchTerm.toLowerCase();
     return songs.filter(song =>
-      song.original_artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      song.title.toLowerCase().includes(searchTerm.toLowerCase())
+      song.original_artist.toLowerCase().includes(normalizedTerm) ||
+      song.title.toLowerCase().includes(normalizedTerm) ||
+      (song.key_signature && song.key_signature.toLowerCase().includes(normalizedTerm)) ||
+      (song.tempo !== null && song.tempo !== undefined && song.tempo.toString().includes(normalizedTerm))
     );
   }, [songs, searchTerm]);
 
@@ -90,11 +93,22 @@ const ManageSongs = () => {
     if (!sortColumn) return filteredSongs;
 
     return [...filteredSongs].sort((a, b) => {
-      const aValue = a[sortColumn] || '';
-      const bValue = b[sortColumn] || '';
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
 
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      if (sortColumn === 'tempo') {
+        const aTempo = aValue !== null && aValue !== undefined ? Number(aValue) : -Infinity;
+        const bTempo = bValue !== null && bValue !== undefined ? Number(bValue) : -Infinity;
+        if (aTempo < bTempo) return sortDirection === 'asc' ? -1 : 1;
+        if (aTempo > bTempo) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      }
+
+      const aComparable = (aValue || '').toString().toLowerCase();
+      const bComparable = (bValue || '').toString().toLowerCase();
+
+      if (aComparable < bComparable) return sortDirection === 'asc' ? -1 : 1;
+      if (aComparable > bComparable) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
   }, [filteredSongs, sortColumn, sortDirection]);
@@ -142,6 +156,18 @@ const ManageSongs = () => {
       initialWidth: 200,
       sortable: true,
       onSort: () => handleSort('original_artist'),
+    },
+    {
+      key: 'tempo',
+      header: (
+        <div className="flex items-center">
+          Tempo (BPM) {renderSortIcon('tempo')}
+        </div>
+      ),
+      render: (song) => (song.tempo !== null && song.tempo !== undefined ? `${song.tempo} BPM` : '-'),
+      initialWidth: 130,
+      sortable: true,
+      onSort: () => handleSort('tempo'),
     },
     {
       key: 'key_signature',
@@ -304,9 +330,14 @@ const ManageSongs = () => {
                         {song.title}
                       </Link>
                       <p className="text-base text-zinc-300 mb-1">{song.original_artist}</p>
-                      {song.key_signature && (
-                        <p className="text-sm text-zinc-400">Key: {song.key_signature}</p>
-                      )}
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-400">
+                        {song.key_signature && (
+                          <span>Key: {song.key_signature}</span>
+                        )}
+                        {song.tempo !== null && song.tempo !== undefined && (
+                          <span>{song.tempo} BPM</span>
+                        )}
+                      </div>
                       {song.performance_note && (
                         <div className="flex items-center space-x-2 mt-2">
                           <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -28,6 +28,9 @@ const MobileOptimizedTable = ({
               {item.key_signature && (
                 <span className="badge badge-secondary">Key: {item.key_signature}</span>
               )}
+              {item.tempo !== null && item.tempo !== undefined && (
+                <span className="badge badge-secondary">{item.tempo} BPM</span>
+              )}
               {item.performance_note && (
                 <div className="flex items-center space-x-1">
                   <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

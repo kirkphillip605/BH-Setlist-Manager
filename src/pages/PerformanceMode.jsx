@@ -896,7 +896,9 @@ const PerformanceMode = () => {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{song.title}</p>
                 <p className="text-xs opacity-75 truncate">
-                  {song.original_artist} {song.key_signature && `• ${song.key_signature}`}
+                  {song.original_artist}
+                  {song.key_signature && ` • ${song.key_signature}`}
+                  {song.tempo !== null && song.tempo !== undefined && ` • ${song.tempo} BPM`}
                 </p>
                 {song.performance_note && (
                   <div className="flex items-center space-x-1 mt-1">
@@ -975,7 +977,9 @@ const PerformanceMode = () => {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{song.title}</p>
                 <p className="text-xs opacity-75 truncate">
-                  {song.original_artist} {song.key_signature && `• ${song.key_signature}`}
+                  {song.original_artist}
+                  {song.key_signature && ` • ${song.key_signature}`}
+                  {song.tempo !== null && song.tempo !== undefined && ` • ${song.tempo} BPM`}
                 </p>
               </div>
             </button>

@@ -91,12 +91,18 @@ const SongViewPage = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-zinc-100 mb-1">{song.title}</h1>
-                <div className="flex items-center space-x-2 text-sm text-zinc-400">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-400">
                   <span>{song.original_artist}</span>
                   {song.key_signature && (
                     <>
                       <span>•</span>
                       <span>Key: {song.key_signature}</span>
+                    </>
+                  )}
+                  {song.tempo !== null && song.tempo !== undefined && (
+                    <>
+                      <span>•</span>
+                      <span>{song.tempo} BPM</span>
                     </>
                   )}
                   {song.performance_note && (
