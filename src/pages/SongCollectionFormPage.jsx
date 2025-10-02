@@ -99,9 +99,9 @@ const SongCollectionFormPage = () => {
         name: collectionName,
         user_id: user.id,
         is_public: isPublic,
-        songs: collectionSongs.map((song, index) => ({
+        songs: collectionSongs.map((song) => ({
           song_id: song.id,
-          song_order: index + 1
+          song_order: song.song_order
         }))
       };
 
