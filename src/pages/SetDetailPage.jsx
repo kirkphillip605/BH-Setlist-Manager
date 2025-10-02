@@ -4,7 +4,7 @@ import { Edit, ArrowLeft, Music } from 'lucide-react';
 import { usePageTitle } from '../context/PageTitleContext';
 import { setsService } from '../services/setsService';
 import { setlistsService } from '../services/setlistsService';
-import MobileDragDrop from '../components/MobileDragDrop';
+import DraggableList from '../components/DraggableList';
 
 const SetDetailPage = () => {
   const { setlistId, setId } = useParams();
@@ -184,7 +184,7 @@ const SetDetailPage = () => {
             </button>
           </div>
         ) : (
-          <MobileDragDrop
+          <DraggableList
             items={songs}
             onReorder={handleReorderSongs}
             onRemove={handleRemoveSong}

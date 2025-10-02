@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Save, XCircle, Music, Trash2, GripVertical, BookTemplate as Collection } from 'lucide-react';
+import { Save, XCircle, Music, BookTemplate as Collection } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 import { setsService } from '../services/setsService';
 import { songCollectionsService } from '../services/songCollectionsService';
-import SongSelector from '../components/SongSelector';
 import SongSelectorModal from '../components/SongSelectorModal';
 import CollectionSelectorModal from '../components/CollectionSelectorModal';
 import DuplicateModal from '../components/DuplicateModal';
 import CollectionDuplicateModal from '../components/CollectionDuplicateModal';
+import DraggableList from '../components/DraggableList';
 
 const SetFormPage = () => {
   const { setlistId, setId } = useParams();
@@ -345,38 +345,18 @@ const SetFormPage = () => {
 
         <div className="space-y-4">
           {setSongs.length === 0 ? (
-          <div className="text-center py-8">
-            <Music className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-            <p className="text-slate-300 text-lg mb-2">No songs in set</p>
-            <p className="text-slate-400">Add songs to build your set</p>
-          </div>
+            <div className="text-center py-8">
+              <Music className="mx-auto h-12 w-12 text-slate-400 mb-4" />
+              <p className="text-slate-300 text-lg mb-2">No songs in set</p>
+              <p className="text-slate-400">Add songs to build your set</p>
+            </div>
           ) : (
-          <div className="space-y-2">
-            {setSongs.map((song, index) => (
-              <div
-                key={`${song.id}-${index}`}
-                className="flex items-center justify-between p-4 bg-slate-700 rounded-lg border border-slate-600"
-              >
-                <div className="flex items-center space-x-3">
-                  <GripVertical className="h-5 w-5 text-slate-400 cursor-move" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-100 truncate">
-                      {song.title}
-                    </p>
-                    <p className="text-sm text-slate-400 truncate">
-                      {song.original_artist} {song.key_signature && `• ${song.key_signature}`}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleRemoveSong(index)}
-                  className="p-2 text-red-400 hover:text-red-300 transition-colors"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
+            <DraggableList
+              items={setSongs}
+              onReorder={handleReorderSongs}
+              onRemove={handleRemoveSong}
+              type="songs"
+            />
           )}
         </div>
       </div>
