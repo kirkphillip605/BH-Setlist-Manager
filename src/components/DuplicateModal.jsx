@@ -6,17 +6,14 @@ const DuplicateModal = ({ isOpen, onClose, duplicates = [], onRemoveDuplicates, 
 
   const handleRemoveDuplicates = () => {
     onRemoveDuplicates();
-    onClose();
   };
 
   const handleKeepInCurrent = () => {
     onKeepInCurrentSet();
-    onClose();
   };
 
   const handleKeepInOriginal = () => {
     onKeepInOriginalSet();
-    onClose();
   };
 
   return (
@@ -38,7 +35,7 @@ const DuplicateModal = ({ isOpen, onClose, duplicates = [], onRemoveDuplicates, 
                 </h3>
                 <div className="mt-2">
                   <p className="text-base sm:text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    The following songs already exist in other {type === 'set' ? 'sets within this setlist' : 'locations'}:
+                    The following songs already exist in other {type === 'set' ? 'sets within this setlist' : 'locations'}. Choose how you would like to resolve each duplicate so this {type === 'set' ? 'set' : 'collection'} can be saved.
                   </p>
                   <div className="max-h-40 overflow-y-auto scroll-container">
                     {duplicates.map((duplicate, index) => (
@@ -66,14 +63,14 @@ const DuplicateModal = ({ isOpen, onClose, duplicates = [], onRemoveDuplicates, 
                   onClick={handleKeepInCurrent}
                   className="w-full sm:w-auto inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-3 sm:py-2 bg-blue-600 text-base sm:text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mobile-form-button"
                 >
-                  Keep in Current Set
+                  Keep in This Set (remove from others)
                 </button>
                 <button
                   type="button"
                   onClick={handleKeepInOriginal}
                   className="w-full sm:w-auto inline-flex justify-center rounded-xl border border-gray-300 dark:border-slate-600 shadow-sm px-4 py-3 sm:py-2 bg-white dark:bg-slate-800 text-base sm:text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mobile-form-button"
                 >
-                  Keep in Original Set
+                  Keep in Existing Set(s)
                 </button>
               </>
             )}
@@ -82,7 +79,7 @@ const DuplicateModal = ({ isOpen, onClose, duplicates = [], onRemoveDuplicates, 
               onClick={handleRemoveDuplicates}
               className="w-full sm:w-auto inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-3 sm:py-2 bg-red-600 text-base sm:text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 mobile-form-button"
             >
-              Remove Duplicates
+              Remove from All Sets
             </button>
             <button
               type="button"
