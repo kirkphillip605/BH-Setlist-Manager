@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Edit, ArrowLeft, Trash2 } from 'lucide-react';
+import { Edit, ArrowLeft } from 'lucide-react';
 import { usePageTitle } from '../context/PageTitleContext';
 import { songCollectionsService } from '../services/songCollectionsService';
-import MobileDragDrop from '../components/MobileDragDrop';
+import DraggableList from '../components/DraggableList';
 
 const SongCollectionDetailPage = () => {
   const { collectionId } = useParams();
@@ -13,6 +13,7 @@ const SongCollectionDetailPage = () => {
   const [collection, setCollection] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [songs, setSongs] = useState([]);
 
   useEffect(() => {
     fetchCollection();
@@ -25,6 +26,13 @@ const SongCollectionDetailPage = () => {
       const data = await songCollectionsService.getSongCollectionById(collectionId);
       setCollection(data);
       setPageTitle(data.name);
+      const sortedSongs = data.song_collection_songs
+        ?.map(cs => ({
+          ...cs.songs,
+          song_order: cs.song_order
+        }))
+        .sort((a, b) => a.song_order - b.song_order) || [];
+      setSongs(sortedSongs);
     } catch (err) {
       console.error('Error fetching collection:', err);
       setError(err.message || 'Failed to load collection');
@@ -33,38 +41,31 @@ const SongCollectionDetailPage = () => {
     }
   };
 
-  const handleRemoveSong = async (songId) => {
-    const updatedSongs = songs.filter((_, index) => index !== songIndex);
-    await updateCollectionSongs(updatedSongs);
-  };
-
-  const handleReorderSongs = async (sourceIndex, destinationIndex) => {
-    const reorderedSongs = [...songs];
-    const [removed] = reorderedSongs.splice(sourceIndex, 1);
-    reorderedSongs.splice(destinationIndex, 0, removed);
-    
-    // Update song_order for all songs
-    const updatedSongs = reorderedSongs.map((song, index) => ({
+  const normalizeSongOrder = (items) =>
+    items.map((song, index) => ({
       ...song,
       song_order: index + 1
     }));
-    
-    await updateCollectionSongs(updatedSongs);
-  };
-    
-  const updateCollectionSongs = async (updatedSongs) => {
-    if (!window.confirm('Are you sure you want to make this change?')) {
+
+  const persistSongs = async (updatedSongs, confirmMessage) => {
+    if (confirmMessage && !window.confirm(confirmMessage)) {
       return;
     }
-    
+
+    const previousSongs = songs;
+    const normalizedSongs = normalizeSongOrder(updatedSongs);
+    setSongs(normalizedSongs);
+    setError(null);
+
     try {
-      const songsData = updatedSongs.map((song, index) => ({
+      const songsData = normalizedSongs.map((song) => ({
         song_id: song.id,
-        song_order: index + 1
+        song_order: song.song_order
       }));
 
       await songCollectionsService.updateSongCollection(collectionId, {
         name: collection.name,
+        is_public: collection.is_public,
         songs: songsData
       });
 
@@ -72,7 +73,23 @@ const SongCollectionDetailPage = () => {
     } catch (err) {
       console.error('Error updating songs:', err);
       setError('Failed to update songs');
+      setSongs(previousSongs);
     }
+  };
+
+  const handleRemoveSong = async (songIndex) => {
+    await persistSongs(
+      songs.filter((_, index) => index !== songIndex),
+      'Are you sure you want to remove this song from the collection?'
+    );
+  };
+
+  const handleReorderSongs = async (sourceIndex, destinationIndex) => {
+    if (sourceIndex === destinationIndex) return;
+    const reorderedSongs = [...songs];
+    const [removed] = reorderedSongs.splice(sourceIndex, 1);
+    reorderedSongs.splice(destinationIndex, 0, removed);
+    await persistSongs(reorderedSongs);
   };
 
   if (loading) {
@@ -95,13 +112,6 @@ const SongCollectionDetailPage = () => {
       </div>
     );
   }
-
-  const songs = collection.song_collection_songs
-    ?.map(cs => ({
-      ...cs.songs,
-      song_order: cs.song_order
-    }))
-    .sort((a, b) => a.song_order - b.song_order) || [];
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -139,12 +149,11 @@ const SongCollectionDetailPage = () => {
             <p className="text-slate-300 text-lg">No songs in this collection</p>
           </div>
         ) : (
-          <MobileDragDrop
+          <DraggableList
             items={songs}
             onReorder={handleReorderSongs}
             onRemove={handleRemoveSong}
             type="songs"
-            showMoveToSet={false}
           />
         )}
       </div>

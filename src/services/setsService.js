@@ -76,7 +76,12 @@ export const setsService = {
 
     // Check for duplicates within the setlist (across all sets)
     if (songs && songs.length > 0) {
-      const duplicates = await this.checkForDuplicatesInSetlist(setlist_id, songs.map(s => s.song_id));
+      const duplicates = await this.checkForDuplicatesInSetlist(
+        setlist_id,
+        songs.map(s => s.song_id),
+        null,
+        true
+      );
       if (duplicates.length > 0) {
         throw new Error(JSON.stringify({
           type: 'DUPLICATES_FOUND',
@@ -155,9 +160,10 @@ export const setsService = {
     // Check for duplicates within the setlist (across all sets) excluding current set
     if (songs !== undefined && songs.length > 0) {
       const duplicates = await this.checkForDuplicatesInSetlist(
-        existingSet.setlist_id, 
+        existingSet.setlist_id,
         songs.map(s => s.song_id),
-        id // Exclude current set from duplicate check
+        id, // Exclude current set from duplicate check
+        true
       );
       if (duplicates.length > 0) {
         throw new Error(JSON.stringify({

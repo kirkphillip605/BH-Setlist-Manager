@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Save, XCircle, Music, Trash2, GripVertical, BookTemplate as Collection } from 'lucide-react';
+import { Save, XCircle, Music, BookTemplate as Collection } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 import { setsService } from '../services/setsService';
 import { songCollectionsService } from '../services/songCollectionsService';
-import SongSelector from '../components/SongSelector';
 import SongSelectorModal from '../components/SongSelectorModal';
 import CollectionSelectorModal from '../components/CollectionSelectorModal';
 import DuplicateModal from '../components/DuplicateModal';
 import CollectionDuplicateModal from '../components/CollectionDuplicateModal';
+import DraggableList from '../components/DraggableList';
 
 const SetFormPage = () => {
   const { setlistId, setId } = useParams();
@@ -29,6 +29,7 @@ const SetFormPage = () => {
   const [showCollectionDuplicateModal, setShowCollectionDuplicateModal] = useState(false);
   const [collectionDuplicates, setCollectionDuplicates] = useState({});
   const [pendingCollectionSongs, setPendingCollectionSongs] = useState([]);
+  const [pendingSaveSongs, setPendingSaveSongs] = useState([]);
 
   const isEditing = !!setId;
 
@@ -75,21 +76,21 @@ const SetFormPage = () => {
     }
   };
 
+  const normalizeSongOrder = (songs) =>
+    songs.map((song, index) => ({
+      ...song,
+      song_order: index + 1
+    }));
+
   const handleSongsSelected = (selectedSongs) => {
     // Filter out songs that are already in the set
     const existingSongIds = new Set(setSongs.map(s => s.id));
     const newSongs = selectedSongs.filter(song => !existingSongIds.has(song.id));
-    
+
     if (newSongs.length > 0) {
-      const startOrder = setSongs.length + 1;
-      const songsWithOrder = newSongs.map((song, index) => ({
-        ...song,
-        song_order: startOrder + index
-      }));
-      
-      setSetSongs(prev => [...prev, ...songsWithOrder]);
+      setSetSongs(prev => normalizeSongOrder([...prev, ...newSongs]));
     }
-    
+
     // Close the modal
     setShowSongSelector(false);
   };
@@ -124,7 +125,7 @@ const SetFormPage = () => {
         const newSongs = collectionSongs.filter(song => !existingSongIds.has(song.id));
         
         if (newSongs.length > 0) {
-          setSetSongs(prev => [...prev, ...newSongs]);
+          setSetSongs(prev => normalizeSongOrder([...prev, ...newSongs]));
         }
       }
     } catch (err) {
@@ -147,9 +148,9 @@ const SetFormPage = () => {
     );
     
     if (songsToAdd.length > 0) {
-      setSetSongs(prev => [...prev, ...songsToAdd]);
+      setSetSongs(prev => normalizeSongOrder([...prev, ...songsToAdd]));
     }
-    
+
     // Clean up state
     setShowCollectionDuplicateModal(false);
     setCollectionDuplicates({});
@@ -184,9 +185,9 @@ const SetFormPage = () => {
       const newSongs = movedSongs.filter(song => !existingSongIds.has(song.id));
       
       if (newSongs.length > 0) {
-        setSetSongs(prev => [...prev, ...newSongs]);
+        setSetSongs(prev => normalizeSongOrder([...prev, ...newSongs]));
       }
-      
+
       // If no more duplicates, close modal and add remaining songs
       if (Object.keys(updatedDuplicates).length === 0) {
         handleSkipDuplicates();
@@ -199,7 +200,7 @@ const SetFormPage = () => {
   };
 
   const handleRemoveSong = (songIndex) => {
-    setSetSongs(prev => prev.filter((_, index) => index !== songIndex));
+    setSetSongs(prev => normalizeSongOrder(prev.filter((_, index) => index !== songIndex)));
   };
 
   const handleReorderSongs = (fromIndex, toIndex) => {
@@ -207,8 +208,50 @@ const SetFormPage = () => {
       const newSongs = [...prev];
       const [removed] = newSongs.splice(fromIndex, 1);
       newSongs.splice(toIndex, 0, removed);
-      return newSongs.map((song, index) => ({ ...song, song_order: index + 1 }));
+      return normalizeSongOrder(newSongs);
     });
+  };
+
+  const buildSetPayload = (songsToPersist) => ({
+    name: setName.trim(),
+    setlist_id: setlistId,
+    songs: songsToPersist.map((song) => ({
+      song_id: song.id,
+      song_order: song.song_order
+    }))
+  });
+
+  const saveSet = async (songsToPersist = setSongs) => {
+    setLoading(true);
+    setError(null);
+
+    const payload = buildSetPayload(songsToPersist);
+
+    try {
+      if (isEditing) {
+        await setsService.updateSet(setId, payload);
+        navigate(`/setlists/${setlistId}/sets/${setId}`);
+      } else {
+        const newSet = await setsService.createSet(payload);
+        navigate(`/setlists/${setlistId}/sets/${newSet.id}`);
+      }
+    } catch (err) {
+      console.error('Error saving set:', err);
+      try {
+        const errorData = JSON.parse(err.message);
+        if (errorData.type === 'DUPLICATES_FOUND') {
+          setPendingSaveSongs(songsToPersist);
+          setDuplicates(errorData.duplicates);
+          setShowDuplicateModal(true);
+          return;
+        }
+      } catch (parseError) {
+        // Not a structured duplicate error
+      }
+      setError(err.message || 'Failed to save set');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -218,41 +261,92 @@ const SetFormPage = () => {
       return;
     }
 
+    const normalizedSongs = normalizeSongOrder(setSongs);
+    setSetSongs(normalizedSongs);
+    await saveSet(normalizedSongs);
+  };
+
+  const dedupeEntries = () => {
+    const uniqueMap = new Map();
+    duplicates.forEach((dup) => {
+      if (!dup.sets || !dup.sets.id) {
+        return;
+      }
+      const key = `${dup.sets.id}:${dup.song_id}`;
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, dup);
+      }
+    });
+    return Array.from(uniqueMap.values());
+  };
+
+  const handleResolveComplete = () => {
+    setShowDuplicateModal(false);
+    setDuplicates([]);
+    setPendingSaveSongs([]);
+  };
+
+  const handleRemoveDuplicates = async () => {
     setLoading(true);
-    setError(null);
-
     try {
-      const setData = {
-        name: setName,
-        setlist_id: setlistId,
-        songs: setSongs.map((song) => ({
-          song_id: song.id,
-          song_order: song.song_order
-        }))
-      };
+      const uniqueDuplicates = dedupeEntries();
+      await Promise.all(
+        uniqueDuplicates.map((dup) =>
+          setsService.removeSongFromSet(dup.sets.id, dup.song_id)
+        )
+      );
 
-      if (isEditing) {
-        await setsService.updateSet(setId, setData);
-        navigate(`/setlists/${setlistId}/sets/${setId}`);
-      } else {
-        const newSet = await setsService.createSet(setData);
-        navigate(`/setlists/${setlistId}/sets/${newSet.id}`);
-      }
+      const duplicateSongIds = new Set(duplicates.map((dup) => dup.song_id));
+      const sourceSongs = pendingSaveSongs.length > 0 ? pendingSaveSongs : setSongs;
+      const updatedSongs = normalizeSongOrder(
+        sourceSongs.filter((song) => !duplicateSongIds.has(song.id))
+      );
+      setSetSongs(updatedSongs);
+      handleResolveComplete();
+      await saveSet(updatedSongs);
     } catch (err) {
-      console.error('Error saving set:', err);
-      // Handle duplicate error
-      try {
-        const errorData = JSON.parse(err.message);
-        if (errorData.type === 'DUPLICATES_FOUND') {
-          setShowDuplicateModal(true);
-          setDuplicates(errorData.duplicates);
-          return;
-        }
-      } catch (parseError) {
-        // Not a JSON error, show regular error
-      }
-      setError(err.message || 'Failed to save set');
-    } finally {
+      console.error('Error removing duplicates:', err);
+      setError('Failed to remove duplicate songs');
+      setLoading(false);
+    }
+  };
+
+  const handleKeepInCurrentSet = async () => {
+    setLoading(true);
+    try {
+      const uniqueDuplicates = dedupeEntries();
+      await Promise.all(
+        uniqueDuplicates.map((dup) =>
+          setsService.removeSongFromSet(dup.sets.id, dup.song_id)
+        )
+      );
+
+      const sourceSongs = pendingSaveSongs.length > 0 ? pendingSaveSongs : setSongs;
+      const normalizedSongs = normalizeSongOrder(sourceSongs);
+      setSetSongs(normalizedSongs);
+      handleResolveComplete();
+      await saveSet(normalizedSongs);
+    } catch (err) {
+      console.error('Error keeping songs in current set:', err);
+      setError('Failed to move duplicate songs from other sets');
+      setLoading(false);
+    }
+  };
+
+  const handleKeepInOriginalSet = async () => {
+    setLoading(true);
+    try {
+      const duplicateSongIds = new Set(duplicates.map((dup) => dup.song_id));
+      const sourceSongs = pendingSaveSongs.length > 0 ? pendingSaveSongs : setSongs;
+      const updatedSongs = normalizeSongOrder(
+        sourceSongs.filter((song) => !duplicateSongIds.has(song.id))
+      );
+      setSetSongs(updatedSongs);
+      handleResolveComplete();
+      await saveSet(updatedSongs);
+    } catch (err) {
+      console.error('Error keeping songs in original set:', err);
+      setError('Failed to keep duplicate songs in their original sets');
       setLoading(false);
     }
   };
@@ -345,38 +439,18 @@ const SetFormPage = () => {
 
         <div className="space-y-4">
           {setSongs.length === 0 ? (
-          <div className="text-center py-8">
-            <Music className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-            <p className="text-slate-300 text-lg mb-2">No songs in set</p>
-            <p className="text-slate-400">Add songs to build your set</p>
-          </div>
+            <div className="text-center py-8">
+              <Music className="mx-auto h-12 w-12 text-slate-400 mb-4" />
+              <p className="text-slate-300 text-lg mb-2">No songs in set</p>
+              <p className="text-slate-400">Add songs to build your set</p>
+            </div>
           ) : (
-          <div className="space-y-2">
-            {setSongs.map((song, index) => (
-              <div
-                key={`${song.id}-${index}`}
-                className="flex items-center justify-between p-4 bg-slate-700 rounded-lg border border-slate-600"
-              >
-                <div className="flex items-center space-x-3">
-                  <GripVertical className="h-5 w-5 text-slate-400 cursor-move" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-100 truncate">
-                      {song.title}
-                    </p>
-                    <p className="text-sm text-slate-400 truncate">
-                      {song.original_artist} {song.key_signature && `• ${song.key_signature}`}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleRemoveSong(index)}
-                  className="p-2 text-red-400 hover:text-red-300 transition-colors"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
+            <DraggableList
+              items={setSongs}
+              onReorder={handleReorderSongs}
+              onRemove={handleRemoveSong}
+              type="songs"
+            />
           )}
         </div>
       </div>
@@ -388,6 +462,17 @@ const SetFormPage = () => {
         onSongsSelected={handleSongsSelected}
         selectedSongs={setSongs}
         setlistId={setlistId}
+      />
+
+      {/* Duplicate Resolution Modal */}
+      <DuplicateModal
+        isOpen={showDuplicateModal}
+        onClose={() => setShowDuplicateModal(false)}
+        duplicates={duplicates}
+        onRemoveDuplicates={handleRemoveDuplicates}
+        onKeepInCurrentSet={handleKeepInCurrentSet}
+        onKeepInOriginalSet={handleKeepInOriginalSet}
+        type="set"
       />
       
       {/* Collection Selector Modal */}

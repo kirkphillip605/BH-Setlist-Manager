@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Save, XCircle, Music, Trash2, GripVertical } from 'lucide-react';
+import { Save, XCircle, Music } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 import { songCollectionsService } from '../services/songCollectionsService';
-import SongSelector from '../components/SongSelector';
 import SongSelectorModal from '../components/SongSelectorModal';
+import DraggableList from '../components/DraggableList';
 
 const SongCollectionFormPage = () => {
   const { collectionId } = useParams();
@@ -56,23 +56,27 @@ const SongCollectionFormPage = () => {
     }
   };
 
+  const normalizeSongOrder = (songs) =>
+    songs.map((song, index) => ({
+      ...song,
+      song_order: index + 1
+    }));
+
   const handleSongsSelected = (selectedSongs) => {
     // Only add songs that aren't already in the collection
     const existingSongIds = new Set(collectionSongs.map(s => s.id));
     const newSongs = selectedSongs
-      .filter(song => !existingSongIds.has(song.id))
-      .map((song, index) => ({
-        ...song,
-        song_order: collectionSongs.length + index + 1
-      }));
-    
+      .filter(song => !existingSongIds.has(song.id));
+
     if (newSongs.length > 0) {
-      setCollectionSongs(prev => [...prev, ...newSongs]);
+      setCollectionSongs(prev => normalizeSongOrder([...prev, ...newSongs]));
     }
+
+    setShowSongSelector(false);
   };
 
   const handleRemoveSong = (songIndex) => {
-    setCollectionSongs(prev => prev.filter((_, index) => index !== songIndex));
+    setCollectionSongs(prev => normalizeSongOrder(prev.filter((_, index) => index !== songIndex)));
   };
 
   const handleReorderSongs = (fromIndex, toIndex) => {
@@ -80,7 +84,7 @@ const SongCollectionFormPage = () => {
       const newSongs = [...prev];
       const [removed] = newSongs.splice(fromIndex, 1);
       newSongs.splice(toIndex, 0, removed);
-      return newSongs.map((song, index) => ({ ...song, song_order: index + 1 }));
+      return normalizeSongOrder(newSongs);
     });
   };
 
@@ -216,32 +220,12 @@ const SongCollectionFormPage = () => {
             <p className="text-slate-400">Add songs to build your collection</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {collectionSongs.map((song, index) => (
-              <div
-                key={`${song.id}-${index}`}
-                className="flex items-center justify-between p-4 bg-slate-700 rounded-lg border border-slate-600"
-              >
-                <div className="flex items-center space-x-3">
-                  <GripVertical className="h-5 w-5 text-slate-400 cursor-move" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-100 truncate">
-                      {song.title}
-                    </p>
-                    <p className="text-sm text-slate-400 truncate">
-                      {song.original_artist} {song.key_signature && `• ${song.key_signature}`}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleRemoveSong(index)}
-                  className="p-2 text-red-400 hover:text-red-300 transition-colors"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
+          <DraggableList
+            items={collectionSongs}
+            onReorder={handleReorderSongs}
+            onRemove={handleRemoveSong}
+            type="songs"
+          />
         )}
       </div>
 

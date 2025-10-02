@@ -14,7 +14,7 @@ const SongSelectorModal = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const [localSelectedSongs, setLocalSelectedSongs] = useState(new Set());
+  const [localSelectedSongs, setLocalSelectedSongs] = useState([]);
 
   // Configure Fuse.js for fuzzy search
   const searchResults = useMemo(() => {
@@ -52,7 +52,7 @@ const SongSelectorModal = ({
   useEffect(() => {
     // Reset local selection when modal opens
     if (isOpen) {
-      setLocalSelectedSongs(new Set());
+      setLocalSelectedSongs([]);
       setSearchQuery('');
       setCurrentPage(1);
     }
@@ -73,17 +73,23 @@ const SongSelectorModal = ({
   };
 
   const handleSongToggle = (song) => {
-    const newSelected = new Set(localSelectedSongs);
-    if (newSelected.has(song.id)) {
-      newSelected.delete(song.id);
-    } else {
-      newSelected.add(song.id);
-    }
-    setLocalSelectedSongs(newSelected);
+    setLocalSelectedSongs(prev => {
+      const alreadySelectedIndex = prev.indexOf(song.id);
+
+      if (alreadySelectedIndex !== -1) {
+        const updated = [...prev];
+        updated.splice(alreadySelectedIndex, 1);
+        return updated;
+      }
+
+      return [...prev, song.id];
+    });
   };
 
   const handleAddSelected = () => {
-    const selectedSongObjects = songs.filter(song => localSelectedSongs.has(song.id));
+    const selectedSongObjects = localSelectedSongs
+      .map(id => songs.find(song => song.id === id))
+      .filter(Boolean);
     onSongsSelected(selectedSongObjects);
     onClose();
   };
@@ -115,19 +121,19 @@ const SongSelectorModal = ({
                 <div>
                   <h3 className="text-lg font-medium text-zinc-100">Add Songs</h3>
                   <p className="text-sm text-zinc-400">
-                    {localSelectedSongs.size > 0 && `${localSelectedSongs.size} selected • `}
+                    {localSelectedSongs.length > 0 && `${localSelectedSongs.length} selected • `}
                     {searchResults.length} songs available
                   </p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
-                {localSelectedSongs.size > 0 && (
+                {localSelectedSongs.length > 0 && (
                   <button
                     onClick={handleAddSelected}
                     className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
                   >
                     <Plus size={16} className="mr-2" />
-                    Add {localSelectedSongs.size} Song{localSelectedSongs.size !== 1 ? 's' : ''}
+                    Add {localSelectedSongs.length} Song{localSelectedSongs.length !== 1 ? 's' : ''}
                   </button>
                 )}
                 <button
@@ -173,7 +179,7 @@ const SongSelectorModal = ({
               <div className="space-y-2">
                 {currentSongs.map((song) => {
                   const alreadySelected = isAlreadySelected(song.id);
-                  const locallySelected = localSelectedSongs.has(song.id);
+                  const locallySelected = localSelectedSongs.includes(song.id);
 
                   return (
                     <div
@@ -268,13 +274,13 @@ const SongSelectorModal = ({
             >
               Cancel
             </button>
-            {localSelectedSongs.size > 0 && (
+            {localSelectedSongs.length > 0 && (
               <button
                 onClick={handleAddSelected}
                 className="inline-flex items-center px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
               >
                 <Plus size={16} className="mr-2" />
-                Add {localSelectedSongs.size} Song{localSelectedSongs.size !== 1 ? 's' : ''}
+                Add {localSelectedSongs.length} Song{localSelectedSongs.length !== 1 ? 's' : ''}
               </button>
             )}
           </div>
