@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log
+Dockerfile.dev
+*.log
+.git
+.gitignore
+dist
+supabase/.branches
+supabase/.temp
+supabase/.env

@@ -1,14 +1,20 @@
-import { createClient } from '@supabase/supabase-js';
+/* eslint-env browser */
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+import { createClient } from '@supabase/supabase-js';
+import { getEnvVar } from './utils/env';
+
+const supabaseUrl = getEnvVar('VITE_SUPABASE_URL', '');
+const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY', '');
+
+const envSource = typeof window !== 'undefined' && window.__ENV__ ? 'runtime' : 'build';
 
 // Debug logging to help troubleshoot
 console.log('Environment check:', {
   supabaseUrl: supabaseUrl ? 'present' : 'missing',
   supabaseAnonKey: supabaseAnonKey ? 'present' : 'missing',
-  NODE_ENV: import.meta.env.NODE_ENV,
-  DEV: import.meta.env.DEV
+  source: envSource,
+  NODE_ENV: import.meta.env?.NODE_ENV,
+  DEV: import.meta.env?.DEV
 });
 
 if (!supabaseUrl || !supabaseAnonKey) {
@@ -17,10 +23,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
     VITE_SUPABASE_URL: !supabaseUrl ? 'MISSING' : 'OK',
     VITE_SUPABASE_ANON_KEY: !supabaseAnonKey ? 'MISSING' : 'OK'
   });
-  console.error('Please ensure your .env file exists in the project root with:');
-  console.error('VITE_SUPABASE_URL=your_url_here');
-  console.error('VITE_SUPABASE_ANON_KEY=your_key_here');
-  console.error('Then restart the development server with: npm run dev');
+  console.error('Ensure the variables are provided either via your .env file during development');
+  console.error('or as CapRover environment variables (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY) in production.');
 }
 
 let supabase = null;
