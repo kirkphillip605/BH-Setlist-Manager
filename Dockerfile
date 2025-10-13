@@ -5,15 +5,21 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
-# 2) Copy your env, then the rest of the source
-COPY .env.production .env
+# 2) Copy the rest of the source
 COPY . .
 
-# 3) Build with Vite (it sees .env, .env.production)
+# 3) Build with Vite
 RUN npm run build
 
 # ### serve with nginx ###
 FROM nginx:stable-alpine
+
 COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker-entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+
+ENTRYPOINT ["/entrypoint.sh"]

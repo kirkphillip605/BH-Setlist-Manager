@@ -1,6 +1,17 @@
 import { supabase } from '../supabaseClient';
 import { apiService } from './apiService';
 import { handleError } from '../utils/errorHandler';
+import { getEnvVar } from '../utils/env';
+
+const supabaseEdgeBaseUrl = getEnvVar('VITE_SUPABASE_URL', '');
+
+const buildFunctionUrl = (path) => {
+  if (!supabaseEdgeBaseUrl) {
+    throw new Error('Supabase base URL is not configured. Set VITE_SUPABASE_URL.');
+  }
+
+  return `${supabaseEdgeBaseUrl}/functions/v1/${path}`;
+};
 
 export const userService = {
   // Get all users (admin only)
@@ -22,7 +33,7 @@ export const userService = {
       }
 
       const result = await apiService.fetchWithRetry(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-list-users`,
+        buildFunctionUrl('admin-list-users'),
         {
           method: 'GET',
           headers: {
@@ -77,7 +88,7 @@ export const userService = {
 
       // Always call the Edge Function for user creation
       const result = await apiService.fetchWithRetry(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-invite-user`,
+        buildFunctionUrl('admin-invite-user'),
         {
           method: 'POST',
           headers: {
@@ -166,7 +177,7 @@ export const userService = {
 
       // Use Edge Function for user deletion
       await apiService.fetchWithRetry(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-user`,
+        buildFunctionUrl('admin-delete-user'),
         {
           method: 'DELETE',
           headers: {
@@ -209,7 +220,7 @@ export const userService = {
       } else {
         // Send password reset email
         await apiService.fetchWithRetry(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-reset-password`,
+          buildFunctionUrl('admin-reset-password'),
           {
             method: 'POST',
             headers: {
@@ -250,7 +261,7 @@ export const userService = {
       }
 
       await apiService.fetchWithRetry(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-invite-user`,
+        buildFunctionUrl('admin-invite-user'),
         {
           method: 'POST',
           headers: {
