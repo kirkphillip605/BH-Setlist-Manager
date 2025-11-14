@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Music, BookTemplate as Collection, Plus } from 'lucide-react';
+import { X, Music, BookTemplate as Collection } from 'lucide-react';
 import { songCollectionsService } from '../services/songCollectionsService';
 
 const CollectionSelectorModal = ({ 

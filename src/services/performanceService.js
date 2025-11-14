@@ -44,7 +44,7 @@ class PerformanceService {
   }
 
   // Check if cached data is still valid
-  isCacheValid() {
+  isCacheValid(setlistId) {
     try {
       const timestamp = localStorage.getItem(STORAGE_KEYS.CACHE_TIMESTAMP);
       const cachedSetlistData = localStorage.getItem(STORAGE_KEYS.SETLIST_DATA);
@@ -53,7 +53,7 @@ class PerformanceService {
       
       const age = Date.now() - parseInt(timestamp);
       return age < CACHE_EXPIRY;
-    } catch {
+    } catch (error) {
       return false;
     }
   }
@@ -854,7 +854,7 @@ class PerformanceService {
         sessionId: localStorage.getItem(STORAGE_KEYS.SESSION_ID),
         isLeader: localStorage.getItem(STORAGE_KEYS.IS_LEADER) === 'true'
       };
-    } catch {
+    } catch (error) {
       return { sessionId: null, isLeader: false };
     }
   }

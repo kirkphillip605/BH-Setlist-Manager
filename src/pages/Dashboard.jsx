@@ -1,7 +1,7 @@
-import React, { useEffect , useState } from 'react';
+import React, { useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Music, ListMusic, BookTemplate as Collection, Edit, Printer } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 import { songsService } from '../services/songsService';
 import { setlistsService } from '../services/setlistsService';
@@ -10,7 +10,6 @@ import { performanceService } from '../services/performanceService';
 import { generateSetlistPDF } from '../utils/pdfGenerator';
 
 const Dashboard = () => {
-  const { user } = useAuth();
   const { setPageTitle } = usePageTitle();
   const navigate = useNavigate();
   const [stats, setStats] = useState({
@@ -41,12 +40,12 @@ const Dashboard = () => {
             setActiveSession({ ...session, setlist });
             break;
           }
-        } catch {
+        } catch (err) {
           // No active session for this setlist, continue
         }
       }
-    } catch (error) {
-      console.error('Error checking for active sessions:', error);
+    } catch (err) {
+      console.error('Error checking for active sessions:', err);
     }
   };
 

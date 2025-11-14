@@ -19,7 +19,7 @@ export const getEnvVar = (key, defaultValue) => {
   let viteEnv = {};
   try {
     viteEnv = import.meta.env || {};
-  } catch {
+  } catch (error) {
     viteEnv = {};
   }
 
