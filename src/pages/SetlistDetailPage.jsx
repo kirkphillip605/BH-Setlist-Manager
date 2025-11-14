@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, Edit, Trash2, Music, ArrowLeft } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 import { setlistsService } from '../services/setlistsService';
 import { setsService } from '../services/setsService';

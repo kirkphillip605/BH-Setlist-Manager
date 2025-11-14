@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Save, XCircle, Music, BookTemplate as Collection } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 import { setsService } from '../services/setsService';
 import { songCollectionsService } from '../services/songCollectionsService';

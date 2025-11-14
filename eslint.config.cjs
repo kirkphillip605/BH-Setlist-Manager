@@ -62,6 +62,11 @@ module.exports = [
       // Security plugin included but rules disabled pending compatibility
       "react/prop-types": "off",
       "import/no-unresolved": "off",
+      "jsx-a11y/click-events-have-key-events": "warn",
+      "jsx-a11y/no-static-element-interactions": "warn",
+      "jsx-a11y/no-autofocus": "warn",
+      "react-hooks/exhaustive-deps": "warn",
+      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
     },
   },
   {
