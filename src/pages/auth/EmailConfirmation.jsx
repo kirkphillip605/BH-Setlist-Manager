@@ -78,7 +78,7 @@ const EmailConfirmation = () => {
           </div>
           <h2 className="text-2xl font-bold text-zinc-100 mb-4">Email Confirmed!</h2>
           <p className="text-zinc-300 mb-6">
-            Your email has been successfully confirmed. You&apos;ll be redirected shortly.
+            Your email has been successfully confirmed. You'll be redirected shortly.
           </p>
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
         </div>

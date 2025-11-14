@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Save, XCircle, Music, BookTemplate as Collection } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 import { setsService } from '../services/setsService';
 import { songCollectionsService } from '../services/songCollectionsService';
@@ -12,6 +13,7 @@ import DraggableList from '../components/DraggableList';
 
 const SetFormPage = () => {
   const { setlistId, setId } = useParams();
+  const { user } = useAuth();
   const { setPageTitle } = usePageTitle();
   const navigate = useNavigate();
 
@@ -243,7 +245,7 @@ const SetFormPage = () => {
           setShowDuplicateModal(true);
           return;
         }
-      } catch {
+      } catch (parseError) {
         // Not a structured duplicate error
       }
       setError(err.message || 'Failed to save set');
