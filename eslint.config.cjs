@@ -37,6 +37,7 @@ module.exports = [
         setInterval: "readonly",
         clearInterval: "readonly",
         AbortController: "readonly",
+        process: "readonly",
       },
       parserOptions: {
         ecmaFeatures: { jsx: true },
