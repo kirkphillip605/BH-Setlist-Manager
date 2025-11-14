@@ -1,0 +1,488 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "BH Setlist Manager Admin API",
+    "description": "Admin management API for BH Setlist Manager application. These Supabase Edge Functions provide administrative capabilities for user management.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "BH Setlist Manager"
+    }
+  },
+  "servers": [
+    {
+      "url": "{supabase_url}/functions/v1",
+      "description": "Supabase Edge Functions endpoint",
+      "variables": {
+        "supabase_url": {
+          "default": "https://your-project.supabase.co",
+          "description": "Your Supabase project URL"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "User Management",
+      "description": "Admin operations for managing users"
+    }
+  ],
+  "paths": {
+    "/admin-list-users": {
+      "get": {
+        "tags": ["User Management"],
+        "summary": "List all users",
+        "description": "Retrieve a list of all users in the system. Requires admin privileges (user_level = 3).",
+        "operationId": "listUsers",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved users list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "users": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "options": {
+        "tags": ["User Management"],
+        "summary": "CORS preflight for list users",
+        "description": "Handle CORS preflight request",
+        "operationId": "listUsersOptions",
+        "responses": {
+          "200": {
+            "description": "CORS headers",
+            "headers": {
+              "Access-Control-Allow-Origin": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Access-Control-Allow-Headers": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Access-Control-Allow-Methods": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin-delete-user": {
+      "post": {
+        "tags": ["User Management"],
+        "summary": "Delete a user",
+        "description": "Delete a user from the system. Requires admin privileges (user_level = 3). Deletes both authentication and profile data.",
+        "operationId": "deleteUser",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["userId"],
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The UUID of the user to delete"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User successfully deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "User deleted successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "options": {
+        "tags": ["User Management"],
+        "summary": "CORS preflight for delete user",
+        "description": "Handle CORS preflight request",
+        "operationId": "deleteUserOptions",
+        "responses": {
+          "200": {
+            "description": "CORS headers"
+          }
+        }
+      }
+    },
+    "/admin-invite-user": {
+      "post": {
+        "tags": ["User Management"],
+        "summary": "Invite or create a new user",
+        "description": "Invite a user by email or create a user with a password. Requires admin privileges (user_level = 3). If password is provided, creates user immediately; otherwise sends an invitation email.",
+        "operationId": "inviteUser",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address of the user to invite"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Display name for the user. Defaults to email prefix if not provided."
+                  },
+                  "role": {
+                    "type": "string",
+                    "description": "Role designation for the user"
+                  },
+                  "user_level": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3,
+                    "default": 1,
+                    "description": "User privilege level (1=regular, 2=moderator, 3=admin)"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "If provided, creates user with this password instead of sending invitation"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User successfully invited or created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "description": "User creation or invitation response from Supabase"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "description": "Admin access required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "example": "not_admin"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Admin access required"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "options": {
+        "tags": ["User Management"],
+        "summary": "CORS preflight for invite user",
+        "description": "Handle CORS preflight request with dynamic origin support",
+        "operationId": "inviteUserOptions",
+        "responses": {
+          "200": {
+            "description": "CORS headers"
+          }
+        }
+      }
+    },
+    "/admin-reset-password": {
+      "post": {
+        "tags": ["User Management"],
+        "summary": "Reset user password",
+        "description": "Send a password reset email to a user. Requires admin privileges (user_level = 3).",
+        "operationId": "resetPassword",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address of the user whose password should be reset"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset email sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Password reset email sent"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "options": {
+        "tags": ["User Management"],
+        "summary": "CORS preflight for reset password",
+        "description": "Handle CORS preflight request",
+        "operationId": "resetPasswordOptions",
+        "responses": {
+          "200": {
+            "description": "CORS headers"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT token obtained from Supabase authentication"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "description": "User object combining authentication and profile data",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique user identifier"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User's email address"
+          },
+          "name": {
+            "type": "string",
+            "description": "User's display name"
+          },
+          "role": {
+            "type": "string",
+            "description": "User's role designation"
+          },
+          "user_level": {
+            "type": "integer",
+            "description": "User privilege level (1=regular, 2=moderator, 3=admin)"
+          },
+          "last_sign_in_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of last sign-in"
+          },
+          "email_confirmed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when email was confirmed"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Account creation timestamp"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequestError": {
+        "description": "Invalid request parameters",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Email is required"
+            }
+          }
+        }
+      },
+      "UnauthorizedError": {
+        "description": "Authentication required or invalid token",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Authorization header required"
+            }
+          }
+        }
+      },
+      "ForbiddenError": {
+        "description": "Admin access required",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Admin access required"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "An unexpected error occurred"
+            }
+          }
+        }
+      }
+    }
+  }
+}

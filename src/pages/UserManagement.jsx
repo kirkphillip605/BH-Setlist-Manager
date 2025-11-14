@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Edit, Trash2, PlusCircle, Mail, UserCheck, Users, Key, RefreshCw, UserPlus, Shield } from 'lucide-react';
+import { Edit, Trash2, Mail, UserCheck, Users, Key, RefreshCw, UserPlus, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePageTitle } from '../context/PageTitleContext';
 import { userService } from '../services/userService';

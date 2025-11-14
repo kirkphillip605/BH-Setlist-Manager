@@ -1,7 +1,7 @@
 // TermsOfService.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, FileText, Scale } from 'lucide-react';
+import { ArrowLeft, Scale } from 'lucide-react';
 
 /**
  * TermsOfService
@@ -39,7 +39,7 @@ const TermsOfService = () => {
           <section>
             <h2 className="text-2xl font-semibold text-zinc-100">1. Acceptance of Terms</h2>
             <p className="text-zinc-300 leading-relaxed">
-              By accessing or using the Bad Habits Setlist Management System ("Service"), you agree to be bound by these Terms of Use. If you do not agree, do not use the Service.
+              By accessing or using the Bad Habits Setlist Management System (&quot;Service&quot;), you agree to be bound by these Terms of Use. If you do not agree, do not use the Service.
             </p>
           </section>
 
@@ -68,7 +68,7 @@ const TermsOfService = () => {
           <section>
             <h2 className="text-2xl font-semibold text-zinc-100">5. Disclaimer of Warranties</h2>
             <p className="text-zinc-300 leading-relaxed">
-              The Service is provided "as is" without warranties of any kind, either express or implied.
+              The Service is provided &quot;as is&quot; without warranties of any kind, either express or implied.
             </p>
           </section>
 

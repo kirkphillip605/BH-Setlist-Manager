@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 import { Mail, ArrowLeft } from 'lucide-react';
 
@@ -8,7 +8,7 @@ const MagicLinkLogin = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,7 +44,7 @@ const MagicLinkLogin = () => {
           </div>
           <h2 className="text-2xl font-bold text-zinc-100 mb-4">Check Your Email</h2>
           <p className="text-zinc-300 mb-6">
-            We've sent a magic link to <strong>{email}</strong>. Click the link in your email to sign in.
+            We&apos;ve sent a magic link to <strong>{email}</strong>. Click the link in your email to sign in.
           </p>
           <Link
             to="/login"
