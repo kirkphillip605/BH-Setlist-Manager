@@ -8,7 +8,6 @@ import { setsService } from '../services/setsService';
 
 const SetlistDetailPage = () => {
   const { setlistId } = useParams();
-  const { user } = useAuth();
   const { setPageTitle } = usePageTitle();
   const navigate = useNavigate();
 

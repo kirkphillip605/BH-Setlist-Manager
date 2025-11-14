@@ -1,5 +1,4 @@
 // Centralized API service for consistent error handling and retries
-import { supabase } from '../supabaseClient';
 
 class ApiError extends Error {
   constructor(message, type = 'system') {

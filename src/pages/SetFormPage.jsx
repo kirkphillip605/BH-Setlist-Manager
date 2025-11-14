@@ -13,7 +13,6 @@ import DraggableList from '../components/DraggableList';
 
 const SetFormPage = () => {
   const { setlistId, setId } = useParams();
-  const { user } = useAuth();
   const { setPageTitle } = usePageTitle();
   const navigate = useNavigate();
 
@@ -245,7 +244,7 @@ const SetFormPage = () => {
           setShowDuplicateModal(true);
           return;
         }
-      } catch (parseError) {
+      } catch {
         // Not a structured duplicate error
       }
       setError(err.message || 'Failed to save set');
